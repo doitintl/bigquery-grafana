@@ -16,7 +16,8 @@
         "lodash-es": "^4.17.11",
         "moment": "^2.18.1",
         "q": "^1.5.1",
-        "systemjs": "^2.1.1"
+        "systemjs": "^2.1.1",
+        "@google-cloud/bigquery": "^2.0.6"
     },
     "devDependencies": {
         "@babel/core": "^7.3.3",
