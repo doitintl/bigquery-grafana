@@ -12,12 +12,12 @@
     "author": "DoiT International",
     "license": "MIT",
     "dependencies": {
+        "@types/node": "^11.11.1",
         "brace": "^0.10.0",
         "lodash-es": "^4.17.11",
         "moment": "^2.18.1",
         "q": "^1.5.1",
-        "systemjs": "^2.1.1",
-        "@google-cloud/bigquery": "^2.0.6"
+        "systemjs": "^2.1.1"
     },
     "devDependencies": {
         "@babel/core": "^7.3.3",
@@ -32,6 +32,7 @@
         "babel-preset-env": "^1.7.0",
         "clean-webpack-plugin": "^1.0.1",
         "copy-webpack-plugin": "^4.6.0",
+        "googleapis": "^37.2.0",
         "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
         "jest": "^24.1.0",
         "ng-annotate-webpack-plugin": "^0.3.0",

@@ -161,7 +161,7 @@ register({
     {
       name: 'interval',
       type: 'interval',
-      options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h'],
+      options: ['$__interval', '1s', '1m', '1h', '1d'],
     },
     {
       name: 'fill',

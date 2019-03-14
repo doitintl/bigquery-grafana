@@ -1,7 +1,12 @@
 import _ from 'lodash';
-import ResponseParser from './response_parser';
+import ResponseParser, {ResultFormat} from './response_parser';
 import BigQueryQuery from './bigquery_query';
-import {ResultFormat} from "./response_parser";
+
+function sleep(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+}
 
 export class BigQueryDatasource {
     id: any;
@@ -14,6 +19,8 @@ export class BigQueryDatasource {
     url: string;
     authenticationType: string;
     projectName: string;
+    jobId: string;
+
 
     /** @ngInject */
     constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
@@ -27,6 +34,8 @@ export class BigQueryDatasource {
         this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
         this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
         this.projectName = instanceSettings.jsonData.defaultProject || '';
+        this.jobId = '';
+
     }
 
     async doRequest(url, maxRetries = 1) {
@@ -44,23 +53,76 @@ export class BigQueryDatasource {
             });
     }
 
-    async doQueryRequest(url, query, maxRetries = 1) {
+    async doQueryRequest(query, maxRetries = 1) {
+        const path = `v2/projects/${this.projectName}/queries`;
+        const url = this.url + `${this.baseUrl}${path}`;
         return this.backendSrv
             .datasourceRequest({
-                url: this.url + url,
+                url: url,
                 method: 'POST',
                 data: {
-                    query : query,
+                    query: query,
                     useLegacySql: false,
                 },
             })
             .catch(error => {
                 if (maxRetries > 0) {
-                    return this.doQueryRequest(url,query, maxRetries - 1);
+                    return this.doQueryRequest(query, maxRetries - 1);
                 }
                 throw error;
             });
     }
+
+    async cancleJob() {
+        if (this.jobId) {
+            console.log("Canceling Job ", this.jobId);
+            const path = `v2/projects/${this.projectName}/queries/` + this.jobId + '/cancel';
+            await this.doRequest(`${this.baseUrl}${path}`);
+            console.log("Done Canceling Job ", this.jobId);
+            this.jobId = '';
+        }
+    }
+    async doQuery(query, maxRetries = 1) {
+        if (!query) {
+            return {
+                rows: null,
+                schema: null
+            };
+        }
+        console.log("------DOQUERY--------JobId ",this.jobId , '-------------');
+        console.log(query)
+        if (this.jobId) {
+            this.cancleJob();
+        }
+        var sleepTimeMs = 100;
+        var queryResults = await this.doQueryRequest(query, maxRetries = 1);
+        this.jobId = queryResults.data.jobReference.jobId;
+        console.log("New jon id: ", this.jobId)
+        const path = `v2/projects/${this.projectName}/queries/` + this.jobId;
+        while (!queryResults.data.jobComplete) {
+            await sleep(sleepTimeMs);
+            sleepTimeMs *= 2;
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+            console.log('wating for job to complete ', this.jobId);
+        }
+        console.log("Job Done ", this.jobId);
+        var rows = queryResults.data.rows;
+        rows = rows.concat(queryResults.data.rows);
+        var schema = queryResults.data.schema;
+        while (queryResults.data.pageToken) {
+            const path = `v2/projects/${this.projectName}/queries/` + this.jobId + '?pageToken=' + queryResults.data.pageToken;
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+            rows = rows.concat(queryResults.data.rows);
+            console.log("getting results");
+            console.log(rows.length, queryResults.data.pageToken);
+        }
+        const res = {
+            rows: rows,
+            schema: schema
+        };
+        return (res);
+    }
+
     interpolateVariable = (value, variable) => {
         if (typeof value === 'string') {
             if (variable.multi || variable.includeAll) {
@@ -85,7 +147,7 @@ export class BigQueryDatasource {
             return target.hide !== true;
         }).map(target => {
             const queryModel = new BigQueryQuery(target, this.templateSrv, options.scopedVars);
-            this.queryModel = queryModel
+            this.queryModel = queryModel;
             return {
                 refId: target.refId,
                 intervalMs: options.intervalMs,
@@ -100,8 +162,7 @@ export class BigQueryDatasource {
             return this.$q.when({data: []});
         }
         let q = this.queryModel.expend_macros(options);
-        const path = `v2/projects/${this.projectName}/queries`;
-        return this.doQueryRequest(`${this.baseUrl}${path}`,q).then(response => {
+        return this.doQuery(q).then(response => {
             return new ResponseParser(this.$q).parseDataQuery(response);
         });
     }

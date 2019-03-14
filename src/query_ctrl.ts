@@ -264,6 +264,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     timeColumnChanged(refresh?: boolean) {
+        this.datasource.cancleJob();
         this.target.timeColumn = this.timeColumnSegment.value;
         let partModel;
         partModel = sqlPart.create({type: 'macro', name: '$__timeFilter', params: []});
@@ -287,6 +288,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     metricColumnChanged() {
+        this.datasource.cancleJob();
         this.target.metricColumn = this.metricColumnSegment.value;
         this.panelCtrl.refresh();
     }
@@ -633,8 +635,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     getGroupOptions() {
-        return this.datasource
-            .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
+        return this.getMetricColumnSegments()
             .then(tags => {
                 const options = [];
                 if (!this.queryModel.hasTimeGroup()) {

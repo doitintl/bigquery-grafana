@@ -581,7 +581,7 @@ function () {
     });
 
     if (alias) {
-      query += ' AS ' + this.quoteIdentifier(alias.params[0]);
+      query += ' AS ' + alias.params[0];
     }
 
     return query;
@@ -657,25 +657,61 @@ function () {
 
     if (this.hasMetricColumn()) {
       query += ',2';
-    }
+    } //query += '\nLIMIT 15000';
 
-    query += '\nLIMIT 10שפן צשס מוצנקר םכ רקדוךאד' + '00';
-    console.log(query);
+
     return query;
   };
 
   BigQueryQuery.prototype.expend_macros = function (options) {
     if (this.target.rawSql) {
-      var q = this.replaceTimeFilters(options);
+      var q = this.target.rawSql;
+      q = this.replaceTimeFilters(q, options);
+      q = this.replacetimeGroupAlias(q, options);
       return q;
     }
   };
 
-  BigQueryQuery.prototype.replaceTimeFilters = function (options) {
+  BigQueryQuery.prototype.replaceTimeFilters = function (q, options) {
     var from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
     var to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
     var range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
-    return this.target.rawSql.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+    return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+    console.log(q);
+  };
+
+  BigQueryQuery.prototype.replacetimeGroupAlias = function (q, options) {
+    var interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g)[0];
+    var intervalStr = '';
+
+    switch (interval) {
+      case '1s':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 1) * 1)";
+          break;
+        }
+
+      case '1m':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 60) * 60)";
+          break;
+        }
+
+      case '1h':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 3600) * 3600)";
+          break;
+        }
+
+      case '1d':
+        {
+          intervalStr = 'DATE' + "(" + this.target.timeColumn + ")";
+          break;
+        }
+    }
+
+    console.log(intervalStr);
+    return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
   };
 
   return BigQueryQuery;
@@ -829,6 +865,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
+function sleep(ms) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
 var BigQueryDatasource =
 /** @class */
 function () {
@@ -871,6 +913,7 @@ function () {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.projectName = instanceSettings.jsonData.defaultProject || '';
+    this.jobId = '';
   }
 
   BigQueryDatasource.prototype.doRequest = function (url, maxRetries) {
@@ -899,19 +942,23 @@ function () {
     });
   };
 
-  BigQueryDatasource.prototype.doQueryRequest = function (url, query, maxRetries) {
+  BigQueryDatasource.prototype.doQueryRequest = function (query, maxRetries) {
     if (maxRetries === void 0) {
       maxRetries = 1;
     }
 
     return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path, url;
+
       var _this = this;
 
       return tslib_1.__generator(this, function (_a) {
+        path = "v2/projects/" + this.projectName + "/queries";
+        url = this.url + ("" + this.baseUrl + path);
         return [2
         /*return*/
         , this.backendSrv.datasourceRequest({
-          url: this.url + url,
+          url: url,
           method: 'POST',
           data: {
             query: query,
@@ -919,11 +966,141 @@ function () {
           }
         }).catch(function (error) {
           if (maxRetries > 0) {
-            return _this.doQueryRequest(url, query, maxRetries - 1);
+            return _this.doQueryRequest(query, maxRetries - 1);
           }
 
           throw error;
         })];
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.cancleJob = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (!this.jobId) return [3
+            /*break*/
+            , 2];
+            console.log("Canceling Job ", this.jobId);
+            path = "v2/projects/" + this.projectName + "/queries/" + this.jobId + '/cancel';
+            return [4
+            /*yield*/
+            , this.doRequest("" + this.baseUrl + path)];
+
+          case 1:
+            _a.sent();
+
+            console.log("Done Canceling Job ", this.jobId);
+            this.jobId = '';
+            _a.label = 2;
+
+          case 2:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.doQuery = function (query, maxRetries) {
+    if (maxRetries === void 0) {
+      maxRetries = 1;
+    }
+
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var sleepTimeMs, queryResults, path, rows, schema, path_1, res;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (!query) {
+              return [2
+              /*return*/
+              , {
+                rows: null,
+                schema: null
+              }];
+            }
+
+            console.log("------DOQUERY--------JobId ", this.jobId, '-------------');
+            console.log(query);
+
+            if (this.jobId) {
+              this.cancleJob();
+            }
+
+            sleepTimeMs = 100;
+            return [4
+            /*yield*/
+            , this.doQueryRequest(query, maxRetries = 1)];
+
+          case 1:
+            queryResults = _a.sent();
+            this.jobId = queryResults.data.jobReference.jobId;
+            console.log("New jon id: ", this.jobId);
+            path = "v2/projects/" + this.projectName + "/queries/" + this.jobId;
+            _a.label = 2;
+
+          case 2:
+            if (!!queryResults.data.jobComplete) return [3
+            /*break*/
+            , 5];
+            return [4
+            /*yield*/
+            , sleep(sleepTimeMs)];
+
+          case 3:
+            _a.sent();
+
+            sleepTimeMs *= 2;
+            return [4
+            /*yield*/
+            , this.doRequest("" + this.baseUrl + path)];
+
+          case 4:
+            queryResults = _a.sent();
+            console.log('wating for job to complete ', this.jobId);
+            return [3
+            /*break*/
+            , 2];
+
+          case 5:
+            console.log("Job Done ", this.jobId);
+            rows = queryResults.data.rows;
+            rows = rows.concat(queryResults.data.rows);
+            schema = queryResults.data.schema;
+            _a.label = 6;
+
+          case 6:
+            if (!queryResults.data.pageToken) return [3
+            /*break*/
+            , 8];
+            path_1 = "v2/projects/" + this.projectName + "/queries/" + this.jobId + '?pageToken=' + queryResults.data.pageToken;
+            return [4
+            /*yield*/
+            , this.doRequest("" + this.baseUrl + path_1)];
+
+          case 7:
+            queryResults = _a.sent();
+            rows = rows.concat(queryResults.data.rows);
+            console.log("getting results");
+            console.log(rows.length, queryResults.data.pageToken);
+            return [3
+            /*break*/
+            , 6];
+
+          case 8:
+            res = {
+              rows: rows,
+              schema: schema
+            };
+            return [2
+            /*return*/
+            , res];
+        }
       });
     });
   };
@@ -953,8 +1130,7 @@ function () {
     }
 
     var q = this.queryModel.expend_macros(options);
-    var path = "v2/projects/" + this.projectName + "/queries";
-    return this.doQueryRequest("" + this.baseUrl + path, q).then(function (response) {
+    return this.doQuery(q).then(function (response) {
       return new _response_parser2.default(_this.$q).parseDataQuery(response);
     });
   };
@@ -1743,6 +1919,7 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.timeColumnChanged = function (refresh) {
+    this.datasource.cancleJob();
     this.target.timeColumn = this.timeColumnSegment.value;
     var partModel;
     partModel = _sql_part2.default.create({
@@ -1770,6 +1947,7 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.metricColumnChanged = function () {
+    this.datasource.cancleJob();
     this.target.metricColumn = this.metricColumnSegment.value;
     this.panelCtrl.refresh();
   };
@@ -2222,7 +2400,7 @@ function (_super) {
   BigQueryQueryCtrl.prototype.getGroupOptions = function () {
     var _this = this;
 
-    return this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('group')).then(function (tags) {
+    return this.getMetricColumnSegments().then(function (tags) {
       var options = [];
 
       if (!_this.queryModel.hasTimeGroup()) {
@@ -2393,15 +2571,14 @@ function () {
     console.log(data)
     const last = datapoints[datapoints.length - 1][0];
     console.log("last ", last)
-       return { data: data };
+     return { data: data };
   }*/
 
 
   ResponseParser.prototype.parseDataQuery = function (results) {
     var data = [];
-    console.log(results);
 
-    if (!results.data.rows) {
+    if (!results.rows) {
       return {
         data: data
       };
@@ -2411,16 +2588,16 @@ function () {
     var metricIndex = -1;
     var valueIndex = -1;
 
-    for (var i = 0; i < results.data.schema.fields.length; i++) {
-      if (timeIndex === -1 && ['DATE', 'TIMESTAMP', 'DATETIME'].includes(results.data.schema.fields[i].type)) {
+    for (var i = 0; i < results.schema.fields.length; i++) {
+      if (timeIndex === -1 && ['DATE', 'TIMESTAMP', 'DATETIME'].includes(results.schema.fields[i].type)) {
         timeIndex = i;
       }
 
-      if (metricIndex === -1 && results.data.schema.fields[i].type === 'STRING') {
+      if (metricIndex === -1 && results.schema.fields[i].type === 'STRING') {
         metricIndex = i;
       }
 
-      if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT'].includes(results.data.schema.fields[i].type)) {
+      if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT'].includes(results.schema.fields[i].type)) {
         valueIndex = i;
       }
     }
@@ -2429,12 +2606,15 @@ function () {
       throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
     }
 
-    for (var _i = 0, _a = results.data.rows; _i < _a.length; _i++) {
+    for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
       var row = _a[_i];
-      var epoch = Number(row.f[timeIndex].v) * 1000;
-      var metricName = metricIndex > -1 ? row.f[metricIndex].v : results.data.schema.fields[valueIndex].name;
-      var bucket = ResponseParser.findOrCreateBucket(data, metricName);
-      bucket.datapoints.push([row.f[valueIndex].v, epoch]);
+
+      if (row) {
+        var epoch = Number(row.f[timeIndex].v) * 1000;
+        var metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
+        var bucket = ResponseParser.findOrCreateBucket(data, metricName);
+        bucket.datapoints.push([row.f[valueIndex].v, epoch]);
+      }
     }
 
     return {
@@ -2805,7 +2985,7 @@ register({
   params: [{
     name: 'interval',
     type: 'interval',
-    options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h']
+    options: ['$__interval', '1s', '1m', '1h', '1d']
   }, {
     name: 'fill',
     type: 'string',

@@ -1,5 +1,6 @@
 import _ from 'lodash';
 
+
 export default class BigQueryQuery {
     target: any;
     templateSrv: any;
@@ -219,7 +220,7 @@ export default class BigQueryQuery {
 
         const alias = _.find(column, (g: any) => g.type === 'alias');
         if (alias) {
-            query += ' AS ' + this.quoteIdentifier(alias.params[0]);
+            query += ' AS ' + alias.params[0];
         }
 
         return query;
@@ -237,18 +238,15 @@ export default class BigQueryQuery {
                     break;
             }
         });
-
         if (conditions.length > 0) {
             query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
         }
-
         return query;
     }
 
     buildGroupClause() {
         let query = '';
         let groupSection = '';
-
         for (let i = 0; i < this.target.group.length; i++) {
             const part = this.target.group[i];
             if (i > 0) {
@@ -288,24 +286,49 @@ export default class BigQueryQuery {
         if (this.hasMetricColumn()) {
             query += ',2';
         }
-       query += '\nLIMIT 10שפן צשס מוצנקר םכ רקדוךאד' +
-           '00';
-        console.log(query)
+      //query += '\nLIMIT 15000';
         return query;
     }
 
     expend_macros(options) {
         if (this.target.rawSql) {
-            let q = this.replaceTimeFilters(options);
+            let q = this.target.rawSql;
+            q = this.replaceTimeFilters(q,options);
+            q = this.replacetimeGroupAlias(q,options);
             return q;
         }
     }
 
-    replaceTimeFilters(options) {
+    replaceTimeFilters(q,options) {
             const from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
             const to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
             const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
-            return this.target.rawSql.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+            return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+            console.log(q)
+    }
+    replacetimeGroupAlias(q,options){
+        let interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g)[0];
+        let intervalStr = '';
+        switch (interval) {
+            case '1s': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 1) * 1)";
+                break;
+            }
+            case '1m': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 60) * 60)";
+                break;
+            }
+            case '1h': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 3600) * 3600)";
+                break;
+            }
+            case '1d': {
+                intervalStr = 'DATE'+"("+this.target.timeColumn +")";
+                break;
+            }
+        }
+        console.log(intervalStr)
+        return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g,intervalStr);
     }
 
 }
