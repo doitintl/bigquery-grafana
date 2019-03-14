@@ -264,7 +264,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     timeColumnChanged(refresh?: boolean) {
-        this.datasource.cancleJob();
         this.target.timeColumn = this.timeColumnSegment.value;
         let partModel;
         partModel = sqlPart.create({type: 'macro', name: '$__timeFilter', params: []});
@@ -288,7 +287,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     metricColumnChanged() {
-        this.datasource.cancleJob();
         this.target.metricColumn = this.metricColumnSegment.value;
         this.panelCtrl.refresh();
     }

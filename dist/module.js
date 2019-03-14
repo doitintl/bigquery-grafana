@@ -584,6 +584,7 @@ function () {
       query += ' AS ' + alias.params[0];
     }
 
+    console.log(query);
     return query;
   };
 
@@ -677,14 +678,18 @@ function () {
     var to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
     var range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
     return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
-    console.log(q);
   };
 
   BigQueryQuery.prototype.replacetimeGroupAlias = function (q, options) {
-    var interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g)[0];
+    var interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+
+    if (!interval) {
+      return q;
+    }
+
     var intervalStr = '';
 
-    switch (interval) {
+    switch (interval[0]) {
       case '1s':
         {
           intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 1) * 1)";
@@ -705,12 +710,11 @@ function () {
 
       case '1d':
         {
-          intervalStr = 'DATE' + "(" + this.target.timeColumn + ")";
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 86400) * 86400)";
           break;
         }
     }
 
-    console.log(intervalStr);
     return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
   };
 
@@ -913,10 +917,13 @@ function () {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.projectName = instanceSettings.jsonData.defaultProject || '';
-    this.jobId = '';
   }
 
-  BigQueryDatasource.prototype.doRequest = function (url, maxRetries) {
+  BigQueryDatasource.prototype.doRequest = function (url, requestId, maxRetries) {
+    if (requestId === void 0) {
+      requestId = 'requestId';
+    }
+
     if (maxRetries === void 0) {
       maxRetries = 1;
     }
@@ -929,20 +936,25 @@ function () {
         /*return*/
         , this.backendSrv.datasourceRequest({
           url: this.url + url,
-          method: 'GET'
+          method: 'GET',
+          requestId: requestId
         }).catch(function (error) {
           if (maxRetries > 0) {
-            return _this.doRequest(url, maxRetries - 1);
+            return _this.doRequest(url, requestId, maxRetries - 1);
           }
 
-          console.log(error);
+          console.log(url, error);
           throw error;
         })];
       });
     });
   };
 
-  BigQueryDatasource.prototype.doQueryRequest = function (query, maxRetries) {
+  BigQueryDatasource.prototype.doQueryRequest = function (query, requestId, maxRetries) {
+    if (requestId === void 0) {
+      requestId = 'requestId';
+    }
+
     if (maxRetries === void 0) {
       maxRetries = 1;
     }
@@ -960,13 +972,14 @@ function () {
         , this.backendSrv.datasourceRequest({
           url: url,
           method: 'POST',
+          requestId: requestId,
           data: {
             query: query,
             useLegacySql: false
           }
         }).catch(function (error) {
           if (maxRetries > 0) {
-            return _this.doQueryRequest(query, maxRetries - 1);
+            return _this.doQueryRequest(query, requestId = 'requestId', maxRetries - 1);
           }
 
           throw error;
@@ -977,31 +990,10 @@ function () {
 
   BigQueryDatasource.prototype.cancleJob = function () {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path;
       return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            if (!this.jobId) return [3
-            /*break*/
-            , 2];
-            console.log("Canceling Job ", this.jobId);
-            path = "v2/projects/" + this.projectName + "/queries/" + this.jobId + '/cancel';
-            return [4
-            /*yield*/
-            , this.doRequest("" + this.baseUrl + path)];
-
-          case 1:
-            _a.sent();
-
-            console.log("Done Canceling Job ", this.jobId);
-            this.jobId = '';
-            _a.label = 2;
-
-          case 2:
-            return [2
-            /*return*/
-            ];
-        }
+        return [2
+        /*return*/
+        ];
       });
     });
   };
@@ -1012,7 +1004,7 @@ function () {
     }
 
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var sleepTimeMs, queryResults, path, rows, schema, path_1, res;
+      var sleepTimeMs, queryResults, jobId, path, rows, schema, path_1, res;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
@@ -1025,23 +1017,17 @@ function () {
               }];
             }
 
-            console.log("------DOQUERY--------JobId ", this.jobId, '-------------');
-            console.log(query);
-
-            if (this.jobId) {
-              this.cancleJob();
-            }
-
+            console.log("------DOQUERY--------");
             sleepTimeMs = 100;
             return [4
             /*yield*/
-            , this.doQueryRequest(query, maxRetries = 1)];
+            , this.doQueryRequest(query, query.requestId, maxRetries = 1)];
 
           case 1:
             queryResults = _a.sent();
-            this.jobId = queryResults.data.jobReference.jobId;
-            console.log("New jon id: ", this.jobId);
-            path = "v2/projects/" + this.projectName + "/queries/" + this.jobId;
+            jobId = queryResults.data.jobReference.jobId;
+            console.log("New job id: ", jobId);
+            path = "v2/projects/" + this.projectName + "/queries/" + jobId;
             _a.label = 2;
 
           case 2:
@@ -1062,15 +1048,14 @@ function () {
 
           case 4:
             queryResults = _a.sent();
-            console.log('wating for job to complete ', this.jobId);
+            console.log('wating for job to complete ', jobId);
             return [3
             /*break*/
             , 2];
 
           case 5:
-            console.log("Job Done ", this.jobId);
+            console.log("Job Done ", jobId);
             rows = queryResults.data.rows;
-            rows = rows.concat(queryResults.data.rows);
             schema = queryResults.data.schema;
             _a.label = 6;
 
@@ -1078,16 +1063,15 @@ function () {
             if (!queryResults.data.pageToken) return [3
             /*break*/
             , 8];
-            path_1 = "v2/projects/" + this.projectName + "/queries/" + this.jobId + '?pageToken=' + queryResults.data.pageToken;
+            path_1 = "v2/projects/" + this.projectName + "/queries/" + jobId + '?pageToken=' + queryResults.data.pageToken;
             return [4
             /*yield*/
-            , this.doRequest("" + this.baseUrl + path_1)];
+            , this.doRequest("" + this.baseUrl + path_1, query.requestId)];
 
           case 7:
             queryResults = _a.sent();
             rows = rows.concat(queryResults.data.rows);
-            console.log("getting results");
-            console.log(rows.length, queryResults.data.pageToken);
+            console.log("getting results for: ", jobId);
             return [3
             /*break*/
             , 6];
@@ -1118,6 +1102,7 @@ function () {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: _this.id,
+        requestId: options.panelId + target.refId,
         rawSql: queryModel.render(_this.interpolateVariable),
         format: target.format
       };
@@ -1919,7 +1904,6 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.timeColumnChanged = function (refresh) {
-    this.datasource.cancleJob();
     this.target.timeColumn = this.timeColumnSegment.value;
     var partModel;
     partModel = _sql_part2.default.create({
@@ -1947,7 +1931,6 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.metricColumnChanged = function () {
-    this.datasource.cancleJob();
     this.target.metricColumn = this.metricColumnSegment.value;
     this.panelCtrl.refresh();
   };

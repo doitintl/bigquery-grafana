@@ -222,7 +222,7 @@ export default class BigQueryQuery {
         if (alias) {
             query += ' AS ' + alias.params[0];
         }
-
+        console.log(query)
         return query;
     }
 
@@ -304,12 +304,14 @@ export default class BigQueryQuery {
             const to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
             const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
             return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
-            console.log(q)
     }
     replacetimeGroupAlias(q,options){
-        let interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g)[0];
+        let interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+        if  (!interval) {
+            return q;
+        }
         let intervalStr = '';
-        switch (interval) {
+        switch (interval[0]) {
             case '1s': {
                 intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 1) * 1)";
                 break;
@@ -323,11 +325,10 @@ export default class BigQueryQuery {
                 break;
             }
             case '1d': {
-                intervalStr = 'DATE'+"("+this.target.timeColumn +")";
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 86400) * 86400)";
                 break;
             }
         }
-        console.log(intervalStr)
         return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g,intervalStr);
     }
 

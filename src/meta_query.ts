@@ -94,7 +94,7 @@ table_schema IN (
   }
 
   buildValueQuery(column: string) {
-    console.log('buildValueQuery(column: string)')
+    console.log('buildValueQuery(column: string)');
     let query = 'SELECT DISTINCT quote_literal(' + column + ')';
     query += ' FROM ' + this.target.table;
     query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
@@ -104,7 +104,7 @@ table_schema IN (
   }
 
   buildDatatypeQuery(column: string) {
-    console.log('buildDatatypeQuery(column: string)')
+    console.log('buildDatatypeQuery(column: string)');
     let query = 'SELECT udt_name FROM information_schema.columns WHERE ';
     query += this.buildTableConstraint(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
