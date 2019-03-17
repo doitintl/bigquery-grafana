@@ -50,10 +50,9 @@ export class BigQueryDatasource {
                 console.log(url,error);
                 throw error;
             });
-        console.log(url,"All is well")
     }
 
-    async doQueryRequest(query,requestId = 'requestId', maxRetries = 1) {
+    async doQueryRequest(query,requestId, maxRetries = 1) {
         const path = `v2/projects/${this.projectName}/queries`;
         const url = this.url + `${this.baseUrl}${path}`;
         return this.backendSrv
@@ -68,7 +67,7 @@ export class BigQueryDatasource {
             })
             .catch(error => {
                 if (maxRetries > 0) {
-                    return this.doQueryRequest(query, requestId = 'requestId', maxRetries - 1);
+                    return this.doQueryRequest(query, requestId , maxRetries - 1);
                 }
                 throw error;
             });
@@ -87,7 +86,7 @@ export class BigQueryDatasource {
             console.log("Done Canceling Job ", jobId);
         }*/
     }
-    async doQuery(query, maxRetries = 1) {
+    async doQuery(query,requestId ,  maxRetries = 1) {
         if (!query) {
             return {
                 rows: null,
@@ -95,16 +94,15 @@ export class BigQueryDatasource {
             };
         }
         console.log("------DOQUERY--------");
-        //console.log(query)
         var sleepTimeMs = 100;
-        var queryResults = await this.doQueryRequest(query, query.requestId,  maxRetries = 1);
+        var queryResults = await this.doQueryRequest(query, requestId,  maxRetries = 1);
         let jobId  = queryResults.data.jobReference.jobId;
         console.log("New job id: ", jobId)
         const path = `v2/projects/${this.projectName}/queries/` + jobId;
         while (!queryResults.data.jobComplete) {
             await sleep(sleepTimeMs);
             sleepTimeMs *= 2;
-            queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
             console.log('wating for job to complete ', jobId);
         }
         console.log("Job Done ", jobId);
@@ -112,10 +110,10 @@ export class BigQueryDatasource {
         var schema = queryResults.data.schema;
         while (queryResults.data.pageToken) {
             const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
-            queryResults = await this.doRequest(`${this.baseUrl}${path}`, query.requestId);
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
             rows = rows.concat(queryResults.data.rows);
             console.log("getting results for: ",jobId);
-        }
+       }
         const res = {
             rows: rows,
             schema: schema
@@ -153,7 +151,6 @@ export class BigQueryDatasource {
                 intervalMs: options.intervalMs,
                 maxDataPoints: options.maxDataPoints,
                 datasourceId: this.id,
-                requestId: options.panelId + target.refId,
                 rawSql: queryModel.render(this.interpolateVariable),
                 format: target.format,
             };
@@ -163,8 +160,8 @@ export class BigQueryDatasource {
             return this.$q.when({data: []});
         }
         let q = this.queryModel.expend_macros(options);
-        return this.doQuery(q).then(response => {
-            return new ResponseParser(this.$q).parseDataQuery(response);
+        return this.doQuery(q,options.panelId + options.targets[0].refId).then(response => {
+            return new ResponseParser(this.$q).parseDataQuery(response,options.targets[0].format);
         });
     }
 

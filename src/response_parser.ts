@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import {each} from 'lodash-es';
 
 // API interfaces
 export interface ResultFormat {
@@ -72,33 +73,15 @@ export default class ResponseParser {
         return fields;
     }
 
-    /*parseDataQuery(results) {
-      const data = [];
-      console.log(results);
-      if (!results.data.rows) {
-        return { data: data };
-      }
-      const datapoints = [];
-      for (const row of results.data.rows) {
-        const dp = [];
-        for (const i in row.f) {
-          dp.push(Number(row.f[i].v)*1000);
+
+    parseDataQuery(results, format) {
+        if (format === 'time_series') {
+            return this._toTimeSeries(results);
+        } else {
+            return this._toTable(results);
         }
-        datapoints.push(dp);
-      }
-      data.push({
-        datapoints: datapoints,
-        meta: 'meta'
-      });
-      console.log(data)
-      const last = datapoints[datapoints.length - 1][0];
-      console.log("last ", last)
-
-      return { data: data };
-    }*/
-
-
-    parseDataQuery(results) {
+    }
+    _toTimeSeries(results){
         const data = [];
         if (!results.rows) {
             return {data: data};
@@ -132,7 +115,27 @@ export default class ResponseParser {
         }
         return {data: data};
     }
-
+    _toTable(results){
+        const data = [];
+        let columns = [];
+        for (let i = 0; i < results.schema.fields.length; i++) {
+            columns.push({"text": results.schema.fields[i].name, "type": results.schema.fields[i].type});
+        }
+        let rows = [];
+        each(results.rows, function (ser) {
+            let r = [];
+            each(ser, function (v) {
+                r.push(v)
+            });
+            rows.push(r)
+        });
+        data.push({
+            "columns": columns,
+            "rows": rows,
+            "type": "table"
+        });
+        return {data: data};
+    }
     static findOrCreateBucket(data, target): DataTarget {
         let dataTarget = _.find(data, ['target', target]);
         if (!dataTarget) {

@@ -222,7 +222,6 @@ export default class BigQueryQuery {
         if (alias) {
             query += ' AS ' + alias.params[0];
         }
-        console.log(query)
         return query;
     }
 
@@ -286,7 +285,7 @@ export default class BigQueryQuery {
         if (this.hasMetricColumn()) {
             query += ',2';
         }
-      //query += '\nLIMIT 15000';
+      //query += '\nLIMIT 15';
         return query;
     }
 
