@@ -33596,7 +33596,7 @@ function () {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
     target.format = target.format || 'time_series';
-    target.timeColumn = target.timeColumn || 'time';
+    target.timeColumn = target.timeColumn || '-- time --';
     target.metricColumn = target.metricColumn || 'none';
     target.group = target.group || [];
     target.where = target.where || [{
@@ -33606,7 +33606,7 @@ function () {
     }];
     target.select = target.select || [[{
       type: 'column',
-      params: ['value']
+      params: ['-- value --']
     }]]; // handle pre query gui panels gracefully
 
     if (!('rawQuery' in this.target)) {
@@ -34436,7 +34436,7 @@ function () {
     var _this = this;
 
     var path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables/" + tableName;
-    return this.doRequest("" + this.baseUrl + path).then(function (response) {
+    return this.doRequest("" + this.baseUrl + path, filter).then(function (response) {
       return new _response_parser2.default(_this.$q).parseTabelFields(response, filter);
     });
   };
@@ -35099,6 +35099,10 @@ function (_super) {
   BigQueryQueryCtrl.prototype.projectChanged = function () {
     this.target.project = this.projectSegment.value;
     this.datasource.projectName = this.projectSegment.value;
+    this.target.dataset = '';
+    this.applySegment(this.datasetSegment, this.fakeSegment('select dataset'));
+    this.applySegment(this.tableSegment, this.fakeSegment('select table'));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
   };
 
   BigQueryQueryCtrl.prototype.getDatasetSegments = function () {
@@ -35107,6 +35111,8 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.datasetChanged = function () {
     this.target.dataset = this.datasetSegment.value;
+    this.applySegment(this.tableSegment, this.fakeSegment('select table'));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
   };
 
   BigQueryQueryCtrl.prototype.getTableSegments = function () {
@@ -35263,6 +35269,19 @@ function (_super) {
   BigQueryQueryCtrl.prototype.findWindowIndex = function (selectParts) {
     return _lodash2.default.findIndex(selectParts, function (p) {
       return p.def.type === 'window' || p.def.type === 'moving_window';
+    });
+  };
+
+  BigQueryQueryCtrl.prototype.applySegment = function (dst, src) {
+    dst.value = src.value;
+    dst.html = src.html || src.value;
+    dst.fake = src.fake === undefined ? false : src.fake;
+  };
+
+  BigQueryQueryCtrl.prototype.fakeSegment = function (value) {
+    return this.uiSegmentSrv.newSegment({
+      fake: true,
+      value: value
     });
   };
 

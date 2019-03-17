@@ -3,9 +3,9 @@
   "type": "datasource",
   "name": "Google BigQuery",
   "metrics": true,
+  "tables": true,
   "annotations": true,
   "alerting": false,
-
   "state": "beta",
   "info": {
     "description": "Google BigQuery datasource for Grafana",

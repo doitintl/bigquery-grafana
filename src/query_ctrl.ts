@@ -198,9 +198,12 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     projectChanged() {
         this.target.project = this.projectSegment.value;
         this.datasource.projectName = this.projectSegment.value;
+        this.target.dataset = '';
+        this.applySegment(this.datasetSegment, this.fakeSegment('select dataset'));
+        this.applySegment(this.tableSegment, this.fakeSegment('select table'));
+        this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
 
     }
-
     getDatasetSegments() {
         return this.datasource.getDatasets(this.target.project)
             .then(this.uiSegmentSrv.transformToSegments(false))
@@ -209,6 +212,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     datasetChanged() {
         this.target.dataset = this.datasetSegment.value;
+        this.applySegment(this.tableSegment, this.fakeSegment('select table'));
+        this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
     }
 
     getTableSegments() {
@@ -353,6 +358,16 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     findWindowIndex(selectParts) {
         return _.findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
+    }
+
+    applySegment(dst, src) {
+        dst.value = src.value;
+        dst.html = src.html || src.value;
+        dst.fake = src.fake === undefined ? false : src.fake;
+    }
+
+    fakeSegment(value) {
+        return this.uiSegmentSrv.newSegment({fake: true, value: value});
     }
 
     addSelectPart(selectParts, item, subItem) {

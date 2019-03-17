@@ -13,12 +13,12 @@ export default class BigQueryQuery {
         this.scopedVars = scopedVars;
 
         target.format = target.format || 'time_series';
-        target.timeColumn = target.timeColumn || 'time';
+        target.timeColumn = target.timeColumn || '-- time --';
         target.metricColumn = target.metricColumn || 'none';
 
         target.group = target.group || [];
         target.where = target.where || [{type: 'macro', name: '$__timeFilter', params: []}];
-        target.select = target.select || [[{type: 'column', params: ['value']}]];
+        target.select = target.select || [[{type: 'column', params: ['-- value --']}]];
 
         // handle pre query gui panels gracefully
         if (!('rawQuery' in this.target)) {

@@ -214,7 +214,7 @@ export class BigQueryDatasource {
 
     getTableFields(projectName, datasetName, tableName, filter): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets/${datasetName}/tables/${tableName}`;
-        return this.doRequest(`${this.baseUrl}${path}`).then(response => {
+        return this.doRequest(`${this.baseUrl}${path}`,filter).then(response => {
             return new ResponseParser(this.$q).parseTabelFields(response, filter);
         });
     }
