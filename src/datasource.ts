@@ -138,9 +138,9 @@ export class BigQueryDatasource {
             return this.queryModel.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    };
+    }
 
-    query(options) {
+    async query(options) {
         const queries = _.filter(options.targets, target => {
             return target.hide !== true;
         }).map(target => {
@@ -251,20 +251,8 @@ export class BigQueryDatasource {
     async getDefaultProject() {
         try {
             if (this.authenticationType === 'gce' || !this.projectName) {
-                const {data} = await this.backendSrv.datasourceRequest({
-                    url: '/api/tsdb/query',
-                    method: 'POST',
-                    data: {
-                        queries: [
-                            {
-                                refId: 'ensureDefaultProjectQuery',
-                                type: 'ensureDefaultProjectQuery',
-                                datasourceId: this.id,
-                            },
-                        ],
-                    },
-                });
-                this.projectName = data.results.ensureDefaultProjectQuery.meta.defaultProject;
+                const data = await this.getProjects();
+                this.projectName = data[0].value;
                 return this.projectName;
             } else {
                 return this.projectName;
