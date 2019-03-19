@@ -8,7 +8,7 @@ Contributions take the form of pull requests that will be reviewed by the core t
 
 * If you have a trivial fix or improvement, go ahead and create a pull request.
 
-* If you plan to do something more involved, discuss your idea on the respective [issue](https://github.com/doitintl/bigquery-grafana/issues) or create a [new issue](https://github.com/doitintl/bigquery-grafana/issues/new) if it does not exist. This will avoid unnecessary work and surely give you and us a good deal of inspiration.
+* If you plan to do something more involved, discuss your idea on the respective [issue](https://github.com/doitintl/bigquery-grafana/issues) or create a [new issue](https://github.com/doitintl/bigquery-grafana/issues/new/choose) if it does not exist. This will avoid unnecessary work and surely give you and us a good deal of inspiration.
 
 
 ## Steps to Contribute
