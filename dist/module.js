@@ -33712,10 +33712,6 @@ function () {
         args = timeGroup.params[0];
       }
 
-      if (this.hasUnixEpochTimecolumn()) {
-        macro = '$__unixEpochGroup';
-      }
-
       if (alias) {
         macro += 'Alias';
       }
@@ -35658,19 +35654,10 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.getWhereOptions = function () {
     var options = [];
-
-    if (this.queryModel.hasUnixEpochTimecolumn()) {
-      options.push(this.uiSegmentSrv.newSegment({
-        type: 'macro',
-        value: '$__unixEpochFilter'
-      }));
-    } else {
-      options.push(this.uiSegmentSrv.newSegment({
-        type: 'macro',
-        value: '$__timeFilter'
-      }));
-    }
-
+    options.push(this.uiSegmentSrv.newSegment({
+      type: 'macro',
+      value: '$__timeFilter'
+    }));
     options.push(this.uiSegmentSrv.newSegment({
       type: 'expression',
       value: 'Expression'

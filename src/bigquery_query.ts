@@ -118,9 +118,6 @@ export default class BigQueryQuery {
             } else {
                 args = timeGroup.params[0];
             }
-            if (this.hasUnixEpochTimecolumn()) {
-                macro = '$__unixEpochGroup';
-            }
             if (alias) {
                 macro += 'Alias';
             }

@@ -616,11 +616,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     getWhereOptions() {
         const options = [];
-        if (this.queryModel.hasUnixEpochTimecolumn()) {
-            options.push(this.uiSegmentSrv.newSegment({type: 'macro', value: '$__unixEpochFilter'}));
-        } else {
-            options.push(this.uiSegmentSrv.newSegment({type: 'macro', value: '$__timeFilter'}));
-        }
+        options.push(this.uiSegmentSrv.newSegment({type: 'macro', value: '$__timeFilter'}));
         options.push(this.uiSegmentSrv.newSegment({type: 'expression', value: 'Expression'}));
         return this.$q.when(options);
     }

@@ -40,8 +40,6 @@ describe('BigQueryQuery', () => {
       { timeColumn: 'time', timeColumnType: 'int4', group: [{ type: 'time', params: ['5m', 'none'] }] },
       templateSrv
     );
-    expect(query.buildTimeColumn()).toBe('$__unixEpochGroupAlias(time,5m)');
-    expect(query.buildTimeColumn(false)).toBe('$__unixEpochGroup(time,5m)');
   });
 
   describe('When generating metric column SQL', () => {
