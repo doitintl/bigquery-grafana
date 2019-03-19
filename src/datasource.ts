@@ -36,7 +36,7 @@ export class BigQueryDatasource {
 
     }
 
-    async doRequest(url,requestId = 'requestId',  maxRetries = 1) {
+    async doRequest(url, requestId = 'requestId', maxRetries = 1) {
         return this.backendSrv
             .datasourceRequest({
                 url: this.url + url,
@@ -45,14 +45,14 @@ export class BigQueryDatasource {
             })
             .catch(error => {
                 if (maxRetries > 0) {
-                    return this.doRequest(url,requestId, maxRetries - 1);
+                    return this.doRequest(url, requestId, maxRetries - 1);
                 }
                 console.log(error);
                 throw BigQueryDatasource.formatBigqueryError(error);
             });
     }
 
-    async doQueryRequest(query,requestId, maxRetries = 1) {
+    async doQueryRequest(query, requestId, maxRetries = 1) {
         const path = `v2/projects/${this.projectName}/queries`;
         const url = this.url + `${this.baseUrl}${path}`;
         return this.backendSrv
@@ -67,13 +67,14 @@ export class BigQueryDatasource {
             })
             .catch(error => {
                 if (maxRetries > 0) {
-                    return this.doQueryRequest(query, requestId , maxRetries - 1);
+                    return this.doQueryRequest(query, requestId, maxRetries - 1);
                 }
                 console.log(error);
                 throw BigQueryDatasource.formatBigqueryError(error);
             });
     }
-    async doQuery(query,requestId ,  maxRetries = 1) {
+
+    async doQuery(query, requestId, maxRetries = 1) {
         if (!query) {
             return {
                 rows: null,
@@ -82,9 +83,9 @@ export class BigQueryDatasource {
         }
         console.log("------DOQUERY--------");
         var sleepTimeMs = 100;
-        var queryResults = await this.doQueryRequest(query, requestId,  maxRetries = 1);
-        let jobId  = queryResults.data.jobReference.jobId;
-        console.log("New job id: ", jobId)
+        var queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
+        let jobId = queryResults.data.jobReference.jobId;
+        console.log("New job id: ", jobId);
         const path = `v2/projects/${this.projectName}/queries/` + jobId;
         while (!queryResults.data.jobComplete) {
             await sleep(sleepTimeMs);
@@ -99,8 +100,8 @@ export class BigQueryDatasource {
             const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
             queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
             rows = rows.concat(queryResults.data.rows);
-            console.log("getting results for: ",jobId);
-       }
+            console.log("getting results for: ", jobId);
+        }
         const res = {
             rows: rows,
             schema: schema
@@ -125,7 +126,7 @@ export class BigQueryDatasource {
             return this.queryModel.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    }
+    };
 
     async query(options) {
         const queries = _.filter(options.targets, target => {
@@ -147,8 +148,8 @@ export class BigQueryDatasource {
             return this.$q.when({data: []});
         }
         let q = this.queryModel.expend_macros(options);
-        return this.doQuery(q,options.panelId + options.targets[0].refId).then(response => {
-            return new ResponseParser(this.$q).parseDataQuery(response,options.targets[0].format);
+        return this.doQuery(q, options.panelId + options.targets[0].refId).then(response => {
+            return new ResponseParser(this.$q).parseDataQuery(response, options.targets[0].format);
         });
     }
 
@@ -201,39 +202,10 @@ export class BigQueryDatasource {
 
     getTableFields(projectName, datasetName, tableName, filter): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets/${datasetName}/tables/${tableName}`;
-        return this.doRequest(`${this.baseUrl}${path}`,filter).then(response => {
+        return this.doRequest(`${this.baseUrl}${path}`, filter).then(response => {
             return new ResponseParser(this.$q).parseTabelFields(response, filter);
         });
     }
-
-    metricFindQuery(query, optionalOptions) {
-        let refId = 'tempvar';
-        if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-            refId = optionalOptions.variable.name;
-        }
-
-        const interpolatedQuery = {
-            refId: refId,
-            datasourceId: this.id,
-            rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
-            format: 'table',
-        };
-
-        const range = this.timeSrv.timeRange();
-        const data = {
-            queries: [interpolatedQuery],
-            from: range.from.valueOf().toString(),
-            to: range.to.valueOf().toString(),
-        };
-        return this.backendSrv
-            .datasourceRequest({
-                url: '/api/tsdb/query',
-                method: 'POST',
-                data: data,
-            })
-            .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
-    }
-
 
     async getDefaultProject() {
         try {

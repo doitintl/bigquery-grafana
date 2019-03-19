@@ -34504,36 +34504,6 @@ function () {
     });
   };
 
-  BigQueryDatasource.prototype.metricFindQuery = function (query, optionalOptions) {
-    var _this = this;
-
-    var refId = 'tempvar';
-
-    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-      refId = optionalOptions.variable.name;
-    }
-
-    var interpolatedQuery = {
-      refId: refId,
-      datasourceId: this.id,
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
-      format: 'table'
-    };
-    var range = this.timeSrv.timeRange();
-    var data = {
-      queries: [interpolatedQuery],
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString()
-    };
-    return this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: data
-    }).then(function (data) {
-      return _this.responseParser.parseMetricFindQueryResult(refId, data);
-    });
-  };
-
   BigQueryDatasource.prototype.getDefaultProject = function () {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
       var data, error_1;
@@ -35250,14 +35220,8 @@ function (_super) {
     this.panelCtrl.refresh();
   };
 
-  BigQueryQueryCtrl.prototype.onDataReceived = function (dataList) {//TODO fixme
-
-    /*this.lastQueryMeta = null;
-    this.lastQueryError = null;
-     const anySeriesFromQuery = _.find(dataList, { refId: this.target.refId });
-    if (anySeriesFromQuery) {
-      this.lastQueryMeta = anySeriesFromQuery.meta;
-    }*/
+  BigQueryQueryCtrl.prototype.onDataReceived = function (dataList) {
+    return;
   };
 
   BigQueryQueryCtrl.prototype.onDataError = function (err) {
@@ -35955,118 +35919,6 @@ function () {
     return dataTarget;
   };
 
-  ResponseParser.prototype.processQueryResult = function (res) {
-    var data = [];
-
-    if (!res.data.results) {
-      return {
-        data: data
-      };
-    }
-
-    for (var key in res.data.results) {
-      var queryRes = res.data.results[key];
-
-      if (queryRes.series) {
-        for (var _i = 0, _a = queryRes.series; _i < _a.length; _i++) {
-          var series = _a[_i];
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta
-          });
-        }
-      }
-
-      if (queryRes.tables) {
-        for (var _b = 0, _c = queryRes.tables; _b < _c.length; _b++) {
-          var table = _c[_b];
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
-        }
-      }
-    }
-
-    return {
-      data: data
-    };
-  };
-
-  ResponseParser.prototype.parseMetricFindQueryResult = function (refId, results) {
-    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
-      return [];
-    }
-
-    var columns = results.data.results[refId].tables[0].columns;
-    var rows = results.data.results[refId].tables[0].rows;
-    var textColIndex = this.findColIndex(columns, '__text');
-    var valueColIndex = this.findColIndex(columns, '__value');
-
-    if (columns.length === 2 && textColIndex !== -1 && valueColIndex !== -1) {
-      return this.transformToKeyValueList(rows, textColIndex, valueColIndex);
-    }
-
-    return this.transformToSimpleList(rows);
-  };
-
-  ResponseParser.prototype.transformToKeyValueList = function (rows, textColIndex, valueColIndex) {
-    var res = [];
-
-    for (var i = 0; i < rows.length; i++) {
-      if (!this.containsKey(res, rows[i][textColIndex])) {
-        res.push({
-          text: rows[i][textColIndex],
-          value: rows[i][valueColIndex]
-        });
-      }
-    }
-
-    return res;
-  };
-
-  ResponseParser.prototype.transformToSimpleList = function (rows) {
-    var res = [];
-
-    for (var i = 0; i < rows.length; i++) {
-      for (var j = 0; j < rows[i].length; j++) {
-        var value = rows[i][j];
-
-        if (res.indexOf(value) === -1) {
-          res.push(value);
-        }
-      }
-    }
-
-    return _lodash2.default.map(res, function (value) {
-      return {
-        text: value
-      };
-    });
-  };
-
-  ResponseParser.prototype.findColIndex = function (columns, colName) {
-    for (var i = 0; i < columns.length; i++) {
-      if (columns[i].text === colName) {
-        return i;
-      }
-    }
-
-    return -1;
-  };
-
-  ResponseParser.prototype.containsKey = function (res, key) {
-    for (var i = 0; i < res.length; i++) {
-      if (res[i].text === key) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
   ResponseParser.prototype.transformAnnotationResponse = function (options, data) {
     var table = data.data.results[options.annotation.name].tables[0];
     var timeColumnIndex = -1;
@@ -36269,21 +36121,6 @@ register({
     options: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance']
   }],
   defaultParams: ['avg']
-});
-register({
-  type: 'percentile',
-  label: 'Aggregate:',
-  style: 'label',
-  params: [{
-    name: 'name',
-    type: 'string',
-    options: ['percentile_cont', 'percentile_disc']
-  }, {
-    name: 'fraction',
-    type: 'number',
-    options: ['0.5', '0.75', '0.9', '0.95', '0.99']
-  }],
-  defaultParams: ['percentile_cont', '0.95']
 });
 register({
   type: 'alias',

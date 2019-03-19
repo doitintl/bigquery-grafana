@@ -297,14 +297,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     onDataReceived(dataList) {
-        //TODO fixme
-        /*this.lastQueryMeta = null;
-        this.lastQueryError = null;
-
-        const anySeriesFromQuery = _.find(dataList, { refId: this.target.refId });
-        if (anySeriesFromQuery) {
-          this.lastQueryMeta = anySeriesFromQuery.meta;
-        }*/
+      return;
     }
 
     onDataError(err) {

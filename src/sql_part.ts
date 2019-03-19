@@ -128,25 +128,6 @@ register({
 });
 
 register({
-  type: 'percentile',
-  label: 'Aggregate:',
-  style: 'label',
-  params: [
-    {
-      name: 'name',
-      type: 'string',
-      options: ['percentile_cont', 'percentile_disc'],
-    },
-    {
-      name: 'fraction',
-      type: 'number',
-      options: ['0.5', '0.75', '0.9', '0.95', '0.99'],
-    },
-  ],
-  defaultParams: ['percentile_cont', '0.95'],
-});
-
-register({
   type: 'alias',
   style: 'label',
   params: [{ name: 'name', type: 'string', quote: 'double' }],
