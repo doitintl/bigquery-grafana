@@ -47,8 +47,8 @@ export class BigQueryDatasource {
                 if (maxRetries > 0) {
                     return this.doRequest(url,requestId, maxRetries - 1);
                 }
-                console.log(url,error);
-                throw error;
+                console.log(error);
+                throw BigQueryDatasource.formatBigqueryError(error);
             });
     }
 
@@ -69,22 +69,9 @@ export class BigQueryDatasource {
                 if (maxRetries > 0) {
                     return this.doQueryRequest(query, requestId , maxRetries - 1);
                 }
-                throw error;
+                console.log(error);
+                throw BigQueryDatasource.formatBigqueryError(error);
             });
-    }
-
-    async cancleJob() {
-/*        if (this.jobId) {
-            let jobId = this.jobId ;
-            this.jobId = '';
-            const path = `v2/projects/${this.projectName}/queries/` + jobId + '/cancel';
-            await this.doRequest(`${this.baseUrl}${path}`).then(response => {
-                console.log(response);
-            }).catch(e => {
-                console.log(e);
-            });
-            console.log("Done Canceling Job ", jobId);
-        }*/
     }
     async doQuery(query,requestId ,  maxRetries = 1) {
         if (!query) {
@@ -277,7 +264,6 @@ export class BigQueryDatasource {
                 message = response.statusText ? response.statusText : defaultErrorMessage;
             }
         } catch (error) {
-            console.log(error);
             status = 'error';
             if (_.isString(error)) {
                 message = error;

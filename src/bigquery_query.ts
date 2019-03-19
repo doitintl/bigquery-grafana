@@ -5,12 +5,18 @@ export default class BigQueryQuery {
     target: any;
     templateSrv: any;
     scopedVars: any;
+    isWindow: boolean;
+    groupBy: string;
+    tmpcost: string;
 
     /** @ngInject */
     constructor(target, templateSrv?, scopedVars?) {
         this.target = target;
         this.templateSrv = templateSrv;
         this.scopedVars = scopedVars;
+        this.isWindow = false;
+        this.groupBy = '';
+        this.tmpcost = '';
 
         target.format = target.format || 'time_series';
         target.timeColumn = target.timeColumn || '-- time --';
@@ -154,7 +160,6 @@ export default class BigQueryQuery {
 
         const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
         const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
-
         if (aggregate) {
             const func = aggregate.params[0];
             switch (aggregate.type) {
@@ -172,6 +177,7 @@ export default class BigQueryQuery {
         }
 
         if (windows) {
+            this.isWindow = true;
             const overParts = [];
             if (this.hasMetricColumn()) {
                 overParts.push('PARTITION BY ' + this.target.metricColumn);
@@ -181,6 +187,7 @@ export default class BigQueryQuery {
             const over = overParts.join(' ');
             let curr: string;
             let prev: string;
+            let tmpval = query;
             switch (windows.type) {
                 case 'window':
                     switch (windows.params[0]) {
@@ -205,7 +212,7 @@ export default class BigQueryQuery {
                             prev = 'lag(' + curr + ') OVER (' + over + ')';
                             query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
                             query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
-                            query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+                            query += '/(UNIX_SECONDS(' + timeColumn + ') -UNIX_SECONDS(  lag(' + timeColumn + ') OVER (' + over + ')))';
                             break;
                         default:
                             query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
@@ -214,8 +221,11 @@ export default class BigQueryQuery {
                     break;
                 case 'moving_window':
                     query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
+                    query= tmpval + " as tmp" + tmpval +", " +query;
                     break;
             }
+            this.tmpcost = "tmp" + columnName.params[0];
+            query = tmpval + " as " + this.tmpcost + ", " + query;
         }
 
         const alias = _.find(column, (g: any) => g.type === 'alias');
@@ -257,18 +267,27 @@ export default class BigQueryQuery {
                 groupSection += part.params[0];
             }
         }
-
-        if (groupSection.length) {
+        if (groupSection.length ) {
             query = '\nGROUP BY ' + groupSection;
+            this.groupBy = query;
+            if (this.isWindow) {
+                query += "," +this.target.timeColumn;
+                this.groupBy += ',2';
+            }
             if (this.hasMetricColumn()) {
-                query += ',2';
+                if (!this.isWindow) {
+                    query += ',2';
+                } else {
+                    query += ',2';
+                    this.groupBy += ',3';
+                }
             }
         }
         return query;
     }
 
     buildQuery() {
-        let query = '#standardSQL';
+        let query = '';
         query += '\n  ' + 'SELECT';
         query += '\n  ' + this.buildTimeColumn();
         if (this.hasMetricColumn()) {
@@ -286,6 +305,11 @@ export default class BigQueryQuery {
             query += ',2';
         }
       //query += '\nLIMIT 15';
+        if (this.isWindow ){
+            query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
+            query = query + ")" + this.groupBy + " order by 1";
+        }
+        query = '#standardSQL\n' + query;
         return query;
     }
 
@@ -294,6 +318,8 @@ export default class BigQueryQuery {
             let q = this.target.rawSql;
             q = this.replaceTimeFilters(q,options);
             q = this.replacetimeGroupAlias(q,options);
+            q = this.replacetimeGroup(q,options);
+            console .log(q)
             return q;
         }
     }
@@ -329,6 +355,32 @@ export default class BigQueryQuery {
             }
         }
         return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g,intervalStr);
+    }
+    replacetimeGroup(q,options){
+        let interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+        if  (!interval) {
+            return q;
+        }
+        let intervalStr = '';
+        switch (interval[0]) {
+            case '1s': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 1) * 1)";
+                break;
+            }
+            case '1m': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 60) * 60)";
+                break;
+            }
+            case '1h': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 3600) * 3600)";
+                break;
+            }
+            case '1d': {
+                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 86400) * 86400)";
+                break;
+            }
+        }
+        return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g,intervalStr);
     }
 
 }

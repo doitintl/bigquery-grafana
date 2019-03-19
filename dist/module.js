@@ -33595,6 +33595,9 @@ function () {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
+    this.isWindow = false;
+    this.groupBy = '';
+    this.tmpcost = '';
     target.format = target.format || 'time_series';
     target.timeColumn = target.timeColumn || '-- time --';
     target.metricColumn = target.metricColumn || 'none';
@@ -33785,6 +33788,7 @@ function () {
     }
 
     if (windows) {
+      this.isWindow = true;
       var overParts = [];
 
       if (this.hasMetricColumn()) {
@@ -33795,6 +33799,7 @@ function () {
       var over = overParts.join(' ');
       var curr = void 0;
       var prev = void 0;
+      var tmpval = query;
 
       switch (windows.type) {
         case 'window':
@@ -33823,7 +33828,7 @@ function () {
               prev = 'lag(' + curr + ') OVER (' + over + ')';
               query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
               query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
-              query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+              query += '/(UNIX_SECONDS(' + timeColumn + ') -UNIX_SECONDS(  lag(' + timeColumn + ') OVER (' + over + ')))';
               break;
 
             default:
@@ -33835,8 +33840,12 @@ function () {
 
         case 'moving_window':
           query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
+          query = tmpval + " as tmp" + tmpval + ", " + query;
           break;
       }
+
+      this.tmpcost = "tmp" + columnName.params[0];
+      query = tmpval + " as " + this.tmpcost + ", " + query;
     }
 
     var alias = _lodash2.default.find(column, function (g) {
@@ -33894,9 +33903,20 @@ function () {
 
     if (groupSection.length) {
       query = '\nGROUP BY ' + groupSection;
+      this.groupBy = query;
+
+      if (this.isWindow) {
+        query += "," + this.target.timeColumn;
+        this.groupBy += ',2';
+      }
 
       if (this.hasMetricColumn()) {
-        query += ',2';
+        if (!this.isWindow) {
+          query += ',2';
+        } else {
+          query += ',2';
+          this.groupBy += ',3';
+        }
       }
     }
 
@@ -33904,7 +33924,7 @@ function () {
   };
 
   BigQueryQuery.prototype.buildQuery = function () {
-    var query = '#standardSQL';
+    var query = '';
     query += '\n  ' + 'SELECT';
     query += '\n  ' + this.buildTimeColumn();
 
@@ -33923,6 +33943,12 @@ function () {
     } //query += '\nLIMIT 15';
 
 
+    if (this.isWindow) {
+      query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
+      query = query + ")" + this.groupBy + " order by 1";
+    }
+
+    query = '#standardSQL\n' + query;
     return query;
   };
 
@@ -33931,6 +33957,8 @@ function () {
       var q = this.target.rawSql;
       q = this.replaceTimeFilters(q, options);
       q = this.replacetimeGroupAlias(q, options);
+      q = this.replacetimeGroup(q, options);
+      console.log(q);
       return q;
     }
   };
@@ -33978,6 +34006,44 @@ function () {
     }
 
     return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
+  };
+
+  BigQueryQuery.prototype.replacetimeGroup = function (q, options) {
+    var interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+
+    if (!interval) {
+      return q;
+    }
+
+    var intervalStr = '';
+
+    switch (interval[0]) {
+      case '1s':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 1) * 1)";
+          break;
+        }
+
+      case '1m':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 60) * 60)";
+          break;
+        }
+
+      case '1h':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 3600) * 3600)";
+          break;
+        }
+
+      case '1d':
+        {
+          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 86400) * 86400)";
+          break;
+        }
+    }
+
+    return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g, intervalStr);
   };
 
   return BigQueryQuery;
@@ -34205,8 +34271,8 @@ function () {
             return _this.doRequest(url, requestId, maxRetries - 1);
           }
 
-          console.log(url, error);
-          throw error;
+          console.log(error);
+          throw BigQueryDatasource.formatBigqueryError(error);
         })];
       });
     });
@@ -34240,18 +34306,9 @@ function () {
             return _this.doQueryRequest(query, requestId, maxRetries - 1);
           }
 
-          throw error;
+          console.log(error);
+          throw BigQueryDatasource.formatBigqueryError(error);
         })];
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.cancleJob = function () {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      return tslib_1.__generator(this, function (_a) {
-        return [2
-        /*return*/
-        ];
       });
     });
   };
@@ -34348,32 +34405,42 @@ function () {
   };
 
   BigQueryDatasource.prototype.query = function (options) {
-    var _this = this;
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var queries, q;
 
-    var queries = _lodash2.default.filter(options.targets, function (target) {
-      return target.hide !== true;
-    }).map(function (target) {
-      var queryModel = new _bigquery_query2.default(target, _this.templateSrv, options.scopedVars);
-      _this.queryModel = queryModel;
-      return {
-        refId: target.refId,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        datasourceId: _this.id,
-        rawSql: queryModel.render(_this.interpolateVariable),
-        format: target.format
-      };
-    });
+      var _this = this;
 
-    if (queries.length === 0) {
-      return this.$q.when({
-        data: []
+      return tslib_1.__generator(this, function (_a) {
+        queries = _lodash2.default.filter(options.targets, function (target) {
+          return target.hide !== true;
+        }).map(function (target) {
+          var queryModel = new _bigquery_query2.default(target, _this.templateSrv, options.scopedVars);
+          _this.queryModel = queryModel;
+          return {
+            refId: target.refId,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            datasourceId: _this.id,
+            rawSql: queryModel.render(_this.interpolateVariable),
+            format: target.format
+          };
+        });
+
+        if (queries.length === 0) {
+          return [2
+          /*return*/
+          , this.$q.when({
+            data: []
+          })];
+        }
+
+        q = this.queryModel.expend_macros(options);
+        return [2
+        /*return*/
+        , this.doQuery(q, options.panelId + options.targets[0].refId).then(function (response) {
+          return new _response_parser2.default(_this.$q).parseDataQuery(response, options.targets[0].format);
+        })];
       });
-    }
-
-    var q = this.queryModel.expend_macros(options);
-    return this.doQuery(q, options.panelId + options.targets[0].refId).then(function (response) {
-      return new _response_parser2.default(_this.$q).parseDataQuery(response, options.targets[0].format);
     });
   };
 
@@ -34484,21 +34551,11 @@ function () {
             , 2];
             return [4
             /*yield*/
-            , this.backendSrv.datasourceRequest({
-              url: '/api/tsdb/query',
-              method: 'POST',
-              data: {
-                queries: [{
-                  refId: 'ensureDefaultProjectQuery',
-                  type: 'ensureDefaultProjectQuery',
-                  datasourceId: this.id
-                }]
-              }
-            })];
+            , this.getProjects()];
 
           case 1:
-            data = _a.sent().data;
-            this.projectName = data.results.ensureDefaultProjectQuery.meta.defaultProject;
+            data = _a.sent();
+            this.projectName = data[0].value;
             return [2
             /*return*/
             , this.projectName];
@@ -34566,7 +34623,6 @@ function () {
 
           case 4:
             error_2 = _a.sent();
-            console.log(error_2);
             status = 'error';
 
             if (_lodash2.default.isString(error_2)) {
@@ -35842,7 +35898,7 @@ function () {
         metricIndex = i;
       }
 
-      if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT'].includes(results.schema.fields[i].type)) {
+      if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(results.schema.fields[i].type)) {
         valueIndex = i;
       }
     }

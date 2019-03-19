@@ -97,7 +97,7 @@ export default class ResponseParser {
             if (metricIndex === -1 && results.schema.fields[i].type === 'STRING') {
                 metricIndex = i;
             }
-            if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT'].includes(results.schema.fields[i].type)) {
+            if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(results.schema.fields[i].type)) {
                 valueIndex = i;
             }
 
