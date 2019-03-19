@@ -20,9 +20,9 @@ describe('BigQueryQuery', () => {
     const query = new BigQueryQuery({}, templateSrv);
 
     query.target.timeColumn = 'time';
-    expect(query.buildTimeColumn()).toBe('time AS "time"');
+    expect(query.buildTimeColumn()).toBe('time AS time');
     query.target.timeColumn = '"time"';
-    expect(query.buildTimeColumn()).toBe('"time" AS "time"');
+    expect(query.buildTimeColumn()).toBe('"time" AS time');
   });
 
   describe('When generating time column SQL with group by time', () => {
@@ -57,22 +57,22 @@ describe('BigQueryQuery', () => {
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('value');
     column = [{ type: 'column', params: ['value'] }, { type: 'alias', params: ['alias'] }];
-    expect(query.buildValueColumn(column)).toBe('value AS "alias"');
+    expect(query.buildValueColumn(column)).toBe('value AS alias');
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
       { type: 'aggregate', params: ['max'] },
     ];
-    expect(query.buildValueColumn(column)).toBe('max(v) AS "a"');
+    expect(query.buildValueColumn(column)).toBe('max(v) AS a');
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN v >= lag(v) OVER (ORDER BY time) ' +
-        'THEN v - lag(v) OVER (ORDER BY time) ' +
-        'WHEN lag(v) OVER (ORDER BY time) IS NULL THEN NULL ELSE v END) AS "a"'
+      'v as tmpv, (CASE WHEN v >= lag(v) OVER (ORDER BY -- time --) ' +
+        'THEN v - lag(v) OVER (ORDER BY -- time --) ' +
+        'WHEN lag(v) OVER (ORDER BY -- time --) IS NULL THEN NULL ELSE v END) AS a'
     );
   });
 
@@ -83,22 +83,22 @@ describe('BigQueryQuery', () => {
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('value');
     column = [{ type: 'column', params: ['value'] }, { type: 'alias', params: ['alias'] }];
-    expect(query.buildValueColumn(column)).toBe('value AS "alias"');
+    expect(query.buildValueColumn(column)).toBe('value AS alias');
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
       { type: 'aggregate', params: ['max'] },
     ];
-    expect(query.buildValueColumn(column)).toBe('max(v) AS "a"');
+    expect(query.buildValueColumn(column)).toBe('max(v) AS a');
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN v >= lag(v) OVER (PARTITION BY host ORDER BY time) ' +
-        'THEN v - lag(v) OVER (PARTITION BY host ORDER BY time) ' +
-        'WHEN lag(v) OVER (PARTITION BY host ORDER BY time) IS NULL THEN NULL ELSE v END) AS "a"'
+      'v as tmpv, (CASE WHEN v >= lag(v) OVER (PARTITION BY host ORDER BY -- time --) ' +
+        'THEN v - lag(v) OVER (PARTITION BY host ORDER BY -- time --) ' +
+        'WHEN lag(v) OVER (PARTITION BY host ORDER BY -- time --) IS NULL THEN NULL ELSE v END) AS a'
     );
     column = [
       { type: 'column', params: ['v'] },
@@ -107,9 +107,9 @@ describe('BigQueryQuery', () => {
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN max(v) >= lag(max(v)) OVER (PARTITION BY host ORDER BY time) ' +
-        'THEN max(v) - lag(max(v)) OVER (PARTITION BY host ORDER BY time) ' +
-        'WHEN lag(max(v)) OVER (PARTITION BY host ORDER BY time) IS NULL THEN NULL ELSE max(v) END) AS "a"'
+      'max(v) as tmpv, (CASE WHEN max(v) >= lag(max(v)) OVER (PARTITION BY host ORDER BY -- time --) ' +
+        'THEN max(v) - lag(max(v)) OVER (PARTITION BY host ORDER BY -- time --) ' +
+        'WHEN lag(max(v)) OVER (PARTITION BY host ORDER BY -- time --) IS NULL THEN NULL ELSE max(v) END) AS a'
     );
   });
 
@@ -146,13 +146,13 @@ describe('BigQueryQuery', () => {
       select: [[{ type: 'column', params: ['value'] }]],
       where: [],
     };
-    let result = 'SELECT\n  t AS "time",\n  value\nFROM table\nORDER BY 1';
+    let result = '#standardSQL\nSELECT\n t AS time,\n  value\nFROM undefined.table\nORDER BY 1';
     const query = new BigQueryQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = 'm';
-    result = 'SELECT\n  t AS "time",\n  m AS metric,\n  value\nFROM table\nORDER BY 1,2';
+    result = '#standardSQL\nSELECT\n t AS time,\n  m AS metric,\n  value\nFROM undefined.table\nORDER BY 1,2';
     expect(query.buildQuery()).toBe(result);
   });
 });

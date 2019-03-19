@@ -285,8 +285,8 @@ export default class BigQueryQuery {
 
     buildQuery() {
         let query = '';
-        query += '\n  ' + 'SELECT';
-        query += '\n  ' + this.buildTimeColumn();
+        query += '\n' + 'SELECT';
+        query += '\n ' + this.buildTimeColumn();
         if (this.hasMetricColumn()) {
             query += ',\n  ' + this.buildMetricColumn();
         }
@@ -306,7 +306,7 @@ export default class BigQueryQuery {
             query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
             query = query + ")" + this.groupBy + " order by 1";
         }
-        query = '#standardSQL\n' + query;
+        query = '#standardSQL' + query;
         return query;
     }
 
