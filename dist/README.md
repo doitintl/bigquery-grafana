@@ -1,5 +1,7 @@
-![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=plastic)
-![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=plastic)
+
+![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=svg)
+![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=svg)
+[![Circle CI](https://circleci.com/gh/doitintl/bigquery-grafana.svg?style=svg)](https://circleci.com/gh/doitintl/bigquery-grafana)
 # !!!!! Project is Work in Progress. Not ready for production yet !!!!! 
 # BigQuery datasource for Grafana 4.6+
 
@@ -59,15 +61,15 @@ Click on the links above and click the `Enable` button:
 
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-    ![](REPLACEME.png)
+    ![](bq_service_account_choose_role.png)
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
-   ![](REPLACEME.png)
+   ![](bq__grafana_upload_key.png)
    
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-    ![](REPLACEME.png)
+    ![](bq_grafana_key_uploaded.png)
 
 ### Using GCE Default Service Account
 
@@ -78,3 +80,17 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 3. Allow access to the `Stackdriver Monitoring API` scope. See instructions [here](changeserviceaccountandscopes).
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
+
+### Build
+
+The build works with Yarn:
+
+```
+yarn run run build:dev
+```
+
+Tests can be run with Jest:
+
+```
+yarn run test
+```
