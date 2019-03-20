@@ -8,7 +8,7 @@
 # !!!!! Project is Work in Progress. Not ready for production yet !!!!! 
 # BigQuery datasource for Grafana 4.6+
 
-ClickHouse datasource plugin provides a support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
+BigQuery datasource plugin provides a support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
 
 ### Quick start
 Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)

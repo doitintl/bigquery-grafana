@@ -33613,31 +33613,12 @@ function () {
     }]]; // handle pre query gui panels gracefully
 
     if (!('rawQuery' in this.target)) {
-      if ('rawSql' in target) {
-        // pre query gui panel
-        target.rawQuery = true;
-      } else {
-        // new panel
-        target.rawQuery = false;
-      }
+      target.rawQuery = 'rawSql' in target;
     } // give interpolateQueryStr access to this
 
 
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
-  } // remove identifier quoting from identifier to use in metadata queries
-
-
-  BigQueryQuery.prototype.unquoteIdentifier = function (value) {
-    if (value[0] === '"' && value[value.length - 1] === '"') {
-      return value.substring(1, value.length - 1).replace(/""/g, '"');
-    } else {
-      return value;
-    }
-  };
-
-  BigQueryQuery.prototype.quoteIdentifier = function (value) {
-    return '"' + String(value).replace(/"/g, '""') + '"';
-  };
+  }
 
   BigQueryQuery.prototype.quoteLiteral = function (value) {
     return "'" + String(value).replace(/'/g, "''") + "'";
@@ -33688,10 +33669,6 @@ function () {
     } else {
       return target.rawSql;
     }
-  };
-
-  BigQueryQuery.prototype.hasUnixEpochTimecolumn = function () {
-    return ['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1;
   };
 
   BigQueryQuery.prototype.buildTimeColumn = function (alias) {
@@ -33979,30 +33956,30 @@ function () {
       return q;
     }
 
-    var intervalStr = '';
+    var intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), ";
 
     switch (interval[0]) {
       case '1s':
         {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 1) * 1)";
+          intervalStr += "1) * 1)";
           break;
         }
 
       case '1m':
         {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 60) * 60)";
+          intervalStr += "60) * 60)";
           break;
         }
 
       case '1h':
         {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 3600) * 3600)";
+          intervalStr += "3600) * 3600)";
           break;
         }
 
       case '1d':
         {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 86400) * 86400)";
+          intervalStr += "86400) * 86400)";
           break;
         }
     }

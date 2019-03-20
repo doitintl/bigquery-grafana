@@ -28,30 +28,11 @@ export default class BigQueryQuery {
 
         // handle pre query gui panels gracefully
         if (!('rawQuery' in this.target)) {
-            if ('rawSql' in target) {
-                // pre query gui panel
-                target.rawQuery = true;
-            } else {
-                // new panel
-                target.rawQuery = false;
-            }
+            target.rawQuery = 'rawSql' in target;
         }
 
         // give interpolateQueryStr access to this
         this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
-    }
-
-    // remove identifier quoting from identifier to use in metadata queries
-    unquoteIdentifier(value) {
-        if (value[0] === '"' && value[value.length - 1] === '"') {
-            return value.substring(1, value.length - 1).replace(/""/g, '"');
-        } else {
-            return value;
-        }
-    }
-
-    quoteIdentifier(value) {
-        return '"' + String(value).replace(/"/g, '""') + '"';
     }
 
     quoteLiteral(value) {
@@ -100,10 +81,6 @@ export default class BigQueryQuery {
         } else {
             return target.rawSql;
         }
-    }
-
-    hasUnixEpochTimecolumn() {
-        return ['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1;
     }
 
     buildTimeColumn(alias = true) {
@@ -337,22 +314,22 @@ export default class BigQueryQuery {
         if  (!interval) {
             return q;
         }
-        let intervalStr = '';
+        let intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), ";
         switch (interval[0]) {
             case '1s': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 1) * 1)";
+                intervalStr += "1) * 1)";
                 break;
             }
             case '1m': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 60) * 60)";
+                intervalStr += "60) * 60)";
                 break;
             }
             case '1h': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 3600) * 3600)";
+                intervalStr += "3600) * 3600)";
                 break;
             }
             case '1d': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 86400) * 86400)";
+                intervalStr += "86400) * 86400)";
                 break;
             }
         }
