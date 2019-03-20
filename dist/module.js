@@ -34731,13 +34731,17 @@ function (_super) {
       }
     }
 
+    _this.projectSegment = uiSegmentSrv.newSegment(_this.target.project);
+    _this.datasetSegment = uiSegmentSrv.newSegment(_this.target.dataset);
+    _this.tableSegment = uiSegmentSrv.newSegment(_this.target.table);
+    _this.timeColumnSegment = uiSegmentSrv.newSegment(_this.target.timeColumn);
+    _this.metricColumnSegment = uiSegmentSrv.newSegment(_this.target.metricColumn);
+
     if (!_this.target.project) {
       _this.projectSegment = uiSegmentSrv.newSegment({
         value: 'select project',
         fake: true
       });
-    } else {
-      _this.projectSegment = uiSegmentSrv.newSegment(_this.target.project);
     }
 
     if (!_this.target.dataset) {
@@ -34745,8 +34749,6 @@ function (_super) {
         value: 'select dataset',
         fake: true
       });
-    } else {
-      _this.datasetSegment = uiSegmentSrv.newSegment(_this.target.dataset);
     }
 
     if (!_this.target.table) {
@@ -34754,12 +34756,7 @@ function (_super) {
         value: 'select table',
         fake: true
       });
-    } else {
-      _this.tableSegment = uiSegmentSrv.newSegment(_this.target.table);
     }
-
-    _this.timeColumnSegment = uiSegmentSrv.newSegment(_this.target.timeColumn);
-    _this.metricColumnSegment = uiSegmentSrv.newSegment(_this.target.metricColumn);
 
     _this.buildSelectMenu();
 
@@ -35009,14 +35006,7 @@ function (_super) {
       name: '$__timeFilter',
       params: []
     });
-
-    if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
-      // replace current macro
-      this.whereParts[0] = partModel;
-    } else {
-      this.whereParts.splice(0, 0, partModel);
-    }
-
+    this.setwWereParts(partModel);
     this.updatePersistedParts();
 
     if (refresh !== false) {
@@ -35241,7 +35231,7 @@ function (_super) {
               return;
 
             case 'column':
-              return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
+              return this.getValueColumnSegments();
           }
         }
 
@@ -35425,6 +35415,15 @@ function (_super) {
     return this.$q.when(options);
   };
 
+  BigQueryQueryCtrl.prototype.setwWereParts = function (partModel) {
+    if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+      // replace current macro
+      this.whereParts[0] = partModel;
+    } else {
+      this.whereParts.splice(0, 0, partModel);
+    }
+  };
+
   BigQueryQueryCtrl.prototype.addWhereAction = function (part, index) {
     switch (this.whereAdd.type) {
       case 'macro':
@@ -35435,13 +35434,7 @@ function (_super) {
             params: []
           });
 
-          if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
-            // replace current macro
-            this.whereParts[0] = partModel;
-          } else {
-            this.whereParts.splice(0, 0, partModel);
-          }
-
+          this.setwWereParts(partModel);
           break;
         }
 

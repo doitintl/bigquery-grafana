@@ -53,23 +53,20 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 this.target.rawSql = defaultQuery;
             }
         }
+        this.projectSegment = uiSegmentSrv.newSegment(this.target.project);
+        this.datasetSegment = uiSegmentSrv.newSegment(this.target.dataset);
+        this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
+        this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
+        this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
         if (!this.target.project) {
             this.projectSegment = uiSegmentSrv.newSegment({value: 'select project', fake: true});
-        } else {
-            this.projectSegment = uiSegmentSrv.newSegment(this.target.project);
         }
         if (!this.target.dataset) {
             this.datasetSegment = uiSegmentSrv.newSegment({value: 'select dataset', fake: true});
-        } else {
-            this.datasetSegment = uiSegmentSrv.newSegment(this.target.dataset);
         }
         if (!this.target.table) {
             this.tableSegment = uiSegmentSrv.newSegment({value: 'select table', fake: true});
-        } else {
-            this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
         }
-        this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
-        this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
         this.buildSelectMenu();
         this.whereAdd = this.uiSegmentSrv.newPlusButton();
         this.groupAdd = this.uiSegmentSrv.newPlusButton();
@@ -258,13 +255,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.target.timeColumn = this.timeColumnSegment.value;
         let partModel;
         partModel = sqlPart.create({type: 'macro', name: '$__timeFilter', params: []});
-
-        if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
-            // replace current macro
-            this.whereParts[0] = partModel;
-        } else {
-            this.whereParts.splice(0, 0, partModel);
-        }
+        this.setwWereParts(partModel);
         this.updatePersistedParts();
         if (refresh !== false) {
             this.panelCtrl.refresh();
@@ -436,6 +427,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.updatePersistedParts();
     }
 
+
     handleSelectPartEvent(selectParts, part, evt) {
         switch (evt.name) {
             case 'get-param-options': {
@@ -443,10 +435,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                     case 'aggregate':
                         return ;
                     case 'column':
-                        return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-                            ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'])
-                            .then(this.uiSegmentSrv.transformToSegments(false))
-                            .catch(this.handleQueryError.bind(this));
+                        return this.getValueColumnSegments();
                 }
             }
             case 'part-param-changed': {
@@ -575,17 +564,19 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         options.push(this.uiSegmentSrv.newSegment({type: 'expression', value: 'Expression'}));
         return this.$q.when(options);
     }
-
+    setwWereParts(partModel){
+        if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+            // replace current macro
+            this.whereParts[0] = partModel;
+        } else {
+            this.whereParts.splice(0, 0, partModel);
+        }
+    }
     addWhereAction(part, index) {
         switch (this.whereAdd.type) {
             case 'macro': {
                 const partModel = sqlPart.create({type: 'macro', name: this.whereAdd.value, params: []});
-                if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
-                    // replace current macro
-                    this.whereParts[0] = partModel;
-                } else {
-                    this.whereParts.splice(0, 0, partModel);
-                }
+                this.setwWereParts(partModel);
                 break;
             }
             default: {
