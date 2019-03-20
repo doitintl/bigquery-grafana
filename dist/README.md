@@ -2,6 +2,9 @@
 ![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=svg)
 ![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=svg)
 [![Circle CI](https://circleci.com/gh/doitintl/bigquery-grafana.svg?style=svg)](https://circleci.com/gh/doitintl/bigquery-grafana)
+[![Code Climate](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/gpa.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana/coverage)
+[![Issue Count](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/issue_count.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana)
+[![CodeCpv](https://codecov.io/gh/doitintl/bigquery-grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/doitintl/bigquery-grafana/)
 # !!!!! Project is Work in Progress. Not ready for production yet !!!!! 
 # BigQuery datasource for Grafana 4.6+
 
