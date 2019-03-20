@@ -62,13 +62,20 @@ export default class ResponseParser {
             return fields;
         }
         for (let fl of results.data.schema.fields) {
-            for (let i = 0; i < filter.length; i++) {
-                if (!filter || filter[i] === fl.type) {
-                    fields.push({
-                        text: fl.name,
-                        value: fl.type,
-                    });
+            if (filter.length >0) {
+                for (let i = 0; i < filter.length; i++) {
+                    if (filter[i] === fl.type) {
+                        fields.push({
+                            text: fl.name,
+                            value: fl.type,
+                        });
+                    }
                 }
+            } else {
+                fields.push({
+                    text: fl.name,
+                    value: fl.type,
+                });
             }
         }
         return fields;

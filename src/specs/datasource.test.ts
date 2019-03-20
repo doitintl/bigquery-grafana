@@ -293,7 +293,7 @@ describe('BigQueryDatasource', () => {
       });
     });
 
-    it('should return list of tabels', () => {
+    it('should return list of dare fields', () => {
       expect(results.length).toBe(3);
       expect(results[0].text).toBe('transaction_date');
       expect(results[1].text).toBe('My_datetime');
@@ -366,13 +366,85 @@ describe('BigQueryDatasource', () => {
       });
     });
 
-    it('should return list of tabels', () => {
+    it('should return list of numeric', () => {
       expect(results.length).toBe(2);
       expect(results[0].text).toBe('transaction_id');
       expect(results[1].text).toBe('My_FLOAT');
     });
   });
 
+  describe('When performing getTableFields for All Fields', () => {
+    let results;
+    const response = {
+      "kind": "bigquery#table",
+      "etag": "3UHbvhc/35v2P8ZhsjrRtw==",
+      "id": "ds-1:ds-1.newtable",
+      "selfLink": "https://content.googleapis.com/bigquery/v2/projects/ds-1/datasets/ds-1/tables/newtable",
+      "tableReference": {
+        "projectId": "ds-1",
+        "datasetId": "ds-1",
+        "tableId": "newtable"
+      },
+      "description": "a table partitioned by transaction_date",
+      "schema": {
+        "fields": [
+          {
+            "name": "transaction_id",
+            "type": "INTEGER"
+          },
+          {
+            "name": "transaction_date",
+            "type": "DATE"
+          },
+          {
+            "name": "My_datetime",
+            "type": "DATETIME"
+          },
+          {
+            "name": "My_Timestamp",
+            "type": "TIMESTAMP"
+          },
+          {
+            "name": "My_STRING",
+            "type": "STRING"
+          },
+          {
+            "name": "My_FLOAT",
+            "type": "FLOAT64"
+          }
+
+        ]
+      },
+      "timePartitioning": {
+        "type": "DAY",
+        "expirationMs": "259200000",
+        "field": "transaction_date"
+      },
+      "numBytes": "0",
+      "numLongTermBytes": "0",
+      "numRows": "0",
+      "creationTime": "1551211795415",
+      "lastModifiedTime": "1551623603909",
+      "type": "TABLE",
+      "location": "US"
+    };
+
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        return Promise.resolve({ data: response, status: 200 });
+      });
+      ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable',[] ).then(data => {
+        results = data;
+      });
+    });
+
+    it('should return list of all fields', () => {
+      expect(results.length).toBe(6);
+      expect(results[0].text).toBe('transaction_id');
+      expect(results[5].text).toBe('My_FLOAT');
+    });
+  });
   describe('When interpolating variables', () => {
     beforeEach(() => {
       ctx.variable = {};

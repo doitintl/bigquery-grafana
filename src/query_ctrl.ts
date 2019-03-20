@@ -468,7 +468,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     handleGroupPartEvent(part, index, evt) {
         switch (evt.name) {
             case 'get-param-options': {
-                return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, null)
+                return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, [])
                     .then(this.transformToSegments({}))
                     .catch(this.handleQueryError.bind(this));
             }

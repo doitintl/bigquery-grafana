@@ -35273,7 +35273,7 @@ function (_super) {
     switch (evt.name) {
       case 'get-param-options':
         {
-          return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, null).then(this.transformToSegments({})).catch(this.handleQueryError.bind(this));
+          return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, []).then(this.transformToSegments({})).catch(this.handleQueryError.bind(this));
         }
 
       case 'part-param-changed':
@@ -35602,13 +35602,20 @@ function () {
     for (var _i = 0, _a = results.data.schema.fields; _i < _a.length; _i++) {
       var fl = _a[_i];
 
-      for (var i = 0; i < filter.length; i++) {
-        if (!filter || filter[i] === fl.type) {
-          fields.push({
-            text: fl.name,
-            value: fl.type
-          });
+      if (filter.length > 0) {
+        for (var i = 0; i < filter.length; i++) {
+          if (filter[i] === fl.type) {
+            fields.push({
+              text: fl.name,
+              value: fl.type
+            });
+          }
         }
+      } else {
+        fields.push({
+          text: fl.name,
+          value: fl.type
+        });
       }
     }
 
