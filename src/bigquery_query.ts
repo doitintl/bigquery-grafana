@@ -314,9 +314,9 @@ export default class BigQueryQuery {
         if (this.target.rawSql) {
             let q = this.target.rawSql;
             q = this.replaceTimeFilters(q,options);
-            q = this.replacetimeGroupAlias(q,options);
-            q = this.replacetimeGroup(q,options);
-            console .log(q)
+            q = this.replacetimeGroupAlias(q,true);
+            q = this.replacetimeGroupAlias(q,false);
+            console .log(q);
             return q;
         }
     }
@@ -327,8 +327,13 @@ export default class BigQueryQuery {
             const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
             return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
     }
-    replacetimeGroupAlias(q,options){
-        let interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+    replacetimeGroupAlias(q,alias) {
+        let interval = '';
+        if (alias) {
+             interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+        } else {
+             interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+        }
         if  (!interval) {
             return q;
         }
@@ -351,33 +356,10 @@ export default class BigQueryQuery {
                 break;
             }
         }
-        return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g,intervalStr);
-    }
-    replacetimeGroup(q,options){
-        let interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
-        if  (!interval) {
-            return q;
+        if (alias) {
+            return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
+        } else {
+            return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g,intervalStr);
         }
-        let intervalStr = '';
-        switch (interval[0]) {
-            case '1s': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 1) * 1)";
-                break;
-            }
-            case '1m': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 60) * 60)";
-                break;
-            }
-            case '1h': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 3600) * 3600)";
-                break;
-            }
-            case '1d': {
-                intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), 86400) * 86400)";
-                break;
-            }
-        }
-        return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g,intervalStr);
     }
-
 }

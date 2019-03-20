@@ -8,6 +8,7 @@ function sleep(ms) {
     });
 }
 
+
 export class BigQueryDatasource {
     id: any;
     name: any;
@@ -81,9 +82,8 @@ export class BigQueryDatasource {
                 schema: null
             };
         }
-        console.log("------DOQUERY--------");
-        var sleepTimeMs = 100;
-        var queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
+        let sleepTimeMs = 100;
+        let queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
         let jobId = queryResults.data.jobReference.jobId;
         console.log("New job id: ", jobId);
         const path = `v2/projects/${this.projectName}/queries/` + jobId;
@@ -94,8 +94,8 @@ export class BigQueryDatasource {
             console.log('wating for job to complete ', jobId);
         }
         console.log("Job Done ", jobId);
-        var rows = queryResults.data.rows;
-        var schema = queryResults.data.schema;
+        let rows = queryResults.data.rows;
+        let schema = queryResults.data.schema;
         while (queryResults.data.pageToken) {
             const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
             queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
@@ -126,7 +126,7 @@ export class BigQueryDatasource {
             return this.queryModel.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    };
+    }
 
     async query(options) {
         const queries = _.filter(options.targets, target => {
@@ -237,21 +237,16 @@ export class BigQueryDatasource {
             }
         } catch (error) {
             status = 'error';
-            if (_.isString(error)) {
-                message = error;
-            } else {
                 message = 'BigQuery: ';
                 message += error.statusText ? error.statusText : defaultErrorMessage;
                 if (error.data && error.data.error && error.data.error.code) {
                     message += ': ' + error.data.error.code + '. ' + error.data.error.message;
-                }
             }
-        } finally {
-            return {
+        }
+        return {
                 status,
                 message,
             };
-        }
     }
 
     static formatBigqueryError(error) {

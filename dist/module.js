@@ -33952,8 +33952,8 @@ function () {
     if (this.target.rawSql) {
       var q = this.target.rawSql;
       q = this.replaceTimeFilters(q, options);
-      q = this.replacetimeGroupAlias(q, options);
-      q = this.replacetimeGroup(q, options);
+      q = this.replacetimeGroupAlias(q, true);
+      q = this.replacetimeGroupAlias(q, false);
       console.log(q);
       return q;
     }
@@ -33966,8 +33966,14 @@ function () {
     return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
   };
 
-  BigQueryQuery.prototype.replacetimeGroupAlias = function (q, options) {
-    var interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+  BigQueryQuery.prototype.replacetimeGroupAlias = function (q, alias) {
+    var interval = '';
+
+    if (alias) {
+      interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+    } else {
+      interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+    }
 
     if (!interval) {
       return q;
@@ -34001,45 +34007,11 @@ function () {
         }
     }
 
-    return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
-  };
-
-  BigQueryQuery.prototype.replacetimeGroup = function (q, options) {
-    var interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
-
-    if (!interval) {
-      return q;
+    if (alias) {
+      return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
+    } else {
+      return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g, intervalStr);
     }
-
-    var intervalStr = '';
-
-    switch (interval[0]) {
-      case '1s':
-        {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 1) * 1)";
-          break;
-        }
-
-      case '1m':
-        {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 60) * 60)";
-          break;
-        }
-
-      case '1h':
-        {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 3600) * 3600)";
-          break;
-        }
-
-      case '1d':
-        {
-          intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), 86400) * 86400)";
-          break;
-        }
-    }
-
-    return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g, intervalStr);
   };
 
   return BigQueryQuery;
@@ -34328,7 +34300,6 @@ function () {
               }];
             }
 
-            console.log("------DOQUERY--------");
             sleepTimeMs = 100;
             return [4
             /*yield*/
@@ -34559,7 +34530,7 @@ function () {
             _a.label = 1;
 
           case 1:
-            _a.trys.push([1, 4, 5, 6]);
+            _a.trys.push([1, 4,, 5]);
 
             return [4
             /*yield*/
@@ -34585,26 +34556,21 @@ function () {
 
             return [3
             /*break*/
-            , 6];
+            , 5];
 
           case 4:
             error_2 = _a.sent();
             status = 'error';
+            message = 'BigQuery: ';
+            message += error_2.statusText ? error_2.statusText : defaultErrorMessage;
 
-            if (_lodash2.default.isString(error_2)) {
-              message = error_2;
-            } else {
-              message = 'BigQuery: ';
-              message += error_2.statusText ? error_2.statusText : defaultErrorMessage;
-
-              if (error_2.data && error_2.data.error && error_2.data.error.code) {
-                message += ': ' + error_2.data.error.code + '. ' + error_2.data.error.message;
-              }
+            if (error_2.data && error_2.data.error && error_2.data.error.code) {
+              message += ': ' + error_2.data.error.code + '. ' + error_2.data.error.message;
             }
 
             return [3
             /*break*/
-            , 6];
+            , 5];
 
           case 5:
             return [2
@@ -34613,11 +34579,6 @@ function () {
               status: status,
               message: message
             }];
-
-          case 6:
-            return [2
-            /*return*/
-            ];
         }
       });
     });

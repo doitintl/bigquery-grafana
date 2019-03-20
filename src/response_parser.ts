@@ -14,6 +14,7 @@ export interface DataTarget {
     query: any;
 }
 
+
 export default class ResponseParser {
     constructor(private $q) {
     }
