@@ -7,6 +7,8 @@ module.exports = {
   },
   testRegex: "(\\.|/)([jt]est)\\.ts$",
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  coverageDirectory: "./coverage/",
+  collectCoverage: true,
   moduleNameMapper: {
     "app/core/utils/datemath": "<rootDir>/node_modules/grafana-sdk-mocks/app/core/utils/datemath.ts",
   },
@@ -22,3 +24,5 @@ module.exports = {
     },
   },
 };
+
+

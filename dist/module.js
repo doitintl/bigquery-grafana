@@ -35185,7 +35185,7 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.getValueColumnSegments = function () {
-    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT']).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
+    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
   };
 
   BigQueryQueryCtrl.prototype.timeColumnChanged = function (refresh) {
