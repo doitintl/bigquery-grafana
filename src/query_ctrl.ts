@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import appEvents from 'grafana/app/core/app_events';
-import {BigQueryMetaQuery} from './meta_query';
 import {QueryCtrl} from 'grafana/app/plugins/sdk';
 import {SqlPart} from './sql_part';
 import BigQueryQuery from './bigquery_query';
@@ -21,11 +20,8 @@ WHERE
 
 export class BigQueryQueryCtrl extends QueryCtrl {
     static templateUrl = 'partials/query.editor.html';
-
-    showLastQuerySQL: boolean;
     formats: any[];
     queryModel: BigQueryQuery;
-    metaBuilder: BigQueryMetaQuery;
     lastQueryMeta: QueryMeta;
     lastQueryError: string;
     showHelp: boolean;
@@ -44,13 +40,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     /** @ngInject */
     constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
         super($scope, $injector);
-        this.target = this.target;
         this.queryModel = new BigQueryQuery(this.target, templateSrv, this.panel.scopedVars);
-        this.metaBuilder = new BigQueryMetaQuery(this.target, this.queryModel);
         this.updateProjection();
-
         this.formats = [{text: 'Time series', value: 'time_series'}, {text: 'Table', value: 'table'}];
-
         if (!this.target.rawSql) {
             // special handling when in table panel
             if (this.panelCtrl.panel.type === 'table') {
@@ -61,32 +53,26 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 this.target.rawSql = defaultQuery;
             }
         }
-
         if (!this.target.project) {
             this.projectSegment = uiSegmentSrv.newSegment({value: 'select project', fake: true});
         } else {
             this.projectSegment = uiSegmentSrv.newSegment(this.target.project);
         }
-
         if (!this.target.dataset) {
             this.datasetSegment = uiSegmentSrv.newSegment({value: 'select dataset', fake: true});
         } else {
             this.datasetSegment = uiSegmentSrv.newSegment(this.target.dataset);
         }
-
         if (!this.target.table) {
             this.tableSegment = uiSegmentSrv.newSegment({value: 'select table', fake: true});
         } else {
             this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
         }
-
         this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
         this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
-
         this.buildSelectMenu();
         this.whereAdd = this.uiSegmentSrv.newPlusButton();
         this.groupAdd = this.uiSegmentSrv.newPlusButton();
-
         this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
         this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     }
@@ -455,13 +441,10 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             case 'get-param-options': {
                 switch (part.def.type) {
                     case 'aggregate':
-                        return this.datasource
-                            .metricFindQuery(this.metaBuilder.buildAggregateQuery())
-                            .then(this.transformToSegments({}))
-                            .catch(this.handleQueryError.bind(this));
+                        return ;
                     case 'column':
                         return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-                            ['INT64', 'NUMERIC', 'FLOAT64'])
+                            ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'])
                             .then(this.uiSegmentSrv.transformToSegments(false))
                             .catch(this.handleQueryError.bind(this));
                 }
@@ -485,8 +468,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     handleGroupPartEvent(part, index, evt) {
         switch (evt.name) {
             case 'get-param-options': {
-                return this.datasource
-                    .metricFindQuery(this.metaBuilder.buildColumnQuery())
+                return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, null)
                     .then(this.transformToSegments({}))
                     .catch(this.handleQueryError.bind(this));
             }
@@ -557,40 +539,20 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             case 'get-param-options': {
                 switch (evt.param.name) {
                     case 'left':
-                        return this.datasource
-                            .metricFindQuery(this.metaBuilder.buildColumnQuery())
+                        return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
+                            ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'])
                             .then(this.transformToSegments({}))
                             .catch(this.handleQueryError.bind(this));
                     case 'right':
-                        if (['int4', 'int8', 'float4', 'float8', 'timestamp', 'timestamptz'].indexOf(part.datatype) > -1) {
-                            // don't do value lookups for numerical fields
                             return this.$q.when([]);
-                        } else {
-                            return this.datasource
-                                .metricFindQuery(this.metaBuilder.buildValueQuery(part.params[0]))
-                                .then(
-                                    this.transformToSegments({
-                                        addTemplateVars: true,
-                                        templateQuoter: (v: string) => {
-                                            return this.queryModel.quoteLiteral(v);
-                                        },
-                                    })
-                                )
-                                .catch(this.handleQueryError.bind(this));
-                        }
                     case 'op':
-                        return this.$q.when(this.uiSegmentSrv.newOperators(this.metaBuilder.getOperators(part.datatype)));
+                        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=']));
                     default:
                         return this.$q.when([]);
                 }
             }
             case 'part-param-changed': {
                 this.updatePersistedParts();
-                this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(part.params[0])).then((d: any) => {
-                    if (d.length === 1) {
-                        part.datatype = d[0].text;
-                    }
-                });
                 this.panelCtrl.refresh();
                 break;
             }
