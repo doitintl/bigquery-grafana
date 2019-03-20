@@ -1,9 +1,16 @@
-version: 2
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@1.0.4
+  jobs:
+    build:
+      steps:
+
 jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:8
+      - image: circleci/node:10
 
     working_directory: ~/repo
 
@@ -21,5 +28,8 @@ jobs:
       - run:
           name: build
           command: 'run build:prod'
+      - codecov/upload:
+          token: a1127a6b-ce13-4174-9d14-6dbfa7252a54
+          file: coverage/*.json
       - store_artifacts:
           path: dist
