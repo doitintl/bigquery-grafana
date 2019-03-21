@@ -351,7 +351,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         }
         let addAlias = false;
         let _addAlias = function () {
-            return !_.find(selectParts, (p: any) => p.def.type === 'alias')
+            return !_.find(selectParts, (p: any) => p.def.type === 'alias');
         };
         switch (partType) {
             case 'column':
