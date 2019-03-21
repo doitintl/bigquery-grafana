@@ -238,19 +238,19 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     getTimeColumnSegments() {
-        return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-            ['DATE', 'TIMESTAMP', 'DATETIME'])
-            .then(this.uiSegmentSrv.transformToSegments(false))
-            .catch(this.handleQueryError.bind(this));
+        return this._getColumnSegments(['DATE', 'TIMESTAMP', 'DATETIME']);
     }
 
     getValueColumnSegments() {
+        return this._getColumnSegments(['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT','INTEGER']);
+    }
+
+    _getColumnSegments(filter){
         return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-            ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT','INTEGER'])
+            filter)
             .then(this.uiSegmentSrv.transformToSegments(false))
             .catch(this.handleQueryError.bind(this));
     }
-
     timeColumnChanged(refresh?: boolean) {
         this.target.timeColumn = this.timeColumnSegment.value;
         let partModel;
