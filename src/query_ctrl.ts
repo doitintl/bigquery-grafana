@@ -479,7 +479,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         }
     }
 
-    addGroup(partType, value) {
+    _setgroupParts(partType, value) {
         let params = [value];
         if (partType === 'time') {
             params = ['$__interval', 'none'];
@@ -492,7 +492,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         } else {
             this.groupParts.push(partModel);
         }
-
+    }
+    addGroup(partType, value) {
+        this._setgroupParts(partType, value);
         // add aggregates when adding group by
         for (const selectParts of this.selectParts) {
             if (!selectParts.some(part => part.def.type === 'aggregate')) {

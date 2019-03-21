@@ -83,22 +83,26 @@ export default class BigQueryQuery {
         }
     }
 
+    _buildTimeColumntimeGroup(alias,timeGroup){
+        let args;
+        let macro = '$__timeGroup';
+
+        if (timeGroup.params.length > 1 && timeGroup.params[1] !== 'none') {
+            args = timeGroup.params.join(',');
+        } else {
+            args = timeGroup.params[0];
+        }
+        if (alias) {
+            macro += 'Alias';
+        }
+       return macro + '(' + this.target.timeColumn + ',' + args + ')';
+
+    }
     buildTimeColumn(alias = true) {
         const timeGroup = this.hasTimeGroup();
         let query;
-        let macro = '$__timeGroup';
-
         if (timeGroup) {
-            let args;
-            if (timeGroup.params.length > 1 && timeGroup.params[1] !== 'none') {
-                args = timeGroup.params.join(',');
-            } else {
-                args = timeGroup.params[0];
-            }
-            if (alias) {
-                macro += 'Alias';
-            }
-            query = macro + '(' + this.target.timeColumn + ',' + args + ')';
+          query = this._buildTimeColumntimeGroup(alias, timeGroup);
         } else {
             query = this.target.timeColumn;
             if (alias) {

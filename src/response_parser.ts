@@ -91,9 +91,8 @@ export default class ResponseParser {
     }
 
     _toTimeSeries(results) {
-        const data = [];
         if (!results.rows) {
-            return {data: data};
+            return {data: []};
         }
         let timeIndex = -1;
         let metricIndex = -1;
@@ -102,18 +101,21 @@ export default class ResponseParser {
             if (timeIndex === -1 && ['DATE', 'TIMESTAMP', 'DATETIME'].includes(results.schema.fields[i].type)) {
                 timeIndex = i;
             }
-
             if (metricIndex === -1 && results.schema.fields[i].type === 'STRING') {
                 metricIndex = i;
             }
             if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(results.schema.fields[i].type)) {
                 valueIndex = i;
             }
-
         }
         if (timeIndex === -1) {
             throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
         }
+       return ResponseParser._buildDatapoints(results,timeIndex,metricIndex,valueIndex);
+    }
+
+    static _buildDatapoints(results, timeIndex, metricIndex, valueIndex){
+        const data = [];
         for (const row of results.rows) {
             if (row) {
                 const epoch = Number(row.f[timeIndex].v) * 1000;
@@ -124,7 +126,6 @@ export default class ResponseParser {
         }
         return {data: data};
     }
-
     _toTable(results) {
         const data = [];
         let columns = [];

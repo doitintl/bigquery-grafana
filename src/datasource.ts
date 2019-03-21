@@ -126,7 +126,7 @@ export class BigQueryDatasource {
             return BigQueryQuery.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    }
+    };
 
     async query(options) {
         const queries = _.filter(options.targets, target => {
@@ -223,29 +223,27 @@ export class BigQueryDatasource {
 
     async testDatasource() {
         let status, message;
-        status = 'error';
-        message = 'BigQuery: ';
+        status = 'success';
+        message = 'Successfully queried the BigQuery API.';
         const defaultErrorMessage = 'Cannot connect to BigQuery API';
         try {
             const projectName = await this.getDefaultProject();
             const path = `v2/projects/${projectName}/datasets`;
             const response = await this.doRequest(`${this.baseUrl}${path}`);
-            if (response.status === 200) {
-                status = 'success';
-                message += 'Successfully queried the BigQuery API.';
-            } else {
+            if (response.status !== 200) {
+                status = 'error';
                 message = response.statusText ? response.statusText : defaultErrorMessage;
             }
         } catch (error) {
-                message += error.statusText ? error.statusText : defaultErrorMessage;
-                if (error.data && error.data.error && error.data.error.code) {
-                    message += ': ' + error.data.error.code + '. ' + error.data.error.message;
+            message = error.statusText ? error.statusText : defaultErrorMessage;
+            if (error.data && error.data.error && error.data.error.code) {
+                message = ': ' + error.data.error.code + '. ' + error.data.error.message;
             }
         }
         return {
-                status,
-                message,
-            };
+            status,
+            message,
+        };
     }
 
     static formatBigqueryError(error) {
