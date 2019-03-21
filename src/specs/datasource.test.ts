@@ -1,6 +1,7 @@
 import moment from 'moment';
 import {BigQueryDatasource} from '../datasource';
 import ResponseParser, {ResultFormat} from '../response_parser';
+import BigQueryQuery from "../bigquery_query";
 
 describe('BigQueryDatasource', () => {
     const instanceSettings = {name: 'bigquery', jsonData: {authenticationType: 'jwt'}};
@@ -26,6 +27,22 @@ describe('BigQueryDatasource', () => {
     beforeEach(() => {
         ctx.ds = new BigQueryDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);
         ctx.ds.projectName = "my project";
+    });
+
+    describe('formatBigqueryError', () => {
+        let  error = {
+            statusText: 'status text',
+        };
+
+        let res = BigQueryDatasource.formatBigqueryError(error);
+        expect(res).toBe('BigQuery: status text: Cannot connect to BigQuery API');
+        let error_1 = {
+            statusText: 'status text',
+            data: {error: 'error txt'}
+        };
+        res = BigQueryDatasource.formatBigqueryError(error_1);
+        expect(res).toBe('BigQuery: status text: error txt');
+
     });
 
     describe('When performing annotationQuery', () => {
@@ -622,7 +639,6 @@ describe('BigQueryDatasource', () => {
 
 
         results = new ResponseParser(null).parseDataQuery(response, 'time_series');
-        console.log(results.data[0].datapoints[0][0]);
         it('should return a table', () => {
             expect(results.data[0].datapoints.length).toBe(3);
             expect(results.data[0].datapoints[0][0]).toBe("37.7753058");

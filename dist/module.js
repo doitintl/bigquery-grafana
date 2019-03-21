@@ -33620,11 +33620,11 @@ function () {
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
 
-  BigQueryQuery.prototype.quoteLiteral = function (value) {
+  BigQueryQuery.quoteLiteral = function (value) {
     return "'" + String(value).replace(/'/g, "''") + "'";
   };
 
-  BigQueryQuery.prototype.escapeLiteral = function (value) {
+  BigQueryQuery.escapeLiteral = function (value) {
     return String(value).replace(/'/g, "''");
   };
 
@@ -33641,14 +33641,14 @@ function () {
   BigQueryQuery.prototype.interpolateQueryStr = function (value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
-      return this.escapeLiteral(value);
+      return BigQueryQuery.escapeLiteral(value);
     }
 
     if (typeof value === 'string') {
-      return this.quoteLiteral(value);
+      return BigQueryQuery.quoteLiteral(value);
     }
 
-    var escapedValues = _lodash2.default.map(value, this.quoteLiteral);
+    var escapedValues = _lodash2.default.map(value, BigQueryQuery.quoteLiteral);
 
     return escapedValues.join(',');
   };
@@ -34153,8 +34153,6 @@ var BigQueryDatasource =
 function () {
   /** @ngInject */
   function BigQueryDatasource(instanceSettings, backendSrv, $q, templateSrv, timeSrv) {
-    var _this = this;
-
     this.backendSrv = backendSrv;
     this.$q = $q;
     this.templateSrv = templateSrv;
@@ -34163,7 +34161,7 @@ function () {
     this.interpolateVariable = function (value, variable) {
       if (typeof value === 'string') {
         if (variable.multi || variable.includeAll) {
-          return _this.queryModel.quoteLiteral(value);
+          return _bigquery_query2.default.quoteLiteral(value);
         } else {
           return value;
         }
@@ -34174,7 +34172,7 @@ function () {
       }
 
       var quotedValues = _lodash2.default.map(value, function (v) {
-        return _this.queryModel.quoteLiteral(v);
+        return _bigquery_query2.default.quoteLiteral(v);
       });
 
       return quotedValues.join(',');
@@ -34503,6 +34501,8 @@ function () {
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
+            status = 'error';
+            message = 'BigQuery: ';
             defaultErrorMessage = 'Cannot connect to BigQuery API';
             _a.label = 1;
 
@@ -34525,9 +34525,8 @@ function () {
 
             if (response.status === 200) {
               status = 'success';
-              message = 'Successfully queried the BigQuery API.';
+              message += 'Successfully queried the BigQuery API.';
             } else {
-              status = 'error';
               message = response.statusText ? response.statusText : defaultErrorMessage;
             }
 
@@ -34537,8 +34536,6 @@ function () {
 
           case 4:
             error_2 = _a.sent();
-            status = 'error';
-            message = 'BigQuery: ';
             message += error_2.statusText ? error_2.statusText : defaultErrorMessage;
 
             if (error_2.data && error_2.data.error && error_2.data.error.code) {

@@ -35,11 +35,11 @@ export default class BigQueryQuery {
         this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
     }
 
-    quoteLiteral(value) {
+    static quoteLiteral(value) {
         return "'" + String(value).replace(/'/g, "''") + "'";
     }
 
-    escapeLiteral(value) {
+    static escapeLiteral(value) {
         return String(value).replace(/'/g, "''");
     }
 
@@ -54,14 +54,14 @@ export default class BigQueryQuery {
     interpolateQueryStr(value, variable, defaultFormatFn) {
         // if no multi or include all do not regexEscape
         if (!variable.multi && !variable.includeAll) {
-            return this.escapeLiteral(value);
+            return BigQueryQuery.escapeLiteral(value);
         }
 
         if (typeof value === 'string') {
-            return this.quoteLiteral(value);
+            return BigQueryQuery.quoteLiteral(value);
         }
 
-        const escapedValues = _.map(value, this.quoteLiteral);
+        const escapedValues = _.map(value, BigQueryQuery.quoteLiteral);
         return escapedValues.join(',');
     }
 
