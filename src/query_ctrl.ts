@@ -350,7 +350,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             partModel.params[0] = subItem.value;
         }
         let addAlias = false;
-
+        let _addAlias = function () {
+            return !_.find(selectParts, (p: any) => p.def.type === 'alias')
+        };
         switch (partType) {
             case 'column':
                 const parts = _.map(selectParts, (part: any) => {
@@ -371,7 +373,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 } else {
                     selectParts.splice(1, 0, partModel);
                 }
-                if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
+                if (_addAlias()) {
                     addAlias = true;
                 }
                 break;
@@ -389,7 +391,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                         selectParts.splice(1, 0, partModel);
                     }
                 }
-                if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
+                if (_addAlias()) {
                     addAlias = true;
                 }
                 break;
