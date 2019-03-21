@@ -305,7 +305,7 @@ export default class BigQueryQuery {
         return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
     }
 
-    _getInterval(q, alias) {
+    static _getInterval(q, alias) {
         if (alias) {
             return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
         } else {
@@ -313,32 +313,39 @@ export default class BigQueryQuery {
         }
     }
 
-    _getIntervalStr(interval) {
-        switch (interval) {
-            case '1s': {
-                return "1) * 1)";
-            }
-            case '1m': {
-                return "60) * 60)";
-            }
-            case '1h': {
-                return "3600) * 3600)";
+    static _getIntervalStr(interval) {
+        let IntervalStr = '';
+        if (interval === '1s') {
+            {
+                IntervalStr = "1) * 1)";
 
             }
-            case '1d': {
-                return "86400) * 86400)";
+        } else if (interval === '1m') {
+            {
+                IntervalStr = "60) * 60)";
+
+            }
+        } else if (interval === '1h') {
+            {
+                IntervalStr = "3600) * 3600)";
+
+            }
+        } else if (interval === '1d') {
+            {
+                IntervalStr = "86400) * 86400)";
+
             }
         }
-        return "";
+        return IntervalStr;
     }
 
     replacetimeGroupAlias(q, alias) {
-        let interval = this._getInterval(q, alias);
+        let interval = BigQueryQuery._getInterval(q, alias);
         if (!interval) {
             return q;
         }
         let intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), ";
-        intervalStr += this._getIntervalStr(interval[0]);
+        intervalStr += BigQueryQuery._getIntervalStr(interval[0]);
 
         if (alias) {
             return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
