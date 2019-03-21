@@ -5,7 +5,7 @@
 [![Code Climate](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/gpa.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana/coverage)
 [![Issue Count](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/issue_count.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana)
 [![CodeCpv](https://codecov.io/gh/doitintl/bigquery-grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/doitintl/bigquery-grafana/)
-# !!!!! Project is Work in Progress. Not ready for production yet !!!!! 
+## Status: Ready for Beta Testing
 # BigQuery datasource for Grafana 4.6+
 
 BigQuery datasource plugin provides a support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
