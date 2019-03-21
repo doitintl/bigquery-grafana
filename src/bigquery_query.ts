@@ -195,7 +195,7 @@ export default class BigQueryQuery {
                     break;
                 case 'moving_window':
                     query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
-                    query= tmpval + " as tmp" + tmpval +", " +query;
+                    query = tmpval + " as tmp" + tmpval + ", " + query;
                     break;
             }
             this.tmpcost = "tmp" + columnName.params[0];
@@ -241,11 +241,11 @@ export default class BigQueryQuery {
                 groupSection += part.params[0];
             }
         }
-        if (groupSection.length ) {
+        if (groupSection.length) {
             query = '\nGROUP BY ' + groupSection;
             this.groupBy = query;
             if (this.isWindow) {
-                query += "," +this.target.timeColumn;
+                query += "," + this.target.timeColumn;
                 this.groupBy += ',2';
             }
             if (this.hasMetricColumn()) {
@@ -269,7 +269,7 @@ export default class BigQueryQuery {
         }
         query += this.buildValueColumns();
 
-        query += '\nFROM ' + this.target.dataset + "." + this.target.table ;
+        query += '\nFROM ' + this.target.dataset + "." + this.target.table;
 
         query += this.buildWhereClause();
         query += this.buildGroupClause();
@@ -278,8 +278,8 @@ export default class BigQueryQuery {
         if (this.hasMetricColumn()) {
             query += ',2';
         }
-      //query += '\nLIMIT 15';
-        if (this.isWindow ){
+        //query += '\nLIMIT 15';
+        if (this.isWindow) {
             query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
             query = query + ")" + this.groupBy + " order by 1";
         }
@@ -290,53 +290,60 @@ export default class BigQueryQuery {
     expend_macros(options) {
         if (this.target.rawSql) {
             let q = this.target.rawSql;
-            q = this.replaceTimeFilters(q,options);
-            q = this.replacetimeGroupAlias(q,true);
-            q = this.replacetimeGroupAlias(q,false);
-            console .log(q);
+            q = this.replaceTimeFilters(q, options);
+            q = this.replacetimeGroupAlias(q, true);
+            q = this.replacetimeGroupAlias(q, false);
+            console.log(q);
             return q;
         }
     }
 
-    replaceTimeFilters(q,options) {
-            const from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
-            const to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
-            const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
-            return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+    replaceTimeFilters(q, options) {
+        const from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
+        const to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
+        const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
+        return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
     }
-    replacetimeGroupAlias(q,alias) {
-        let interval = '';
+
+    _getInterval(q, alias) {
         if (alias) {
-             interval = q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+            return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
         } else {
-             interval = q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+            return q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
         }
-        if  (!interval) {
-            return q;
-        }
-        let intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS("+ this.target.timeColumn + "), ";
-        switch (interval[0]) {
+    }
+
+    _getIntervalStr(interval) {
+        switch (interval) {
             case '1s': {
-                intervalStr += "1) * 1)";
-                break;
+                return "1) * 1)";
             }
             case '1m': {
-                intervalStr += "60) * 60)";
-                break;
+                return "60) * 60)";
             }
             case '1h': {
-                intervalStr += "3600) * 3600)";
-                break;
+                return "3600) * 3600)";
+
             }
             case '1d': {
-                intervalStr += "86400) * 86400)";
-                break;
+                return "86400) * 86400)";
             }
         }
+        return "";
+    }
+
+    replacetimeGroupAlias(q, alias) {
+        let interval = this._getInterval(q, alias);
+        if (!interval) {
+            return q;
+        }
+        let intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), ";
+        intervalStr += this._getIntervalStr(interval[0]);
+
         if (alias) {
             return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
         } else {
-            return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g,intervalStr);
+            return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g, intervalStr);
         }
     }
 }
