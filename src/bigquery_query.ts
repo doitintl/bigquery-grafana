@@ -350,7 +350,6 @@ export default class BigQueryQuery {
         }
         let intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), ";
         intervalStr += BigQueryQuery._getIntervalStr(interval[0]);
-
         if (alias) {
             return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
         } else {

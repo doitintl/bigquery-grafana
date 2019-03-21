@@ -208,5 +208,4 @@ describe('BigQueryQuery', () => {
         let res = BigQueryQuery.escapeLiteral("'a");
         expect(res === "''a");
     });
-
 });

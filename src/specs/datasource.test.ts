@@ -770,6 +770,27 @@ describe('BigQueryDatasource', () => {
         });
 
     });
+    describe('When performing testDatasource', () => {
+        let results;
+        const response = {
+            statusText: "Failed"
+        };
+
+        beforeEach(() => {
+            ctx.backendSrv.datasourceRequest = jest.fn(options => {
+                return Promise.resolve({data: response, status: 400});
+            });
+        });
+
+        it('should test datasource', async () => {
+            await ctx.ds.testDatasource().then(data => {
+                results = data;
+            });
+            expect(results.status).toBe("error");
+            expect(results.message).toBe("Cannot connect to BigQuery API");
+        });
+
+    });
     describe('When performing getDefaultProject', () => {
         let results;
         const response = {
