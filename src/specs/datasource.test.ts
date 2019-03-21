@@ -30,7 +30,7 @@ describe('BigQueryDatasource', () => {
     });
 
     describe('formatBigqueryError', () => {
-        let  error = {
+        let error = {
             statusText: 'status text',
         };
 
@@ -44,6 +44,83 @@ describe('BigQueryDatasource', () => {
         expect(res).toBe('BigQuery: status text: error txt');
 
     });
+
+
+    describe('When performing do request', () => {
+        let results;
+        const response = {
+            "kind": "bigquery#queryResponse",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "time",
+                        "type": "TIMESTAMP",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "start_station_latitude",
+                        "type": "FLOAT",
+                        "mode": "NULLABLE"
+                    }
+                ]
+            },
+            "jobReference": {
+                "projectId": "aviv-playground",
+                "jobId": "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5",
+                "location": "US"
+            },
+            "totalRows": "3",
+            "rows": [
+                {
+                    "f": [
+                        {
+                            "v": "1.521578851E9"
+                        },
+                        {
+                            "v": "37.7753058"
+                        }
+                    ]
+                },
+                {
+                    "f": [
+                        {
+                            "v": "1.521578916E9"
+                        },
+                        {
+                            "v": "37.3322326"
+                        }
+                    ]
+                },
+                {
+                    "f": [
+                        {
+                            "v": "1.521578927E9"
+                        },
+                        {
+                            "v": "37.781752"
+                        }
+                    ]
+                }
+            ],
+            "totalBytesProcessed": "23289520",
+            "jobComplete": true,
+            "cacheHit": false
+        };
+        beforeEach(() => {
+            ctx.backendSrv.datasourceRequest = jest.fn(options => {
+                return Promise.resolve({data: response, status: 200});
+            });
+        });
+
+        it('should return expected data', async () => {
+            await ctx.ds.doQuery('select * from table', "id-1").then(data => {
+                results = data;
+            });
+            expect(results.rows.length).toBe(3);
+            expect(results.schema.fields.length).toBe(2);
+        });
+    });
+
 
     describe('When performing annotationQuery', () => {
         let results;
@@ -646,6 +723,102 @@ describe('BigQueryDatasource', () => {
             expect(results.data[0].datapoints[2][0]).toBe("37.781752");
             expect(results.data[0].datapoints[2][1]).toBe(1521578927000);
 
+        });
+    });
+
+    describe('When performing testDatasource', () => {
+        let results;
+        const response = {
+            "kind": "bigquery#datasetList",
+            "etag": "q6TrWWJHEC7v8Vt1T4+geg==",
+            "datasets": [
+                {
+                    "kind": "bigquery#dataset",
+                    "id": "prj-1:ds-1",
+                    "datasetReference": {
+                        "datasetId": "ds-1",
+                        "projectId": "prj-1"
+                    },
+                    "location": "US"
+                },
+                {
+                    "kind": "bigquery#dataset",
+                    "id": "prj-1:ds-2",
+                    "datasetReference": {
+                        "datasetId": "ds-2",
+                        "projectId": "prj-1"
+                    },
+                    "labels": {
+                        "otag": "ds-2",
+                    },
+                    "location": "US"
+                }
+            ]
+        };
+
+        beforeEach(() => {
+            ctx.backendSrv.datasourceRequest = jest.fn(options => {
+                return Promise.resolve({data: response, status: 200});
+            });
+        });
+
+        it('should test datasource', async () => {
+            await ctx.ds.testDatasource().then(data => {
+                results = data;
+            });
+            expect(results.status).toBe("success");
+        });
+
+    });
+    describe('When performing getDefaultProject', () => {
+        let results;
+        const response = {
+            "kind": "bigquery#projectList",
+            "etag": "o48iuUgjDrXb++kcLl2yeQ==",
+            "projects": [
+                {
+                    "kind": "bigquery#project",
+                    "id": "prj-1",
+                    "numericId": "1",
+                    "projectReference": {
+                        "projectId": "prj-1"
+                    },
+                    "friendlyName": "prj-1"
+                },
+                {
+                    "kind": "bigquery#project",
+                    "id": "prj-2",
+                    "numericId": "2",
+                    "projectReference": {
+                        "projectId": "prj-2"
+                    },
+                    "friendlyName": "prj-2"
+                }, {
+                    "kind": "bigquery#project",
+                    "id": "prj-3",
+                    "numericId": "3",
+                    "projectReference": {
+                        "projectId": "prj-3"
+                    },
+                    "friendlyName": "prj-3"
+                },
+
+            ],
+            "totalItems": 3
+        };
+        beforeEach(() => {
+            ctx.ds.projectName = "";
+            ctx.backendSrv.datasourceRequest = jest.fn(options => {
+                return Promise.resolve({data: response, status: 200});
+            });
+        });
+
+
+        it('should return  default projects', async() => {
+            await ctx.ds.getDefaultProject().then(data => {
+                results = data;
+            });
+            expect(results).toBe('prj-1');
         });
     });
 
