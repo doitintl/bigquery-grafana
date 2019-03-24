@@ -53,20 +53,28 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 this.target.rawSql = defaultQuery;
             }
         }
-        this.projectSegment = uiSegmentSrv.newSegment(this.target.project);
-        this.datasetSegment = uiSegmentSrv.newSegment(this.target.dataset);
-        this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
-        this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
-        this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
+
         if (!this.target.project) {
             this.projectSegment = uiSegmentSrv.newSegment({value: 'select project', fake: true});
+        } else {
+            this.projectSegment = uiSegmentSrv.newSegment(this.target.project);
         }
+
         if (!this.target.dataset) {
             this.datasetSegment = uiSegmentSrv.newSegment({value: 'select dataset', fake: true});
+        } else {
+            this.datasetSegment = uiSegmentSrv.newSegment(this.target.dataset);
         }
+
         if (!this.target.table) {
             this.tableSegment = uiSegmentSrv.newSegment({value: 'select table', fake: true});
+        } else {
+            this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
         }
+
+        this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
+        this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
+
         this.buildSelectMenu();
         this.whereAdd = this.uiSegmentSrv.newPlusButton();
         this.groupAdd = this.uiSegmentSrv.newPlusButton();
