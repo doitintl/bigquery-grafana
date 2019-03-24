@@ -204,7 +204,7 @@ describe('BigQueryDatasource', () => {
         });
     });
 
-    describe('_getResults', () => {
+    describe('_getQueryResults', () => {
         let results;
         const response = {
             //"pageToken": "token;",
@@ -333,7 +333,7 @@ describe('BigQueryDatasource', () => {
         });
         let rows = response.rows;
         it('should return expected data', async () => {
-            await ctx.ds._getResults(queryResults, rows, "requestId", "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5").then(data => {
+            await ctx.ds._getQueryResults(queryResults, rows, "requestId", "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5").then(data => {
                 results = data;
             });
             expect(results.length).toBe(6);
@@ -398,7 +398,7 @@ describe('BigQueryDatasource', () => {
     });
 
     describe('When performing getProjects', () => {
-        let results;
+        let queryResults;
         const response = {
             "kind": "bigquery#projectList",
             "etag": "o48iuUgjDrXb++kcLl2yeQ==",
@@ -434,19 +434,19 @@ describe('BigQueryDatasource', () => {
             "totalItems": 3
         };
 
-        beforeEach(() => {
+        beforeEach(async () => {
             ctx.backendSrv.datasourceRequest = jest.fn(options => {
                 return Promise.resolve({data: response, status: 200});
             });
-            ctx.ds.getProjects().then(data => {
-                results = data;
+            await ctx.ds.getProjects().then(data => {
+                queryResults = data;
             });
         });
 
         it('should return list of projects', () => {
-            expect(results.length).toBe(3);
-            expect(results[0].text).toBe('prj-1');
-            expect(results[2].text).toBe('prj-3');
+            expect(queryResults.length).toBe(3);
+            expect(queryResults[0].text).toBe('prj-1');
+            expect(queryResults[2].text).toBe('prj-3');
         });
     });
 
@@ -480,11 +480,11 @@ describe('BigQueryDatasource', () => {
             ]
         };
 
-        beforeEach(() => {
+        beforeEach(async () => {
             ctx.backendSrv.datasourceRequest = jest.fn(options => {
                 return Promise.resolve({data: response, status: 200});
             });
-            ctx.ds.getDatasets('prj-1').then(data => {
+            await ctx.ds.getDatasets('prj-1').then(data => {
                 results = data;
             });
         });
@@ -528,11 +528,11 @@ describe('BigQueryDatasource', () => {
             "totalItems": 2
         };
 
-        beforeEach(() => {
+        beforeEach(async () => {
             ctx.backendSrv.datasourceRequest = jest.fn(options => {
                 return Promise.resolve({data: response, status: 200});
             });
-            ctx.ds.getTables('prj-1', 'ds-1').then(data => {
+            await ctx.ds.getTables('prj-1', 'ds-1').then(data => {
                 results = data;
             });
         });
@@ -596,11 +596,11 @@ describe('BigQueryDatasource', () => {
         };
 
 
-        beforeEach(() => {
+        beforeEach(async () => {
             ctx.backendSrv.datasourceRequest = jest.fn(options => {
                 return Promise.resolve({data: response, status: 200});
             });
-            ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable', ['DATE', 'TIMESTAMP', 'DATETIME']).then(data => {
+            await ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable', ['DATE', 'TIMESTAMP', 'DATETIME']).then(data => {
                 results = data;
             });
         });
@@ -669,11 +669,11 @@ describe('BigQueryDatasource', () => {
         };
 
 
-        beforeEach(() => {
+        beforeEach(async () => {
             ctx.backendSrv.datasourceRequest = jest.fn(options => {
                 return Promise.resolve({data: response, status: 200});
             });
-            ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable', ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']).then(data => {
+            await ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable', ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']).then(data => {
                 results = data;
             });
         });
@@ -742,11 +742,11 @@ describe('BigQueryDatasource', () => {
         };
 
 
-        beforeEach(() => {
+        beforeEach(async () => {
             ctx.backendSrv.datasourceRequest = jest.fn(options => {
                 return Promise.resolve({data: response, status: 200});
             });
-            ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable', []).then(data => {
+            await ctx.ds.getTableFields('prj-1', 'ds-1', 'newtable', []).then(data => {
                 results = data;
             });
         });

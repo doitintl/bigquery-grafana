@@ -21,10 +21,10 @@ export default class ResponseParser {
 
     parseProjects(results): ResultFormat[] {
         const projects: ResultFormat[] = [];
-        if (!results || !results.data || !results.data.projects || results.data.projects.length === 0) {
+        if (!results || results.length === 0) {
             return projects;
         }
-        for (let prj of results.data.projects) {
+        for (let prj of results) {
             projects.push({value: prj.id, text: prj.id});
         }
         return projects;
@@ -32,10 +32,10 @@ export default class ResponseParser {
 
     parseDatasets(results): ResultFormat[] {
         const datasets: ResultFormat[] = [];
-        if (!results || !results.data || !results.data.datasets || results.data.datasets.length === 0) {
+        if (!results ||results.length === 0) {
             return datasets;
         }
-        for (let ds of results.data.datasets) {
+        for (let ds of results) {
             datasets.push({value: ds.datasetReference.datasetId, text: ds.datasetReference.datasetId});
         }
         return datasets;
@@ -44,10 +44,10 @@ export default class ResponseParser {
 
     parseTabels(results): ResultFormat[] {
         const tabels: ResultFormat[] = [];
-        if (!results || !results.data || !results.data.tables || results.data.tables.length === 0) {
+        if (!results ||  results.length === 0) {
             return tabels;
         }
-        for (let tbl of results.data.tables) {
+        for (let tbl of results) {
             tabels.push({
                 value: tbl.tableReference.tableId,
                 text: tbl.tableReference.tableId
@@ -58,10 +58,10 @@ export default class ResponseParser {
 
     parseTabelFields(results, filter): ResultFormat[] {
         const fields: ResultFormat[] = [];
-        if (!results || !results.data || !results.data.schema || !results.data.schema.fields || results.data.schema.fields.length === 0) {
+        if (!results || results.length === 0) {
             return fields;
         }
-        for (let fl of results.data.schema.fields) {
+        for (let fl of results) {
             if (filter.length >0) {
                 for (let i = 0; i < filter.length; i++) {
                     if (filter[i] === fl.type) {

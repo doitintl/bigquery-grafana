@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import ResponseParser, {ResultFormat} from './response_parser';
 import BigQueryQuery from './bigquery_query';
+import {compact} from "lodash-es";
 
 function sleep(ms) {
     return new Promise(resolve => {
@@ -91,7 +92,7 @@ export class BigQueryDatasource {
 
     }
 
-    async _getResults(queryResults,rows, requestId, jobId){
+    async _getQueryResults(queryResults, rows, requestId, jobId){
         while (queryResults.data.pageToken) {
             const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
             queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
@@ -113,7 +114,7 @@ export class BigQueryDatasource {
         queryResults = await this._waitForJobComplete(queryResults,requestId,jobId );
         let rows = queryResults.data.rows;
         let schema = queryResults.data.schema;
-        rows = await this._getResults(queryResults,rows, requestId, jobId);
+        rows = await this._getQueryResults(queryResults,rows, requestId, jobId);
         return {
             rows: rows,
             schema: schema
@@ -190,32 +191,51 @@ export class BigQueryDatasource {
             .then(data => this.responseParser.transformAnnotationResponse(options, data));
     }
 
-    getProjects(): Promise<ResultFormat[]> {
+
+    async getProjects(): Promise<ResultFormat[]> {
         const path = `v2/projects`;
-        return this.doRequest(`${this.baseUrl}${path}`).then(response => {
-            return new ResponseParser(this.$q).parseProjects(response);
-        });
+        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+        let projects = queryResults.data.projects;
+        while (queryResults.data.nextPageToken) {
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
+            projects = projects.concat(queryResults.data.projects);
+        }
+        return new ResponseParser(this.$q).parseProjects(projects);
+
     }
 
-    getDatasets(projectName): Promise<ResultFormat[]> {
+    async getDatasets(projectName): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets`;
-        return this.doRequest(`${this.baseUrl}${path}`).then(response => {
-            return new ResponseParser(this.$q).parseDatasets(response);
-        });
+        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+        let datasets = queryResults.data.datasets;
+        while (queryResults.data.nextPageToken) {
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
+            datasets = datasets.concat(queryResults.data.datasets);
+        }
+        return new ResponseParser(this.$q).parseDatasets(datasets);
     }
 
-    getTables(projectName, datasetName): Promise<ResultFormat[]> {
-        const path = `v2/projects/${projectName}/datasets/${datasetName}/tables`;
-        return this.doRequest(`${this.baseUrl}${path}`).then(response => {
-            return new ResponseParser(this.$q).parseTabels(response);
-        });
+    async getTables(projectName, datasetName): Promise<ResultFormat[]> {
+        let path = `v2/projects/${projectName}/datasets/${datasetName}/tables`;
+        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+        let tables = queryResults.data.tables;
+        while (queryResults.data.nextPageToken) {
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
+            tables = tables.concat(queryResults.data.tables);
+        }
+        return new ResponseParser(this.$q).parseTabels(tables);
+
     }
 
-    getTableFields(projectName, datasetName, tableName, filter): Promise<ResultFormat[]> {
+    async getTableFields(projectName, datasetName, tableName, filter): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets/${datasetName}/tables/${tableName}`;
-        return this.doRequest(`${this.baseUrl}${path}`, filter).then(response => {
-            return new ResponseParser(this.$q).parseTabelFields(response, filter);
-        });
+        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+        let fields = queryResults.data.schema.fields;
+        while (queryResults.data.nextPageToken) {
+            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
+            fields = fields.concat(queryResults.data.schema.fields);
+        }
+        return new ResponseParser(this.$q).parseTabelFields(fields, filter);
     }
 
     async getDefaultProject() {
