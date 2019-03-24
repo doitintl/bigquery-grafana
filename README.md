@@ -16,7 +16,17 @@ Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasou
 OR
 
 Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/installation/#grafana-plugin-directory). Restart Grafana, check datasources list at http://your.grafana.instance/datasources/new, and choose BigQuery option.
+### Features:
 
+ * Query setup
+ * Raw SQL editor
+ * Query formatting
+ * Macros support
+ * Additional functions
+ * Table view
+ * Annotations
+ 
+ 
 ## Adding the data source to Grafana
 
 1. Open the side menu by clicking the Grafana icon in the top header.
