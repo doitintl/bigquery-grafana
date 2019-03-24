@@ -75,16 +75,8 @@ export class BigQueryDatasource {
             });
     }
 
-    async doQuery(query, requestId, maxRetries = 1) {
-        if (!query) {
-            return {
-                rows: null,
-                schema: null
-            };
-        }
+    async _waitForJobComplete(queryResults, requestId, jobId) {
         let sleepTimeMs = 100;
-        let queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
-        let jobId = queryResults.data.jobReference.jobId;
         console.log("New job id: ", jobId);
         const path = `v2/projects/${this.projectName}/queries/` + jobId;
         while (!queryResults.data.jobComplete) {
@@ -94,6 +86,20 @@ export class BigQueryDatasource {
             console.log('wating for job to complete ', jobId);
         }
         console.log("Job Done ", jobId);
+        return queryResults;
+
+
+    }
+    async doQuery(query, requestId, maxRetries = 1) {
+        if (!query) {
+            return {
+                rows: null,
+                schema: null
+            };
+        }
+        let queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
+        let jobId = queryResults.data.jobReference.jobId;
+        queryResults = await this._waitForJobComplete(queryResults,requestId,jobId );
         let rows = queryResults.data.rows;
         let schema = queryResults.data.schema;
         while (queryResults.data.pageToken) {
@@ -126,7 +132,7 @@ export class BigQueryDatasource {
             return BigQueryQuery.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    };
+    }
 
     async query(options) {
         const queries = _.filter(options.targets, target => {

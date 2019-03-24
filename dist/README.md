@@ -6,16 +6,16 @@
 [![Issue Count](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/issue_count.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana)
 [![CodeCpv](https://codecov.io/gh/doitintl/bigquery-grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/doitintl/bigquery-grafana/)
 ## Status: Ready for Beta Testing
-# BigQuery datasource for Grafana 4.6+
+# BigQuery datasource for Grafana
 
-BigQuery datasource plugin provides a support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
+BigQuery datasource plugin provide support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
 
 ### Quick start
 Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)
 
 OR
 
-Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/installation/#grafana-plugin-directory). Restart Grafana, check datasources list at http://your.grafana.instance/datasources/new, choose BigQuery option.
+Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/installation/#grafana-plugin-directory). Restart Grafana, check datasources list at http://your.grafana.instance/datasources/new, and choose BigQuery option.
 
 ## Adding the data source to Grafana
 
