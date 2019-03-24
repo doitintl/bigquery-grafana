@@ -184,9 +184,9 @@ describe('BigQueryDatasource', () => {
         };
         let queryResults = {
             data: {
-            "totalBytesProcessed": "23289520",
-            "jobComplete": false,
-            "cacheHit": false
+                "totalBytesProcessed": "23289520",
+                "jobComplete": false,
+                "cacheHit": false
             }
         };
         beforeEach(() => {
@@ -199,12 +199,146 @@ describe('BigQueryDatasource', () => {
             await ctx.ds._waitForJobComplete(queryResults, "requestId", "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5").then(data => {
                 results = data;
             });
-            console.log(results)
             expect(results.data.rows.length).toBe(3);
             expect(results.data.schema.fields.length).toBe(2);
         });
     });
 
+    describe('_getResults', () => {
+        let results;
+        const response = {
+            //"pageToken": "token;",
+            "kind": "bigquery#queryResponse",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "time",
+                        "type": "TIMESTAMP",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "start_station_latitude",
+                        "type": "FLOAT",
+                        "mode": "NULLABLE"
+                    }
+                ]
+            },
+            "jobReference": {
+                "projectId": "aviv-playground",
+                "jobId": "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5",
+                "location": "US"
+            },
+            "totalRows": "3",
+            "rows": [
+                {
+                    "f": [
+                        {
+                            "v": "1.521578851E9"
+                        },
+                        {
+                            "v": "37.7753058"
+                        }
+                    ]
+                },
+                {
+                    "f": [
+                        {
+                            "v": "1.521578916E9"
+                        },
+                        {
+                            "v": "37.3322326"
+                        }
+                    ]
+                },
+                {
+                    "f": [
+                        {
+                            "v": "1.521578927E9"
+                        },
+                        {
+                            "v": "37.781752"
+                        }
+                    ]
+                }
+            ],
+            "totalBytesProcessed": "23289520",
+            "jobComplete": true,
+            "cacheHit": false
+        };
+        let queryResults = {
+            data: {
+                "pageToken": "token;",
+                "kind": "bigquery#queryResponse",
+                "schema": {
+                    "fields": [
+                        {
+                            "name": "time",
+                            "type": "TIMESTAMP",
+                            "mode": "NULLABLE"
+                        },
+                        {
+                            "name": "start_station_latitude",
+                            "type": "FLOAT",
+                            "mode": "NULLABLE"
+                        }
+                    ]
+                },
+                "jobReference": {
+                    "projectId": "aviv-playground",
+                    "jobId": "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5",
+                    "location": "US"
+                },
+                "totalRows": "3",
+                "rows": [
+                    {
+                        "f": [
+                            {
+                                "v": "1.521578851E9"
+                            },
+                            {
+                                "v": "37.7753058"
+                            }
+                        ]
+                    },
+                    {
+                        "f": [
+                            {
+                                "v": "1.521578916E9"
+                            },
+                            {
+                                "v": "37.3322326"
+                            }
+                        ]
+                    },
+                    {
+                        "f": [
+                            {
+                                "v": "1.521578927E9"
+                            },
+                            {
+                                "v": "37.781752"
+                            }
+                        ]
+                    }
+                ],
+                "totalBytesProcessed": "23289520",
+                "jobComplete": true,
+                "cacheHit": false
+            }
+        };
+        beforeEach(() => {
+            ctx.backendSrv.datasourceRequest = jest.fn(options => {
+                return Promise.resolve({data: response, status: 200});
+            });
+        });
+        let rows = response.rows;
+        it('should return expected data', async () => {
+            await ctx.ds._getResults(queryResults, rows, "requestId", "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5").then(data => {
+                results = data;
+            });
+            expect(results.length).toBe(6);
+        });
+    });
 
     describe('When performing annotationQuery', () => {
         let results;
@@ -919,7 +1053,7 @@ describe('BigQueryDatasource', () => {
         });
 
 
-        it('should return  default projects', async() => {
+        it('should return  default projects', async () => {
             await ctx.ds.getDefaultProject().then(data => {
                 results = data;
             });

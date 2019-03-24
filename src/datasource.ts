@@ -90,6 +90,17 @@ export class BigQueryDatasource {
 
 
     }
+
+    async _getResults(queryResults,rows, requestId, jobId){
+        while (queryResults.data.pageToken) {
+            const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
+            queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
+            rows = rows.concat(queryResults.data.rows);
+            console.log("getting results for: ", jobId);
+        }
+        return rows;
+
+    }
     async doQuery(query, requestId, maxRetries = 1) {
         if (!query) {
             return {
@@ -102,17 +113,11 @@ export class BigQueryDatasource {
         queryResults = await this._waitForJobComplete(queryResults,requestId,jobId );
         let rows = queryResults.data.rows;
         let schema = queryResults.data.schema;
-        while (queryResults.data.pageToken) {
-            const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
-            queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
-            rows = rows.concat(queryResults.data.rows);
-            console.log("getting results for: ", jobId);
-        }
-        const res = {
+        rows = await this._getResults(queryResults,rows, requestId, jobId);
+        return {
             rows: rows,
             schema: schema
         };
-        return (res);
     }
 
     interpolateVariable = (value, variable) => {
