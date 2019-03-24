@@ -160,7 +160,7 @@ export class BigQueryDatasource {
         }
         let q = this.queryModel.expend_macros(options);
         return this.doQuery(q, options.panelId + options.targets[0].refId).then(response => {
-            return new ResponseParser(this.$q).parseDataQuery(response, options.targets[0].format);
+            return ResponseParser.parseDataQuery(response, options.targets[0].format);
         });
     }
 

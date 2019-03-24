@@ -130,14 +130,7 @@ export default class BigQueryQuery {
         return query;
     }
 
-    buildValueColumn(column) {
-        let query = '';
-
-        const columnName = _.find(column, (g: any) => g.type === 'column');
-        query = columnName.params[0];
-
-        const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-        const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    _buildAggregate(aggregate,query) {
         if (aggregate) {
             const func = aggregate.params[0];
             switch (aggregate.type) {
@@ -153,7 +146,14 @@ export default class BigQueryQuery {
                     break;
             }
         }
-
+        return query;
+    }
+    buildValueColumn(column) {
+        const columnName = _.find(column, (g: any) => g.type === 'column');
+        let query = columnName.params[0];
+        const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+        const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+        query = this._buildAggregate(aggregate, query);
         if (windows) {
             this.isWindow = true;
             const overParts = [];
@@ -161,7 +161,6 @@ export default class BigQueryQuery {
                 overParts.push('PARTITION BY ' + this.target.metricColumn);
             }
             overParts.push('ORDER BY ' + this.buildTimeColumn(false));
-
             const over = overParts.join(' ');
             let curr: string;
             let prev: string;

@@ -82,18 +82,18 @@ export default class ResponseParser {
     }
 
 
-    parseDataQuery(results, format) {
+    static parseDataQuery(results, format) {
         if (format === 'time_series') {
-            return this._toTimeSeries(results);
+            if (!results.rows) {
+                return {data: []};
+            }
+            return ResponseParser._toTimeSeries(results);
         } else {
-            return this._toTable(results);
+            return ResponseParser._toTable(results);
         }
     }
 
-    _toTimeSeries(results) {
-        if (!results.rows) {
-            return {data: []};
-        }
+    static _toTimeSeries(results) {
         let timeIndex = -1;
         let metricIndex = -1;
         let valueIndex = -1;
@@ -111,10 +111,10 @@ export default class ResponseParser {
         if (timeIndex === -1) {
             throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
         }
-       return ResponseParser._buildDatapoints(results,timeIndex,metricIndex,valueIndex);
+       return ResponseParser._buildDataPoints(results,timeIndex,metricIndex,valueIndex);
     }
 
-    static _buildDatapoints(results, timeIndex, metricIndex, valueIndex){
+    static _buildDataPoints(results, timeIndex, metricIndex, valueIndex){
         const data = [];
         for (const row of results.rows) {
             if (row) {
@@ -126,7 +126,7 @@ export default class ResponseParser {
         }
         return {data: data};
     }
-    _toTable(results) {
+    static _toTable(results) {
         const data = [];
         let columns = [];
         for (let i = 0; i < results.schema.fields.length; i++) {

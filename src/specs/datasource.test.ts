@@ -862,7 +862,7 @@ describe('BigQueryDatasource', () => {
         };
 
 
-        results = new ResponseParser(null).parseDataQuery(response, 'table');
+        results = ResponseParser.parseDataQuery(response, 'table');
         it('should return a table', () => {
             expect(results.data[0].columns.length).toBe(2);
             expect(results.data[0].rows.length).toBe(3);
@@ -933,7 +933,7 @@ describe('BigQueryDatasource', () => {
         };
 
 
-        results = new ResponseParser(null).parseDataQuery(response, 'time_series');
+        results = ResponseParser.parseDataQuery(response, 'time_series');
         it('should return a table', () => {
             expect(results.data[0].datapoints.length).toBe(3);
             expect(results.data[0].datapoints[0][0]).toBe("37.7753058");
