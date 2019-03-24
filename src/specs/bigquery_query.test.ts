@@ -206,6 +206,47 @@ describe('BigQueryQuery', () => {
 
     describe('escapeLiteral', () => {
         let res = BigQueryQuery.escapeLiteral("'a");
-        expect(res === "''a");
+        expect(BigQueryQuery.escapeLiteral("'a")).toBe("''a");
+    });
+    describe('macros', () => {
+        const target = {
+            timeColumn: 't',
+            table: 'table',
+            select: [[{type: 'column', params: ['value']}]],
+            where: [],
+            rawSql: "$__timeGroupAlias(start_date,1d), $__timeGroup(start_date,1m) WHERE $__timeFilter(start_date)"
+        };
+        const query = new BigQueryQuery(target, templateSrv);
+        let options = {
+            "timezone": "browser",
+            "panelId": 2,
+            "dashboardId": null,
+            "range": {"from": "2017-03-24T07:20:12.788Z", "to": "2019-03-24T08:20:12.788Z", "raw": {"from": "now-2y", "to": "now"}},
+            "rangeRaw": {"from": "now-2y", "to": "now"},
+            "interval": "12h",
+            "intervalMs": 43200000,
+            "targets": [{
+                "refId": "A",
+                "format": "time_series",
+                "timeColumn": "start_date",
+                "metricColumn": "none",
+                "group": [{"type": "time", "params": ["$__interval", "none"]}],
+                "where": [{"type": "macro", "name": "$__timeFilter", "params": []}],
+                "select": [[{"type": "column", "params": ["trip_id"]}, {"type": "aggregate", "params": ["count"]}, {
+                    "type": "alias",
+                    "params": ["trip_id"]
+                }]],
+                "rawQuery": false,
+                "rawSql": "#standardSQL\nSELECT\n $__timeGroupAlias(start_date,$__interval),\n  count(trip_id) AS trip_id\nFROM sss.bikeshare_trips\nWHERE\n  $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1",
+                "project": "aviv-playground",
+                "dataset": "sss",
+                "table": "bikeshare_trips"
+            }],
+            "maxDataPoints": 960,
+            "scopedVars": {"__interval": {"text": "12h", "value": "12h"}, "__interval_ms": {"text": 43200000, "value": 43200000}}
+        };
+        it('Check macros', () => {
+            expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(t), 86400) * 86400), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(t), 60) * 60) WHERE t BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)');
+        });
     });
 });
