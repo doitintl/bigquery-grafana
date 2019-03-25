@@ -215,9 +215,11 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     tableChanged() {
+        this.target.sharded = false;
         this.target.table = this.tableSegment.value;
+        this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
         let sharded = this.target.table.indexOf("_YYYYMMDD");
-        if (sharded ! -1) {
+        if (sharded > -1) {
             this.target.table = this.target.table.substring(0, sharded+1) + "*";
             this.target.sharded = true;
         }
