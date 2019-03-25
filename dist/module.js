@@ -33929,7 +33929,7 @@ function () {
 
     if (this.hasMetricColumn()) {
       query += ',2';
-    } //query += '\nLIMIT 15';
+    } //query += '\nLIMIT 2';
 
 
     if (this.isWindow) {
@@ -35882,7 +35882,9 @@ function () {
     (0, _lodashEs.each)(results.rows, function (ser) {
       var r = [];
       (0, _lodashEs.each)(ser, function (v) {
-        r.push(v);
+        for (var i = 0; i < v.length; i++) {
+          r.push(v[i].v);
+        }
       });
       rows.push(r);
     });

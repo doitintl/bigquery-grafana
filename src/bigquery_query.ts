@@ -286,7 +286,7 @@ export default class BigQueryQuery {
         if (this.hasMetricColumn()) {
             query += ',2';
         }
-        //query += '\nLIMIT 15';
+        //query += '\nLIMIT 2';
         if (this.isWindow) {
             query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
             query = query + ")" + this.groupBy + " order by 1";

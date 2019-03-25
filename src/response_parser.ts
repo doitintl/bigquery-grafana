@@ -144,16 +144,19 @@ export default class ResponseParser {
         return {data: data};
     }
     static _toTable(results) {
-        const data = [];
+        let data = [];
         let columns = [];
         for (let i = 0; i < results.schema.fields.length; i++) {
-            columns.push({"text": results.schema.fields[i].name, "type": results.schema.fields[i].type});
+            columns.push({"text": results.schema.fields[i].name,
+                "type": results.schema.fields[i].type});
         }
         let rows = [];
         each(results.rows, function (ser) {
             let r = [];
             each(ser, function (v) {
-                r.push(v);
+                for (let i = 0; i< v.length; i++) {
+                    r.push(v[i].v);
+                }
             });
             rows.push(r);
         });
@@ -177,7 +180,6 @@ export default class ResponseParser {
 
     transformAnnotationResponse(options, data) {
         const table = data.data.results[options.annotation.name].tables[0];
-
         let timeColumnIndex = -1;
         const titleColumnIndex = -1;
         let textColumnIndex = -1;
