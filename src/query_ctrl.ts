@@ -203,6 +203,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     datasetChanged() {
         this.target.dataset = this.datasetSegment.value;
+        this.target.sharded = false;
         this.applySegment(this.tableSegment, this.fakeSegment('select table'));
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
     }
@@ -215,6 +216,12 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     tableChanged() {
         this.target.table = this.tableSegment.value;
+        let sharded = this.target.table.indexOf("_YYYYMMDD");
+        if (sharded ! -1) {
+            this.target.table = this.target.table.substring(0, sharded+1) + "*";
+            this.target.sharded = true;
+        }
+
         this.target.where = [];
         this.target.group = [];
         this.updateProjection();
@@ -303,7 +310,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                     expandable: segment.expandable,
                 });
             });
-
             if (config.addTemplateVars) {
                 for (const variable of this.templateSrv.variables) {
                     let value;
@@ -311,7 +317,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                     if (config.templateQuoter && variable.multi === false) {
                         value = config.templateQuoter(value);
                     }
-
                     segments.unshift(
                         this.uiSegmentSrv.newSegment({
                             type: 'template',
@@ -325,7 +330,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             if (config.addNone) {
                 segments.unshift(this.uiSegmentSrv.newSegment({type: 'template', value: 'none', expandable: true}));
             }
-
             return segments;
         };
     }

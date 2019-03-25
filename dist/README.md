@@ -25,6 +25,7 @@ Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/in
  * Additional functions
  * Table view
  * Annotations
+ * Sharded tables (`tablename_YYYYMMDD`)
  
  
 ## Adding the data source to Grafana

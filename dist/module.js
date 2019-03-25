@@ -33861,6 +33861,14 @@ function () {
       query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
     }
 
+    if (this.target.sharded) {
+      var from = this.templateSrv.timeRange.from._d.getFullYear().toString() + this.templateSrv.timeRange.from._d.getMonth().toString() + this.templateSrv.timeRange.from._d.getDate().toString();
+
+      var to = this.templateSrv.timeRange.to._d.getFullYear().toString() + this.templateSrv.timeRange.to._d.getMonth().toString() + this.templateSrv.timeRange.to._d.getDate().toString();
+
+      query += "AND  _TABLE_SUFFIX BETWEEN \'" + from + "\' AND \'" + to + "\' ";
+    }
+
     return query;
   };
 
@@ -33914,7 +33922,7 @@ function () {
     }
 
     query += this.buildValueColumns();
-    query += '\nFROM ' + this.target.dataset + "." + this.target.table;
+    query += '\nFROM ' + "\`" + this.target.dataset + "." + this.target.table + "\`";
     query += this.buildWhereClause();
     query += this.buildGroupClause();
     query += '\nORDER BY 1';
@@ -34613,7 +34621,7 @@ function () {
           case 4:
             return [2
             /*return*/
-            , new _response_parser2.default(this.$q).parseTabelFields(fields, filter)];
+            , _response_parser2.default.parseTabelFields(fields, filter)];
         }
       });
     });
@@ -35087,6 +35095,7 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.datasetChanged = function () {
     this.target.dataset = this.datasetSegment.value;
+    this.target.sharded = false;
     this.applySegment(this.tableSegment, this.fakeSegment('select table'));
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
   };
@@ -35099,6 +35108,13 @@ function (_super) {
     var _this = this;
 
     this.target.table = this.tableSegment.value;
+    var sharded = this.target.table.indexOf("_YYYYMMDD");
+
+    if (sharded - 1) {
+      this.target.table = this.target.table.substring(0, sharded + 1) + "*";
+      this.target.sharded = true;
+    }
+
     this.target.where = [];
     this.target.group = [];
     this.updateProjection();
@@ -35695,8 +35711,8 @@ function () {
     for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
       var prj = results_1[_i];
       projects.push({
-        value: prj.id,
-        text: prj.id
+        text: prj.id,
+        value: prj.id
       });
     }
 
@@ -35722,24 +35738,47 @@ function () {
   };
 
   ResponseParser.prototype.parseTabels = function (results) {
-    var tabels = [];
+    var tables = [];
 
     if (!results || results.length === 0) {
-      return tabels;
+      return tables;
     }
 
     for (var _i = 0, results_3 = results; _i < results_3.length; _i++) {
       var tbl = results_3[_i];
-      tabels.push({
+      tables.push({
         value: tbl.tableReference.tableId,
         text: tbl.tableReference.tableId
       });
     }
 
-    return tabels;
+    return this._handelWildCardTables(tables);
   };
 
-  ResponseParser.prototype.parseTabelFields = function (results, filter) {
+  ResponseParser.prototype._handelWildCardTables = function (tables) {
+    var sorted = new Map();
+    var new_tables = [];
+
+    for (var _i = 0, tables_1 = tables; _i < tables_1.length; _i++) {
+      var t = tables_1[_i];
+
+      if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)) {
+        sorted = sorted.set(t.value, t.text);
+      } else {
+        sorted.set(t.text.substring(0, t.text.length - 8) + 'YYYYMMDD', t.text.substring(0, t.text.length - 8) + 'YYYYMMDD');
+      }
+    }
+
+    sorted.forEach(function (value, key) {
+      new_tables = new_tables.concat({
+        key: key,
+        text: value
+      });
+    });
+    return new_tables;
+  };
+
+  ResponseParser.parseTabelFields = function (results, filter) {
     var fields = [];
 
     if (!results || results.length === 0) {

@@ -194,13 +194,13 @@ describe('BigQueryQuery', () => {
             select: [[{type: 'column', params: ['value']}]],
             where: [],
         };
-        let result = '#standardSQL\nSELECT\n t AS time,\n  value\nFROM undefined.table\nORDER BY 1';
+        let result = '#standardSQL\nSELECT\n t AS time,\n  value\nFROM `undefined.table`\nORDER BY 1';
         const query = new BigQueryQuery(target, templateSrv);
 
         expect(query.buildQuery()).toBe(result);
 
         query.target.metricColumn = 'm';
-        result = '#standardSQL\nSELECT\n t AS time,\n  m AS metric,\n  value\nFROM undefined.table\nORDER BY 1,2';
+        result = '#standardSQL\nSELECT\n t AS time,\n  m AS metric,\n  value\nFROM `undefined.table`\nORDER BY 1,2';
         expect(query.buildQuery()).toBe(result);
     });
 
