@@ -227,6 +227,11 @@ export default class BigQueryQuery {
         if (conditions.length > 0) {
             query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
         }
+        if (this.target.sharded) {
+            let from = (this.templateSrv.timeRange.from._d.getFullYear().toString()+this.templateSrv.timeRange.from._d.getMonth().toString()+this.templateSrv.timeRange.from._d.getDate().toString());
+            let to = (this.templateSrv.timeRange.to._d.getFullYear().toString()+this.templateSrv.timeRange.to._d.getMonth().toString()+this.templateSrv.timeRange.to._d.getDate().toString());
+            query += "AND  _TABLE_SUFFIX BETWEEN \'" + from +  "\' AND \'" + to + "\' ";
+        }
         return query;
     }
 
@@ -272,7 +277,7 @@ export default class BigQueryQuery {
         }
         query += this.buildValueColumns();
 
-        query += '\nFROM ' + this.target.dataset + "." + this.target.table;
+        query += '\nFROM ' + "\`" + this.target.dataset + "." + this.target.table + "\`" ;
 
         query += this.buildWhereClause();
         query += this.buildGroupClause();

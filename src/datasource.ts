@@ -235,7 +235,7 @@ export class BigQueryDatasource {
             queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
             fields = fields.concat(queryResults.data.schema.fields);
         }
-        return new ResponseParser(this.$q).parseTabelFields(fields, filter);
+        return ResponseParser.parseTabelFields(fields, filter);
     }
 
     async getDefaultProject() {

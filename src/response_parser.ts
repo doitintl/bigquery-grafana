@@ -25,7 +25,7 @@ export default class ResponseParser {
             return projects;
         }
         for (let prj of results) {
-            projects.push({value: prj.id, text: prj.id});
+            projects.push({text: prj.id, value: prj.id});
         }
         return projects;
     }
@@ -43,20 +43,37 @@ export default class ResponseParser {
 
 
     parseTabels(results): ResultFormat[] {
-        const tabels: ResultFormat[] = [];
+        let tables: ResultFormat[] = [];
         if (!results ||  results.length === 0) {
-            return tabels;
+            return tables;
         }
         for (let tbl of results) {
-            tabels.push({
+            tables.push({
                 value: tbl.tableReference.tableId,
                 text: tbl.tableReference.tableId
             });
         }
-        return tabels;
+        return this._handelWildCardTables(tables);
     }
 
-    parseTabelFields(results, filter): ResultFormat[] {
+    _handelWildCardTables(tables){
+        let sorted = new Map();
+        let new_tables = [];
+        for (let t of tables){
+            if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)){
+                sorted = sorted.set(t.value, t.text);
+            } else {
+                sorted.set(t.text.substring(0, t.text.length-8)+ 'YYYYMMDD',t.text.substring(0, t.text.length-8)+ 'YYYYMMDD');
+            }
+        }
+        sorted.forEach(function(value, key) {
+
+            new_tables = new_tables.concat({key: key,text: value});
+        });
+        return new_tables;
+    }
+
+    static parseTabelFields(results, filter): ResultFormat[] {
         const fields: ResultFormat[] = [];
         if (!results || results.length === 0) {
             return fields;
