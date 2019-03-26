@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {each} from 'lodash-es';
+import {compact, each} from 'lodash-es';
 
 // API interfaces
 export interface ResultFormat {
@@ -19,7 +19,7 @@ export default class ResponseParser {
     constructor(private $q) {
     }
 
-    parseProjects(results): ResultFormat[] {
+    static parseProjects(results): ResultFormat[] {
         const projects: ResultFormat[] = [];
         if (!results || results.length === 0) {
             return projects;
@@ -30,9 +30,9 @@ export default class ResponseParser {
         return projects;
     }
 
-    parseDatasets(results): ResultFormat[] {
+    static parseDatasets(results): ResultFormat[] {
         const datasets: ResultFormat[] = [];
-        if (!results ||results.length === 0) {
+        if (!results || results.length === 0) {
             return datasets;
         }
         for (let ds of results) {
@@ -44,7 +44,7 @@ export default class ResponseParser {
 
     parseTabels(results): ResultFormat[] {
         let tables: ResultFormat[] = [];
-        if (!results ||  results.length === 0) {
+        if (!results || results.length === 0) {
             return tables;
         }
         for (let tbl of results) {
@@ -56,30 +56,53 @@ export default class ResponseParser {
         return this._handelWildCardTables(tables);
     }
 
-    _handelWildCardTables(tables){
+    _handelWildCardTables(tables) {
         let sorted = new Map();
         let new_tables = [];
-        for (let t of tables){
-            if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)){
+        for (let t of tables) {
+            if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)) {
                 sorted = sorted.set(t.value, t.text);
             } else {
-                sorted.set(t.text.substring(0, t.text.length-8)+ 'YYYYMMDD',t.text.substring(0, t.text.length-8)+ 'YYYYMMDD');
+                sorted.set(t.text.substring(0, t.text.length - 8) + 'YYYYMMDD', t.text.substring(0, t.text.length - 8) + 'YYYYMMDD');
             }
         }
-        sorted.forEach(function(value, key) {
+        sorted.forEach(function (value, key) {
 
-            new_tables = new_tables.concat({key: key,text: value});
+            new_tables = new_tables.concat({key: key, text: value});
         });
         return new_tables;
     }
 
-    static parseTabelFields(results, filter): ResultFormat[] {
+
+    static _handleRecordFileds(results, res) {
+        for (let fl of results) {
+            if (fl.type === "RECORD") {
+                for (let f of fl.fields) {
+                    if (f.type !== "RECORD") {
+                        res.push({name: fl.name + "." + f.name, type: f.type});
+                    } else {
+                        for (let ff of f.fields) {
+                            ff.name = fl.name + "." + f.name + "." + ff.name;
+                        }
+                        res = ResponseParser._handleRecordFileds(f.fields, res);
+                    }
+                }
+            } else {
+                res.push({name: fl.name, type: fl.type});
+            }
+        }
+        return res;
+    }
+
+    static parseTableFields(results, filter): ResultFormat[] {
         const fields: ResultFormat[] = [];
         if (!results || results.length === 0) {
             return fields;
         }
+        let res = [];
+        results = ResponseParser._handleRecordFileds(results, res);
         for (let fl of results) {
-            if (filter.length >0) {
+            if (filter.length > 0) {
                 for (let i = 0; i < filter.length; i++) {
                     if (filter[i] === fl.type) {
                         fields.push({
@@ -128,10 +151,10 @@ export default class ResponseParser {
         if (timeIndex === -1) {
             throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
         }
-       return ResponseParser._buildDataPoints(results,timeIndex,metricIndex,valueIndex);
+        return ResponseParser._buildDataPoints(results, timeIndex, metricIndex, valueIndex);
     }
 
-    static _buildDataPoints(results, timeIndex, metricIndex, valueIndex){
+    static _buildDataPoints(results, timeIndex, metricIndex, valueIndex) {
         const data = [];
         for (const row of results.rows) {
             if (row) {
@@ -143,18 +166,21 @@ export default class ResponseParser {
         }
         return {data: data};
     }
+
     static _toTable(results) {
         let data = [];
         let columns = [];
         for (let i = 0; i < results.schema.fields.length; i++) {
-            columns.push({"text": results.schema.fields[i].name,
-                "type": results.schema.fields[i].type});
+            columns.push({
+                "text": results.schema.fields[i].name,
+                "type": results.schema.fields[i].type
+            });
         }
         let rows = [];
         each(results.rows, function (ser) {
             let r = [];
             each(ser, function (v) {
-                for (let i = 0; i< v.length; i++) {
+                for (let i = 0; i < v.length; i++) {
                     r.push(v[i].v);
                 }
             });
