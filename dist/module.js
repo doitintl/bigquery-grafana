@@ -34501,7 +34501,7 @@ function () {
           case 4:
             return [2
             /*return*/
-            , new _response_parser2.default(this.$q).parseProjects(projects)];
+            , _response_parser2.default.parseProjects(projects)];
         }
       });
     });
@@ -34541,7 +34541,7 @@ function () {
           case 4:
             return [2
             /*return*/
-            , new _response_parser2.default(this.$q).parseDatasets(datasets)];
+            , _response_parser2.default.parseDatasets(datasets)];
         }
       });
     });
@@ -34621,7 +34621,7 @@ function () {
           case 4:
             return [2
             /*return*/
-            , _response_parser2.default.parseTabelFields(fields, filter)];
+            , _response_parser2.default.parseTableFields(fields, filter)];
         }
       });
     });
@@ -35703,7 +35703,7 @@ function () {
     this.$q = $q;
   }
 
-  ResponseParser.prototype.parseProjects = function (results) {
+  ResponseParser.parseProjects = function (results) {
     var projects = [];
 
     if (!results || results.length === 0) {
@@ -35721,7 +35721,7 @@ function () {
     return projects;
   };
 
-  ResponseParser.prototype.parseDatasets = function (results) {
+  ResponseParser.parseDatasets = function (results) {
     var datasets = [];
 
     if (!results || results.length === 0) {
@@ -35780,15 +35780,51 @@ function () {
     return new_tables;
   };
 
-  ResponseParser.parseTabelFields = function (results, filter) {
+  ResponseParser._handleRecordFileds = function (results, res) {
+    for (var _i = 0, results_4 = results; _i < results_4.length; _i++) {
+      var fl = results_4[_i];
+
+      if (fl.type === "RECORD") {
+        for (var _a = 0, _b = fl.fields; _a < _b.length; _a++) {
+          var f = _b[_a];
+
+          if (f.type !== "RECORD") {
+            res.push({
+              name: fl.name + "." + f.name,
+              type: f.type
+            });
+          } else {
+            for (var _c = 0, _d = f.fields; _c < _d.length; _c++) {
+              var ff = _d[_c];
+              ff.name = fl.name + "." + f.name + "." + ff.name;
+            }
+
+            res = ResponseParser._handleRecordFileds(f.fields, res);
+          }
+        }
+      } else {
+        res.push({
+          name: fl.name,
+          type: fl.type
+        });
+      }
+    }
+
+    return res;
+  };
+
+  ResponseParser.parseTableFields = function (results, filter) {
     var fields = [];
 
     if (!results || results.length === 0) {
       return fields;
     }
 
-    for (var _i = 0, results_4 = results; _i < results_4.length; _i++) {
-      var fl = results_4[_i];
+    var res = [];
+    results = ResponseParser._handleRecordFileds(results, res);
+
+    for (var _i = 0, results_5 = results; _i < results_5.length; _i++) {
+      var fl = results_5[_i];
 
       if (filter.length > 0) {
         for (var i = 0; i < filter.length; i++) {

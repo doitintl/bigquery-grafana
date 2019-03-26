@@ -200,7 +200,7 @@ export class BigQueryDatasource {
             queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
             projects = projects.concat(queryResults.data.projects);
         }
-        return new ResponseParser(this.$q).parseProjects(projects);
+        return ResponseParser.parseProjects(projects);
 
     }
 
@@ -212,7 +212,7 @@ export class BigQueryDatasource {
             queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
             datasets = datasets.concat(queryResults.data.datasets);
         }
-        return new ResponseParser(this.$q).parseDatasets(datasets);
+        return ResponseParser.parseDatasets(datasets);
     }
 
     async getTables(projectName, datasetName): Promise<ResultFormat[]> {
@@ -235,7 +235,7 @@ export class BigQueryDatasource {
             queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
             fields = fields.concat(queryResults.data.schema.fields);
         }
-        return ResponseParser.parseTabelFields(fields, filter);
+        return ResponseParser.parseTableFields(fields, filter);
     }
 
     async getDefaultProject() {
