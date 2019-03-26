@@ -573,7 +573,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 switch (evt.param.name) {
                     case 'left':
                         return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-                            ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'])
+                            [])
                             .then(this.transformToSegments({}))
                             .catch(this.handleQueryError.bind(this));
                     case 'right':
