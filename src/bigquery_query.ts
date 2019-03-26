@@ -22,7 +22,6 @@ export default class BigQueryQuery {
         target.timeColumn = target.timeColumn || '-- time --';
         target.timeColumnType = target.timeColumnType || 'TIMESTAMP';
         target.metricColumn = target.metricColumn || 'none';
-        target.valueColumn = target.valueColumn || 'none';
         target.group = target.group || [];
         target.where = target.where || [{type: 'macro', name: '$__timeFilter', params: []}];
         target.select = target.select || [[{type: 'column', params: ['-- value --']}]];
@@ -301,7 +300,7 @@ export default class BigQueryQuery {
         if (this.hasMetricColumn()) {
             query += ',2';
         }
-        //query += '\nLIMIT 2';
+        //query += '\nLIMIT 10';
         if (this.isWindow) {
             query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
             query = query + ")" + this.groupBy + " order by 1";

@@ -30,7 +30,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     tableSegment: any;
     whereAdd: any;
     timeColumnSegment: any;
-    valueColumnSegment: any;
     metricColumnSegment: any;
     selectMenu: any[];
     selectParts: SqlPart[][];
@@ -75,7 +74,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
         this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
         this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
-        this.valueColumnSegment = uiSegmentSrv.newSegment(this.target.valueColumn);
 
         this.buildSelectMenu();
         this.whereAdd = this.uiSegmentSrv.newPlusButton();
@@ -209,7 +207,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.target.sharded = false;
         this.applySegment(this.tableSegment, this.fakeSegment('select table'));
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
-        this.applySegment(this.valueColumnSegment, this.fakeSegment('-- none --'));
     }
 
     getTableSegments() {
@@ -222,8 +219,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.target.sharded = false;
         this.target.table = this.tableSegment.value;
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
-        this.applySegment(this.metricColumnSegment, this.fakeSegment('none'));
-        this.applySegment(this.valueColumnSegment, this.fakeSegment('none'));
         let sharded = this.target.table.indexOf("_YYYYMMDD");
         if (sharded > -1) {
             this.target.table = this.target.table.substring(0, sharded + 1) + "*";
@@ -239,10 +234,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.metricColumnSegment.value = segment.value;
         this.target.metricColumn = 'none';
 
-        const vsegment = this.uiSegmentSrv.newSegment('none');
-        this.valueColumnSegment.html = vsegment.html;
-        this.valueColumnSegment.value = vsegment.value;
-        this.target.valueColumn = 'none';
         const task1 = this.getTimeColumnSegments().then(result => {
             // check if time column is still valid
             if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
@@ -476,7 +467,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                     case 'aggregate':
                         return;
                     case 'column':
-                        return this.getValueColumnSegments().then(this.transformToSegments({}));
+                        return this.getValueColumnSegments();
                 }
             }
             case 'part-param-changed': {

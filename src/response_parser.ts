@@ -161,7 +161,8 @@ export default class ResponseParser {
                 const epoch = Number(row.f[timeIndex].v) * 1000;
                 const metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
                 const bucket = ResponseParser.findOrCreateBucket(data, metricName);
-                bucket.datapoints.push([row.f[valueIndex].v, epoch]);
+                bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
+                bucket.refId = 'A';
             }
         }
         return {data: data};
