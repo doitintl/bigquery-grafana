@@ -20,8 +20,9 @@ export default class BigQueryQuery {
 
         target.format = target.format || 'time_series';
         target.timeColumn = target.timeColumn || '-- time --';
+        target.timeColumnType = target.timeColumnType || 'TIMESTAMP';
         target.metricColumn = target.metricColumn || 'none';
-
+        target.valueColumn = target.valueColumn || 'none';
         target.group = target.group || [];
         target.where = target.where || [{type: 'macro', name: '$__timeFilter', params: []}];
         target.select = target.select || [[{type: 'column', params: ['-- value --']}]];
@@ -211,7 +212,7 @@ export default class BigQueryQuery {
         }
         return query;
     }
-     static formatDateToString(date){
+     static formatDateToString(date, separator = '', addtime = false){
         // 01, 02, 03, ... 29, 30, 31
          const DD = (date.getDate() < 10 ? '0' : '') + date.getDate();
          // 01, 02, 03, ... 10, 11, 12
@@ -220,7 +221,11 @@ export default class BigQueryQuery {
          const YYYY = date.getFullYear();
 
          // create the format you want
-        return (YYYY + MM + DD);
+         let dateStr = (YYYY + separator +  MM + separator + DD)
+         if (addtime === true) {
+             dateStr += ' ' + date.toTimeString().substr(0,8);
+         }
+        return dateStr;
     }
     buildWhereClause() {
         let query = '';
@@ -317,8 +322,19 @@ export default class BigQueryQuery {
     }
 
     replaceTimeFilters(q, options) {
-        const from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
-        const to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
+        let to, from = '';
+        if (this.target.timeColumnType === 'DATE') {
+            from = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-') + "\'" ;
+            to = "\'" +  BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-') + "\'";
+        } else if (this.target.timeColumnType === 'DATETIME') {
+            from = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-',  true) + "\'" ;
+            to = "\'" +  BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-',  true) + "\'";
+
+        } else {
+            from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
+            to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
+        }
+
         const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
         return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
     }

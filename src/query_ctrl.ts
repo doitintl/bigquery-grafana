@@ -30,6 +30,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     tableSegment: any;
     whereAdd: any;
     timeColumnSegment: any;
+    valueColumnSegment: any;
     metricColumnSegment: any;
     selectMenu: any[];
     selectParts: SqlPart[][];
@@ -74,6 +75,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
         this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
         this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
+        this.valueColumnSegment = uiSegmentSrv.newSegment(this.target.valueColumn);
 
         this.buildSelectMenu();
         this.whereAdd = this.uiSegmentSrv.newPlusButton();
@@ -195,6 +197,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
 
     }
+
     getDatasetSegments() {
         return this.datasource.getDatasets(this.target.project)
             .then(this.uiSegmentSrv.transformToSegments(false))
@@ -206,6 +209,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.target.sharded = false;
         this.applySegment(this.tableSegment, this.fakeSegment('select table'));
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+        this.applySegment(this.valueColumnSegment, this.fakeSegment('-- none --'));
     }
 
     getTableSegments() {
@@ -218,9 +222,11 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.target.sharded = false;
         this.target.table = this.tableSegment.value;
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+        this.applySegment(this.metricColumnSegment, this.fakeSegment('none'));
+        this.applySegment(this.valueColumnSegment, this.fakeSegment('none'));
         let sharded = this.target.table.indexOf("_YYYYMMDD");
         if (sharded > -1) {
-            this.target.table = this.target.table.substring(0, sharded+1) + "*";
+            this.target.table = this.target.table.substring(0, sharded + 1) + "*";
             this.target.sharded = true;
         }
 
@@ -233,6 +239,10 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.metricColumnSegment.value = segment.value;
         this.target.metricColumn = 'none';
 
+        const vsegment = this.uiSegmentSrv.newSegment('none');
+        this.valueColumnSegment.html = vsegment.html;
+        this.valueColumnSegment.value = vsegment.value;
+        this.target.valueColumn = 'none';
         const task1 = this.getTimeColumnSegments().then(result => {
             // check if time column is still valid
             if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
@@ -242,6 +252,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             }
             return this.timeColumnChanged(false);
         });
+
         const task2 = this.getValueColumnSegments().then(result => {
             if (result.length > 0) {
                 this.target.select = [[{type: 'column', params: [result[0].text]}]];
@@ -259,17 +270,32 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     getValueColumnSegments() {
-        return this._getColumnSegments(['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT','INTEGER']);
+        return this._getColumnSegments(['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']);
     }
 
-    _getColumnSegments(filter){
+    _getColumnSegments(filter) {
         return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
             filter)
             .then(this.uiSegmentSrv.transformToSegments(false))
             .catch(this.handleQueryError.bind(this));
     }
-    timeColumnChanged(refresh?: boolean) {
+
+    async _getDateFieldType() {
+        let res = '';
+        await this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
+            ['DATE', 'TIMESTAMP', 'DATETIME']).then(result => {
+            for (let f of result) {
+                if (f.text === this.target.timeColumn) {
+                    res = f.value;
+                }
+            }
+        });
+        return res;
+    }
+
+    async timeColumnChanged(refresh?: boolean) {
         this.target.timeColumn = this.timeColumnSegment.value;
+        this.target.timeColumnType = await this._getDateFieldType();
         let partModel;
         partModel = sqlPart.create({type: 'macro', name: '$__timeFilter', params: []});
         this.setwWereParts(partModel);
@@ -278,7 +304,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             this.panelCtrl.refresh();
         }
     }
-
     getMetricColumnSegments() {
         return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['STRING', 'BYTES'])
             .then(this.uiSegmentSrv.transformToSegments(false))
@@ -291,7 +316,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     onDataReceived(dataList) {
-      return;
+        return;
     }
 
     onDataError(err) {
@@ -449,9 +474,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             case 'get-param-options': {
                 switch (part.def.type) {
                     case 'aggregate':
-                        return ;
+                        return;
                     case 'column':
-                        return this.getValueColumnSegments();
+                        return this.getValueColumnSegments().then(this.transformToSegments({}));
                 }
             }
             case 'part-param-changed': {
@@ -507,6 +532,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             this.groupParts.push(partModel);
         }
     }
+
     addGroup(partType, value) {
         this._setgroupParts(partType, value);
         // add aggregates when adding group by
@@ -551,7 +577,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                             .then(this.transformToSegments({}))
                             .catch(this.handleQueryError.bind(this));
                     case 'right':
-                            return this.$q.when([]);
+                        return this.$q.when([]);
                     case 'op':
                         return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=']));
                     default:
@@ -582,7 +608,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         options.push(this.uiSegmentSrv.newSegment({type: 'expression', value: 'Expression'}));
         return this.$q.when(options);
     }
-    setwWereParts(partModel){
+
+    setwWereParts(partModel) {
         if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
             // replace current macro
             this.whereParts[0] = partModel;
@@ -590,6 +617,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             this.whereParts.splice(0, 0, partModel);
         }
     }
+
     addWhereAction(part, index) {
         switch (this.whereAdd.type) {
             case 'macro': {

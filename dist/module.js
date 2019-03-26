@@ -33600,7 +33600,9 @@ function () {
     this.tmpcost = '';
     target.format = target.format || 'time_series';
     target.timeColumn = target.timeColumn || '-- time --';
+    target.timeColumnType = target.timeColumnType || 'TIMESTAMP';
     target.metricColumn = target.metricColumn || 'none';
+    target.valueColumn = target.valueColumn || 'none';
     target.group = target.group || [];
     target.where = target.where || [{
       type: 'macro',
@@ -33840,15 +33842,29 @@ function () {
     return query;
   };
 
-  BigQueryQuery.formatDateToString = function (date) {
-    // 01, 02, 03, ... 29, 30, 31
+  BigQueryQuery.formatDateToString = function (date, separator, addtime) {
+    if (separator === void 0) {
+      separator = '';
+    }
+
+    if (addtime === void 0) {
+      addtime = false;
+    } // 01, 02, 03, ... 29, 30, 31
+
+
     var DD = (date.getDate() < 10 ? '0' : '') + date.getDate(); // 01, 02, 03, ... 10, 11, 12
 
     var MM = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1); // 1970, 1971, ... 2015, 2016, ...
 
     var YYYY = date.getFullYear(); // create the format you want
 
-    return YYYY + MM + DD;
+    var dateStr = YYYY + separator + MM + separator + DD;
+
+    if (addtime === true) {
+      dateStr += ' ' + date.toTimeString().substr(0, 8);
+    }
+
+    return dateStr;
   };
 
   BigQueryQuery.prototype.buildWhereClause = function () {
@@ -33962,8 +33978,20 @@ function () {
   };
 
   BigQueryQuery.prototype.replaceTimeFilters = function (q, options) {
-    var from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
-    var to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
+    var to,
+        from = '';
+
+    if (this.target.timeColumnType === 'DATE') {
+      from = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-') + "\'";
+      to = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-') + "\'";
+    } else if (this.target.timeColumnType === 'DATETIME') {
+      from = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true) + "\'";
+      to = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true) + "\'";
+    } else {
+      from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
+      to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
+    }
+
     var range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
     return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
   };
@@ -34918,6 +34946,7 @@ function (_super) {
 
     _this.timeColumnSegment = uiSegmentSrv.newSegment(_this.target.timeColumn);
     _this.metricColumnSegment = uiSegmentSrv.newSegment(_this.target.metricColumn);
+    _this.valueColumnSegment = uiSegmentSrv.newSegment(_this.target.valueColumn);
 
     _this.buildSelectMenu();
 
@@ -35107,6 +35136,7 @@ function (_super) {
     this.target.sharded = false;
     this.applySegment(this.tableSegment, this.fakeSegment('select table'));
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.applySegment(this.valueColumnSegment, this.fakeSegment('-- none --'));
   };
 
   BigQueryQueryCtrl.prototype.getTableSegments = function () {
@@ -35119,6 +35149,8 @@ function (_super) {
     this.target.sharded = false;
     this.target.table = this.tableSegment.value;
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.applySegment(this.metricColumnSegment, this.fakeSegment('none'));
+    this.applySegment(this.valueColumnSegment, this.fakeSegment('none'));
     var sharded = this.target.table.indexOf("_YYYYMMDD");
 
     if (sharded > -1) {
@@ -35133,6 +35165,10 @@ function (_super) {
     this.metricColumnSegment.html = segment.html;
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
+    var vsegment = this.uiSegmentSrv.newSegment('none');
+    this.valueColumnSegment.html = vsegment.html;
+    this.valueColumnSegment.value = vsegment.value;
+    this.target.valueColumn = 'none';
     var task1 = this.getTimeColumnSegments().then(function (result) {
       // check if time column is still valid
       if (result.length > 0 && !_lodash2.default.find(result, function (r) {
@@ -35173,20 +35209,72 @@ function (_super) {
     return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, filter).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
   };
 
-  BigQueryQueryCtrl.prototype.timeColumnChanged = function (refresh) {
-    this.target.timeColumn = this.timeColumnSegment.value;
-    var partModel;
-    partModel = _sql_part2.default.create({
-      type: 'macro',
-      name: '$__timeFilter',
-      params: []
-    });
-    this.setwWereParts(partModel);
-    this.updatePersistedParts();
+  BigQueryQueryCtrl.prototype._getDateFieldType = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var res;
 
-    if (refresh !== false) {
-      this.panelCtrl.refresh();
-    }
+      var _this = this;
+
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            res = '';
+            return [4
+            /*yield*/
+            , this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['DATE', 'TIMESTAMP', 'DATETIME']).then(function (result) {
+              for (var _i = 0, result_1 = result; _i < result_1.length; _i++) {
+                var f = result_1[_i];
+
+                if (f.text === _this.target.timeColumn) {
+                  res = f.value;
+                }
+              }
+            })];
+
+          case 1:
+            _a.sent();
+
+            return [2
+            /*return*/
+            , res];
+        }
+      });
+    });
+  };
+
+  BigQueryQueryCtrl.prototype.timeColumnChanged = function (refresh) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var _a, partModel;
+
+      return tslib_1.__generator(this, function (_b) {
+        switch (_b.label) {
+          case 0:
+            this.target.timeColumn = this.timeColumnSegment.value;
+            _a = this.target;
+            return [4
+            /*yield*/
+            , this._getDateFieldType()];
+
+          case 1:
+            _a.timeColumnType = _b.sent();
+            partModel = _sql_part2.default.create({
+              type: 'macro',
+              name: '$__timeFilter',
+              params: []
+            });
+            this.setwWereParts(partModel);
+            this.updatePersistedParts();
+
+            if (refresh !== false) {
+              this.panelCtrl.refresh();
+            }
+
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
   };
 
   BigQueryQueryCtrl.prototype.getMetricColumnSegments = function () {
@@ -35408,7 +35496,7 @@ function (_super) {
               return;
 
             case 'column':
-              return this.getValueColumnSegments();
+              return this.getValueColumnSegments().then(this.transformToSegments({}));
           }
         }
 
