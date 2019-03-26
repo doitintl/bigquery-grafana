@@ -33840,6 +33840,17 @@ function () {
     return query;
   };
 
+  BigQueryQuery.formatDateToString = function (date) {
+    // 01, 02, 03, ... 29, 30, 31
+    var DD = (date.getDate() < 10 ? '0' : '') + date.getDate(); // 01, 02, 03, ... 10, 11, 12
+
+    var MM = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1); // 1970, 1971, ... 2015, 2016, ...
+
+    var YYYY = date.getFullYear(); // create the format you want
+
+    return YYYY + MM + DD;
+  };
+
   BigQueryQuery.prototype.buildWhereClause = function () {
     var _this = this;
 
@@ -33862,11 +33873,9 @@ function () {
     }
 
     if (this.target.sharded) {
-      var from = this.templateSrv.timeRange.from._d.getFullYear().toString() + this.templateSrv.timeRange.from._d.getMonth().toString() + this.templateSrv.timeRange.from._d.getDate().toString();
-
-      var to = this.templateSrv.timeRange.to._d.getFullYear().toString() + this.templateSrv.timeRange.to._d.getMonth().toString() + this.templateSrv.timeRange.to._d.getDate().toString();
-
-      query += "AND  _TABLE_SUFFIX BETWEEN \'" + from + "\' AND \'" + to + "\' ";
+      var from = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d);
+      var to = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d);
+      query += " AND  _TABLE_SUFFIX BETWEEN \'" + from + "\' AND \'" + to + "\' ";
     }
 
     return query;
