@@ -211,7 +211,17 @@ export default class BigQueryQuery {
         }
         return query;
     }
+     static formatDateToString(date){
+        // 01, 02, 03, ... 29, 30, 31
+         const DD = (date.getDate() < 10 ? '0' : '') + date.getDate();
+         // 01, 02, 03, ... 10, 11, 12
+         const MM = ((date.getMonth() + 1) < 10 ? '0' : '') + (date.getMonth() + 1);
+         // 1970, 1971, ... 2015, 2016, ...
+         const YYYY = date.getFullYear();
 
+         // create the format you want
+        return (YYYY + MM + DD);
+    }
     buildWhereClause() {
         let query = '';
         const conditions = _.map(this.target.where, (tag, index) => {
@@ -228,13 +238,9 @@ export default class BigQueryQuery {
             query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
         }
         if (this.target.sharded) {
-            let from = (this.templateSrv.timeRange.from._d.getFullYear().toString() +
-                this.templateSrv.timeRange.from._d.getMonth().toString() +
-                this.templateSrv.timeRange.from._d.getDate().toString());
-            let to = (this.templateSrv.timeRange.to._d.getFullYear().toString() +
-                this.templateSrv.timeRange.to._d.getMonth().toString() +
-                this.templateSrv.timeRange.to._d.getDate().toString());
-            query += "AND  _TABLE_SUFFIX BETWEEN \'" + from +  "\' AND \'" + to + "\' ";
+            let from = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d);
+            let to = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d);
+            query += " AND  _TABLE_SUFFIX BETWEEN \'" + from +  "\' AND \'" + to + "\' ";
         }
         return query;
     }
