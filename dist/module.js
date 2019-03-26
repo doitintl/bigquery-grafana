@@ -33602,7 +33602,6 @@ function () {
     target.timeColumn = target.timeColumn || '-- time --';
     target.timeColumnType = target.timeColumnType || 'TIMESTAMP';
     target.metricColumn = target.metricColumn || 'none';
-    target.valueColumn = target.valueColumn || 'none';
     target.group = target.group || [];
     target.where = target.where || [{
       type: 'macro',
@@ -33954,7 +33953,7 @@ function () {
 
     if (this.hasMetricColumn()) {
       query += ',2';
-    } //query += '\nLIMIT 2';
+    } //query += '\nLIMIT 10';
 
 
     if (this.isWindow) {
@@ -34946,7 +34945,6 @@ function (_super) {
 
     _this.timeColumnSegment = uiSegmentSrv.newSegment(_this.target.timeColumn);
     _this.metricColumnSegment = uiSegmentSrv.newSegment(_this.target.metricColumn);
-    _this.valueColumnSegment = uiSegmentSrv.newSegment(_this.target.valueColumn);
 
     _this.buildSelectMenu();
 
@@ -35136,7 +35134,6 @@ function (_super) {
     this.target.sharded = false;
     this.applySegment(this.tableSegment, this.fakeSegment('select table'));
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
-    this.applySegment(this.valueColumnSegment, this.fakeSegment('-- none --'));
   };
 
   BigQueryQueryCtrl.prototype.getTableSegments = function () {
@@ -35149,8 +35146,6 @@ function (_super) {
     this.target.sharded = false;
     this.target.table = this.tableSegment.value;
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
-    this.applySegment(this.metricColumnSegment, this.fakeSegment('none'));
-    this.applySegment(this.valueColumnSegment, this.fakeSegment('none'));
     var sharded = this.target.table.indexOf("_YYYYMMDD");
 
     if (sharded > -1) {
@@ -35165,10 +35160,6 @@ function (_super) {
     this.metricColumnSegment.html = segment.html;
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
-    var vsegment = this.uiSegmentSrv.newSegment('none');
-    this.valueColumnSegment.html = vsegment.html;
-    this.valueColumnSegment.value = vsegment.value;
-    this.target.valueColumn = 'none';
     var task1 = this.getTimeColumnSegments().then(function (result) {
       // check if time column is still valid
       if (result.length > 0 && !_lodash2.default.find(result, function (r) {
@@ -35496,7 +35487,7 @@ function (_super) {
               return;
 
             case 'column':
-              return this.getValueColumnSegments().then(this.transformToSegments({}));
+              return this.getValueColumnSegments();
           }
         }
 
@@ -35993,7 +35984,8 @@ function () {
         var epoch = Number(row.f[timeIndex].v) * 1000;
         var metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
         var bucket = ResponseParser.findOrCreateBucket(data, metricName);
-        bucket.datapoints.push([row.f[valueIndex].v, epoch]);
+        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
+        bucket.refId = 'A';
       }
     }
 
