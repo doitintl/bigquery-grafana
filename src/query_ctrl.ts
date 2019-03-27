@@ -227,6 +227,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
         this.target.where = [];
         this.target.group = [];
+        this.target.select = [[{type: 'column', params: ['-- value --']}]];
         this.updateProjection();
 
         const segment = this.uiSegmentSrv.newSegment('none');
@@ -250,7 +251,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 this.updateProjection();
             }
         });
-
         this.$q.all([task1, task2]).then(() => {
             this.panelCtrl.refresh();
         });
