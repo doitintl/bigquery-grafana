@@ -155,21 +155,21 @@ export default class ResponseParser {
     }
 
     static _buildDataPoints(results, timeIndex, metricIndex, valueIndex) {
-        const data = [];
+        const dataPoints  = [];
+        let metricName = '';
         for (const row of results.rows) {
             if (row) {
                 const epoch = Number(row.f[timeIndex].v) * 1000;
-                const metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-                const bucket = ResponseParser.findOrCreateBucket(data, metricName);
-                bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
-                bucket.refId = 'A';
+                metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
+                //const bucket = ResponseParser.findOrCreateBucket(data, metricName);
+                dataPoints.push([Number(row.f[valueIndex].v), epoch]);
+                //bucket.refId = 'A';
             }
         }
-        return {data: data};
+        return {target: metricName, datapoints: dataPoints};
     }
 
     static _toTable(results) {
-        let data = [];
         let columns = [];
         for (let i = 0; i < results.schema.fields.length; i++) {
             columns.push({
@@ -187,23 +187,13 @@ export default class ResponseParser {
             });
             rows.push(r);
         });
-        data.push({
-            "columns": columns,
-            "rows": rows,
-            "type": "table"
-        });
-        return {data: data};
+        return  {
+                "columns": columns,
+                "rows": rows,
+                "type": "table"
+            };
     }
 
-    static findOrCreateBucket(data, target): DataTarget {
-        let dataTarget = _.find(data, ['target', target]);
-        if (!dataTarget) {
-            dataTarget = {target: target, datapoints: [], refId: '', query: ''};
-            data.push(dataTarget);
-        }
-
-        return dataTarget;
-    }
 
     transformAnnotationResponse(options, data) {
         const table = data.data.results[options.annotation.name].tables[0];

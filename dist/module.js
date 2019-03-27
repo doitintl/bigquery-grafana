@@ -33953,7 +33953,7 @@ function () {
 
     if (this.hasMetricColumn()) {
       query += ',2';
-    } //query += '\nLIMIT 10';
+    } //query += '\nLIMIT 100';
 
 
     if (this.isWindow) {
@@ -34437,7 +34437,7 @@ function () {
 
   BigQueryDatasource.prototype.query = function (options) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var queries, q;
+      var queries, allQueryPromise;
 
       var _this = this;
 
@@ -34465,11 +34465,27 @@ function () {
           })];
         }
 
-        q = this.queryModel.expend_macros(options);
+        allQueryPromise = _lodash2.default.map(queries, function (query) {
+          _this.queryModel.target.rawSql = query.rawSql;
+
+          var q = _this.queryModel.expend_macros(options);
+
+          return _this.doQuery(q, options.panelId + query.refId).then(function (response) {
+            return _response_parser2.default.parseDataQuery(response, query.format);
+          });
+        });
         return [2
         /*return*/
-        , this.doQuery(q, options.panelId + options.targets[0].refId).then(function (response) {
-          return _response_parser2.default.parseDataQuery(response, options.targets[0].format);
+        , this.$q.all(allQueryPromise).then(function (responses) {
+          var data = [];
+
+          for (var i = 0; i < responses.length; i++) {
+            data.push(responses[i]);
+          }
+
+          return {
+            data: data
+          };
         })];
       });
     });
@@ -35776,13 +35792,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _lodash = __webpack_require__(/*! lodash */ "lodash");
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 var _lodashEs = __webpack_require__(/*! lodash-es */ "../node_modules/lodash-es/lodash.js");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var ResponseParser =
 /** @class */
@@ -35975,27 +35985,27 @@ function () {
   };
 
   ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndex) {
-    var data = [];
+    var dataPoints = [];
+    var metricName = '';
 
     for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
       var row = _a[_i];
 
       if (row) {
         var epoch = Number(row.f[timeIndex].v) * 1000;
-        var metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-        var bucket = ResponseParser.findOrCreateBucket(data, metricName);
-        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
-        bucket.refId = 'A';
+        metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name; //const bucket = ResponseParser.findOrCreateBucket(data, metricName);
+
+        dataPoints.push([Number(row.f[valueIndex].v), epoch]); //bucket.refId = 'A';
       }
     }
 
     return {
-      data: data
+      target: metricName,
+      datapoints: dataPoints
     };
   };
 
   ResponseParser._toTable = function (results) {
-    var data = [];
     var columns = [];
 
     for (var i = 0; i < results.schema.fields.length; i++) {
@@ -36015,30 +36025,11 @@ function () {
       });
       rows.push(r);
     });
-    data.push({
+    return {
       "columns": columns,
       "rows": rows,
       "type": "table"
-    });
-    return {
-      data: data
     };
-  };
-
-  ResponseParser.findOrCreateBucket = function (data, target) {
-    var dataTarget = _lodash2.default.find(data, ['target', target]);
-
-    if (!dataTarget) {
-      dataTarget = {
-        target: target,
-        datapoints: [],
-        refId: '',
-        query: ''
-      };
-      data.push(dataTarget);
-    }
-
-    return dataTarget;
   };
 
   ResponseParser.prototype.transformAnnotationResponse = function (options, data) {

@@ -864,10 +864,10 @@ describe('BigQueryDatasource', () => {
 
         results = ResponseParser.parseDataQuery(response, 'table');
         it('should return a table', () => {
-            expect(results.data[0].columns.length).toBe(2);
-            expect(results.data[0].rows.length).toBe(3);
-            expect(results.data[0].columns[0].text).toBe('time');
-            expect(results.data[0].columns[0].type).toBe('TIMESTAMP');
+            expect(results.columns.length).toBe(2);
+            expect(results.rows.length).toBe(3);
+            expect(results.columns[0].text).toBe('time');
+            expect(results.columns[0].type).toBe('TIMESTAMP');
 
         });
     });
@@ -935,11 +935,11 @@ describe('BigQueryDatasource', () => {
 
         results = ResponseParser.parseDataQuery(response, 'time_series');
         it('should return a table', () => {
-            expect(results.data[0].datapoints.length).toBe(3);
-            expect(results.data[0].datapoints[0][0]).toBe("37.7753058");
-            expect(results.data[0].datapoints[0][1]).toBe(1521578851000);
-            expect(results.data[0].datapoints[2][0]).toBe("37.781752");
-            expect(results.data[0].datapoints[2][1]).toBe(1521578927000);
+            expect(results.datapoints.length).toBe(3);
+            expect(results.datapoints[0][0]).toBe(37.7753058);
+            expect(results.datapoints[0][1]).toBe(1521578851000);
+            expect(results.datapoints[2][0]).toBe(37.781752);
+            expect(results.datapoints[2][1]).toBe(1521578927000);
 
         });
     });

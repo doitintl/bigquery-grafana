@@ -92,7 +92,7 @@ export class BigQueryDatasource {
 
     }
 
-    async _getQueryResults(queryResults, rows, requestId, jobId){
+    async _getQueryResults(queryResults, rows, requestId, jobId) {
         while (queryResults.data.pageToken) {
             const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
             queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
@@ -102,6 +102,7 @@ export class BigQueryDatasource {
         return rows;
 
     }
+
     async doQuery(query, requestId, maxRetries = 1) {
         if (!query) {
             return {
@@ -111,10 +112,10 @@ export class BigQueryDatasource {
         }
         let queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
         let jobId = queryResults.data.jobReference.jobId;
-        queryResults = await this._waitForJobComplete(queryResults,requestId,jobId );
+        queryResults = await this._waitForJobComplete(queryResults, requestId, jobId);
         let rows = queryResults.data.rows;
         let schema = queryResults.data.schema;
-        rows = await this._getQueryResults(queryResults,rows, requestId, jobId);
+        rows = await this._getQueryResults(queryResults, rows, requestId, jobId);
         return {
             rows: rows,
             schema: schema
@@ -138,7 +139,7 @@ export class BigQueryDatasource {
             return BigQueryQuery.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    }
+    };
 
     async query(options) {
         const queries = _.filter(options.targets, target => {
@@ -159,11 +160,23 @@ export class BigQueryDatasource {
         if (queries.length === 0) {
             return this.$q.when({data: []});
         }
-        let q = this.queryModel.expend_macros(options);
-        return this.doQuery(q, options.panelId + options.targets[0].refId).then(response => {
-            return ResponseParser.parseDataQuery(response, options.targets[0].format);
+        const allQueryPromise = _.map(queries, query => {
+            this.queryModel.target.rawSql = query.rawSql;
+            let q = this.queryModel.expend_macros(options);
+            return this.doQuery(q, options.panelId + query.refId).then(response => {
+                return ResponseParser.parseDataQuery(response, query.format);
+            });
+        });
+        return this.$q.all(allQueryPromise).then((responses): any => {
+            let data = [];
+            for (let i = 0; i < responses.length; i++){
+
+                data.push(responses[i]);
+            }
+            return  {data: data};
         });
     }
+
 
     annotationQuery(options) {
         if (!options.annotation.rawQuery) {
@@ -197,7 +210,7 @@ export class BigQueryDatasource {
         let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
         let projects = queryResults.data.projects;
         while (queryResults.data.nextPageToken) {
-            queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
+            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
             projects = projects.concat(queryResults.data.projects);
         }
         return ResponseParser.parseProjects(projects);
@@ -209,7 +222,7 @@ export class BigQueryDatasource {
         let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
         let datasets = queryResults.data.datasets;
         while (queryResults.data.nextPageToken) {
-            queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
+            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
             datasets = datasets.concat(queryResults.data.datasets);
         }
         return ResponseParser.parseDatasets(datasets);
@@ -220,7 +233,7 @@ export class BigQueryDatasource {
         let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
         let tables = queryResults.data.tables;
         while (queryResults.data.nextPageToken) {
-            queryResults = await this.doRequest(`${this.baseUrl}${path}`+ '?pageToken=' + queryResults.data.nextPageToken);
+            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
             tables = tables.concat(queryResults.data.tables);
         }
         return new ResponseParser(this.$q).parseTabels(tables);
