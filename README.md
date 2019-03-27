@@ -1,5 +1,5 @@
 
-![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=svg)
+[![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=svg)](https://github.com/doitintl/bigquery-grafana/stargazers)
 ![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=svg)
 [![Circle CI](https://circleci.com/gh/doitintl/bigquery-grafana.svg?style=svg)](https://circleci.com/gh/doitintl/bigquery-grafana)
 [![Code Climate](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/gpa.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana/coverage)
