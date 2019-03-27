@@ -15,6 +15,14 @@ Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasou
 
 OR
 
+Use the [grafana-cli](http://docs.grafana.org/plugins/installation/#installing-plugins-manually)
+
+```bash
+grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/0.1.0.zip plugins install doitintl-bigquery-datasource
+```
+
+OR
+
 Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/installation/#grafana-plugin-directory). Restart Grafana, check datasources list at http://your.grafana.instance/datasources/new, and choose BigQuery option.
 ### Features:
 
