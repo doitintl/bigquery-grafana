@@ -123,4 +123,4 @@ See the [Contribution Guide](./CONTRIBUTING.md).
 
 ## License
 
-See the [License File](./LICENSE).
+See the [License File](LICENSE.md).

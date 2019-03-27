@@ -116,3 +116,11 @@ Tests can be run with Jest:
 ```
 yarn run test
 ```
+
+## Contributing
+
+See the [Contribution Guide](./CONTRIBUTING.md).
+
+## License
+
+See the [License File](LICENSE.md).
