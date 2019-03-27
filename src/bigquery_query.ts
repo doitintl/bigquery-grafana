@@ -220,7 +220,7 @@ export default class BigQueryQuery {
          const YYYY = date.getFullYear();
 
          // create the format you want
-         let dateStr = (YYYY + separator +  MM + separator + DD)
+         let dateStr = (YYYY + separator +  MM + separator + DD);
          if (addtime === true) {
              dateStr += ' ' + date.toTimeString().substr(0,8);
          }

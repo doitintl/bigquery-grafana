@@ -139,7 +139,7 @@ export class BigQueryDatasource {
             return BigQueryQuery.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    };
+    }
 
     async query(options) {
         const queries = _.filter(options.targets, target => {
@@ -226,7 +226,7 @@ export class BigQueryDatasource {
 
     async getDatasets(projectName): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets`;
-        const data = await this.paginatedResults(path, "datasets")
+        const data = await this.paginatedResults(path, "datasets");
         return ResponseParser.parseDatasets(data);
     }
 
