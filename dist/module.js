@@ -33953,7 +33953,7 @@ function () {
 
     if (this.hasMetricColumn()) {
       query += ',2';
-    } //query += '\nLIMIT 100';
+    } //query += '\nLIMIT 2';
 
 
     if (this.isWindow) {
@@ -35993,9 +35993,8 @@ function () {
 
       if (row) {
         var epoch = Number(row.f[timeIndex].v) * 1000;
-        metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name; //const bucket = ResponseParser.findOrCreateBucket(data, metricName);
-
-        dataPoints.push([Number(row.f[valueIndex].v), epoch]); //bucket.refId = 'A';
+        metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
+        dataPoints.push([Number(row.f[valueIndex].v), epoch]);
       }
     }
 
@@ -36003,6 +36002,18 @@ function () {
       target: metricName,
       datapoints: dataPoints
     };
+  };
+
+  ResponseParser._convertValues = function (v, type) {
+    if (['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(type)) {
+      return Number(v);
+    }
+
+    if (['DATE', 'DATETIME', 'TIMESTAMP'].includes(type)) {
+      return new Date(Number(v) * 1000).toString();
+    }
+
+    return v;
   };
 
   ResponseParser._toTable = function (results) {
@@ -36020,7 +36031,9 @@ function () {
       var r = [];
       (0, _lodashEs.each)(ser, function (v) {
         for (var i = 0; i < v.length; i++) {
-          r.push(v[i].v);
+          var val = ResponseParser._convertValues(v[i].v, columns[i].type);
+
+          r.push(val);
         }
       });
       rows.push(r);

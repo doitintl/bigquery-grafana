@@ -155,18 +155,27 @@ export default class ResponseParser {
     }
 
     static _buildDataPoints(results, timeIndex, metricIndex, valueIndex) {
-        const dataPoints  = [];
+        const dataPoints = [];
         let metricName = '';
         for (const row of results.rows) {
             if (row) {
                 const epoch = Number(row.f[timeIndex].v) * 1000;
                 metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-                //const bucket = ResponseParser.findOrCreateBucket(data, metricName);
                 dataPoints.push([Number(row.f[valueIndex].v), epoch]);
-                //bucket.refId = 'A';
             }
         }
         return {target: metricName, datapoints: dataPoints};
+    }
+
+    static _convertValues(v, type) {
+        if (['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(type)) {
+            return Number(v);
+        }
+        if (['DATE', 'DATETIME', 'TIMESTAMP'].includes(type)) {
+            return new Date(Number(v) * 1000).toString();
+
+        }
+        return v;
     }
 
     static _toTable(results) {
@@ -182,16 +191,17 @@ export default class ResponseParser {
             let r = [];
             each(ser, function (v) {
                 for (let i = 0; i < v.length; i++) {
-                    r.push(v[i].v);
+                    let val = ResponseParser._convertValues(v[i].v, columns[i].type);
+                    r.push(val);
                 }
             });
             rows.push(r);
         });
-        return  {
-                "columns": columns,
-                "rows": rows,
-                "type": "table"
-            };
+        return {
+            "columns": columns,
+            "rows": rows,
+            "type": "table"
+        };
     }
 
 
