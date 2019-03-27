@@ -1,6 +1,6 @@
-MIT License
+# MIT License
 
-Copyright (c) 2017 Vertamedia
+## Copyright (c) 2019 DoiT International
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
