@@ -35171,6 +35171,10 @@ function (_super) {
 
     this.target.where = [];
     this.target.group = [];
+    this.target.select = [[{
+      type: 'column',
+      params: ['-- value --']
+    }]];
     this.updateProjection();
     var segment = this.uiSegmentSrv.newSegment('none');
     this.metricColumnSegment.html = segment.html;
