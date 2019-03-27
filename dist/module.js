@@ -34519,20 +34519,23 @@ function () {
     });
   };
 
-  BigQueryDatasource.prototype.getProjects = function () {
+  BigQueryDatasource.prototype.paginatedResults = function (path, dataName) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, queryResults, projects;
+      var queryResults, data, dataList;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
-            path = "v2/projects";
             return [4
             /*yield*/
             , this.doRequest("" + this.baseUrl + path)];
 
           case 1:
             queryResults = _a.sent();
-            projects = queryResults.data.projects;
+            data = queryResults.data;
+            dataList = dataName.split(".");
+            dataList.forEach(function (element) {
+              data = data[element];
+            });
             _a.label = 2;
 
           case 2:
@@ -34545,7 +34548,7 @@ function () {
 
           case 3:
             queryResults = _a.sent();
-            projects = projects.concat(queryResults.data.projects);
+            data = data.concat(queryResults.data.projects);
             return [3
             /*break*/
             , 2];
@@ -34553,7 +34556,28 @@ function () {
           case 4:
             return [2
             /*return*/
-            , _response_parser2.default.parseProjects(projects)];
+            , data];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.getProjects = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path, data;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            path = "v2/projects";
+            return [4
+            /*yield*/
+            , this.paginatedResults(path, "projects")];
+
+          case 1:
+            data = _a.sent();
+            return [2
+            /*return*/
+            , _response_parser2.default.parseProjects(data)];
         }
       });
     });
@@ -34561,39 +34585,20 @@ function () {
 
   BigQueryDatasource.prototype.getDatasets = function (projectName) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, queryResults, datasets;
+      var path, data;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
             path = "v2/projects/" + projectName + "/datasets";
             return [4
             /*yield*/
-            , this.doRequest("" + this.baseUrl + path)];
+            , this.paginatedResults(path, "datasets")];
 
           case 1:
-            queryResults = _a.sent();
-            datasets = queryResults.data.datasets;
-            _a.label = 2;
-
-          case 2:
-            if (!queryResults.data.nextPageToken) return [3
-            /*break*/
-            , 4];
-            return [4
-            /*yield*/
-            , this.doRequest("" + this.baseUrl + path + '?pageToken=' + queryResults.data.nextPageToken)];
-
-          case 3:
-            queryResults = _a.sent();
-            datasets = datasets.concat(queryResults.data.datasets);
-            return [3
-            /*break*/
-            , 2];
-
-          case 4:
+            data = _a.sent();
             return [2
             /*return*/
-            , _response_parser2.default.parseDatasets(datasets)];
+            , _response_parser2.default.parseDatasets(data)];
         }
       });
     });
@@ -34601,39 +34606,20 @@ function () {
 
   BigQueryDatasource.prototype.getTables = function (projectName, datasetName) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, queryResults, tables;
+      var path, data;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
             path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables";
             return [4
             /*yield*/
-            , this.doRequest("" + this.baseUrl + path)];
+            , this.paginatedResults(path, "tables")];
 
           case 1:
-            queryResults = _a.sent();
-            tables = queryResults.data.tables;
-            _a.label = 2;
-
-          case 2:
-            if (!queryResults.data.nextPageToken) return [3
-            /*break*/
-            , 4];
-            return [4
-            /*yield*/
-            , this.doRequest("" + this.baseUrl + path + '?pageToken=' + queryResults.data.nextPageToken)];
-
-          case 3:
-            queryResults = _a.sent();
-            tables = tables.concat(queryResults.data.tables);
-            return [3
-            /*break*/
-            , 2];
-
-          case 4:
+            data = _a.sent();
             return [2
             /*return*/
-            , new _response_parser2.default(this.$q).parseTabels(tables)];
+            , new _response_parser2.default(this.$q).parseTabels(data)];
         }
       });
     });
@@ -34641,39 +34627,20 @@ function () {
 
   BigQueryDatasource.prototype.getTableFields = function (projectName, datasetName, tableName, filter) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, queryResults, fields;
+      var path, data;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
             path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables/" + tableName;
             return [4
             /*yield*/
-            , this.doRequest("" + this.baseUrl + path)];
+            , this.paginatedResults(path, "schema.fields")];
 
           case 1:
-            queryResults = _a.sent();
-            fields = queryResults.data.schema.fields;
-            _a.label = 2;
-
-          case 2:
-            if (!queryResults.data.nextPageToken) return [3
-            /*break*/
-            , 4];
-            return [4
-            /*yield*/
-            , this.doRequest("" + this.baseUrl + path + '?pageToken=' + queryResults.data.nextPageToken)];
-
-          case 3:
-            queryResults = _a.sent();
-            fields = fields.concat(queryResults.data.schema.fields);
-            return [3
-            /*break*/
-            , 2];
-
-          case 4:
+            data = _a.sent();
             return [2
             /*return*/
-            , _response_parser2.default.parseTableFields(fields, filter)];
+            , _response_parser2.default.parseTableFields(data, filter)];
         }
       });
     });

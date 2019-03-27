@@ -204,51 +204,43 @@ export class BigQueryDatasource {
             .then(data => this.responseParser.transformAnnotationResponse(options, data));
     }
 
-
-    async getProjects(): Promise<ResultFormat[]> {
-        const path = `v2/projects`;
+    async paginatedResults(path, dataName){
         let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
-        let projects = queryResults.data.projects;
+        let data = queryResults.data;
+        let dataList = dataName.split(".");
+        dataList.forEach(function(element) {
+            data = data[element];
+        });
         while (queryResults.data.nextPageToken) {
             queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-            projects = projects.concat(queryResults.data.projects);
+            data = data.concat(queryResults.data.projects);
         }
-        return ResponseParser.parseProjects(projects);
+        return data;
+    }
+    async getProjects(): Promise<ResultFormat[]> {
+        const path = `v2/projects`;
+        const data = await this.paginatedResults(path, "projects");
+        return ResponseParser.parseProjects(data);
 
     }
 
     async getDatasets(projectName): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets`;
-        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
-        let datasets = queryResults.data.datasets;
-        while (queryResults.data.nextPageToken) {
-            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-            datasets = datasets.concat(queryResults.data.datasets);
-        }
-        return ResponseParser.parseDatasets(datasets);
+        const data = await this.paginatedResults(path, "datasets")
+        return ResponseParser.parseDatasets(data);
     }
 
     async getTables(projectName, datasetName): Promise<ResultFormat[]> {
         let path = `v2/projects/${projectName}/datasets/${datasetName}/tables`;
-        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
-        let tables = queryResults.data.tables;
-        while (queryResults.data.nextPageToken) {
-            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-            tables = tables.concat(queryResults.data.tables);
-        }
-        return new ResponseParser(this.$q).parseTabels(tables);
+        const data = await this.paginatedResults(path, "tables");
+        return new ResponseParser(this.$q).parseTabels(data);
 
     }
 
     async getTableFields(projectName, datasetName, tableName, filter): Promise<ResultFormat[]> {
         const path = `v2/projects/${projectName}/datasets/${datasetName}/tables/${tableName}`;
-        let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
-        let fields = queryResults.data.schema.fields;
-        while (queryResults.data.nextPageToken) {
-            queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-            fields = fields.concat(queryResults.data.schema.fields);
-        }
-        return ResponseParser.parseTableFields(fields, filter);
+        const data = await this.paginatedResults(path, "schema.fields");
+        return ResponseParser.parseTableFields(data, filter);
     }
 
     async getDefaultProject() {
