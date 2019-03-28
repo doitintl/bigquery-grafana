@@ -138,7 +138,7 @@ export default class ResponseParser {
             if (timeIndex === -1 && ['DATE', 'TIMESTAMP', 'DATETIME'].includes(results.schema.fields[i].type)) {
                 timeIndex = i;
             }
-            if (metricIndex === -1 && results.schema.fields[i].type === 'STRING') {
+            if (metricIndex === -1 && results.schema.fields[i].name === 'metric') {
                 metricIndex = i;
             }
             if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(results.schema.fields[i].type)) {
@@ -152,18 +152,28 @@ export default class ResponseParser {
     }
 
     static _buildDataPoints(results, timeIndex, metricIndex, valueIndex) {
-        const dataPoints = [];
+        const data = [];
         let metricName = '';
         for (const row of results.rows) {
             if (row) {
                 const epoch = Number(row.f[timeIndex].v) * 1000;
                 metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-                dataPoints.push([Number(row.f[valueIndex].v), epoch]);
+                const bucket = ResponseParser.findOrCreateBucket(data, metricName);
+                bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
             }
         }
-        return {target: metricName, datapoints: dataPoints};
+        return data;
     }
 
+    static findOrCreateBucket(data, target): DataTarget {
+        let dataTarget = _.find(data, ['target', target]);
+        if (!dataTarget) {
+            dataTarget = { target: target, datapoints: [], refId: '', query: '' };
+            data.push(dataTarget);
+        }
+
+        return dataTarget;
+    }
     static _convertValues(v, type) {
         if (['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(type)) {
             return Number(v);

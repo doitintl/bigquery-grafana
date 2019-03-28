@@ -217,8 +217,9 @@ export class BigQueryDatasource {
         return this.$q.all(allQueryPromise).then((responses): any => {
             let data = [];
             for (let i = 0; i < responses.length; i++) {
-
-                data.push(responses[i]);
+                for (let x = 0; x < responses[i].length; x++) {
+                    data.push(responses[i][x]);
+                }
             }
             return {data: data};
         });

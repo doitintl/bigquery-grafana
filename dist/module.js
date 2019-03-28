@@ -34551,7 +34551,9 @@ function () {
           var data = [];
 
           for (var i = 0; i < responses.length; i++) {
-            data.push(responses[i]);
+            for (var x = 0; x < responses[i].length; x++) {
+              data.push(responses[i][x]);
+            }
           }
 
           return {
@@ -35836,7 +35838,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _lodash = __webpack_require__(/*! lodash */ "lodash");
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _lodashEs = __webpack_require__(/*! lodash-es */ "../node_modules/lodash-es/lodash.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var ResponseParser =
 /** @class */
@@ -36003,7 +36011,7 @@ function () {
         timeIndex = i;
       }
 
-      if (metricIndex === -1 && results.schema.fields[i].type === 'STRING') {
+      if (metricIndex === -1 && results.schema.fields[i].name === 'metric') {
         metricIndex = i;
       }
 
@@ -36020,7 +36028,7 @@ function () {
   };
 
   ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndex) {
-    var dataPoints = [];
+    var data = [];
     var metricName = '';
 
     for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
@@ -36029,14 +36037,28 @@ function () {
       if (row) {
         var epoch = Number(row.f[timeIndex].v) * 1000;
         metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-        dataPoints.push([Number(row.f[valueIndex].v), epoch]);
+        var bucket = ResponseParser.findOrCreateBucket(data, metricName);
+        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
       }
     }
 
-    return {
-      target: metricName,
-      datapoints: dataPoints
-    };
+    return data;
+  };
+
+  ResponseParser.findOrCreateBucket = function (data, target) {
+    var dataTarget = _lodash2.default.find(data, ['target', target]);
+
+    if (!dataTarget) {
+      dataTarget = {
+        target: target,
+        datapoints: [],
+        refId: '',
+        query: ''
+      };
+      data.push(dataTarget);
+    }
+
+    return dataTarget;
   };
 
   ResponseParser._convertValues = function (v, type) {
