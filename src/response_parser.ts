@@ -19,41 +19,39 @@ export default class ResponseParser {
     constructor(private $q) {
     }
 
-    static parseProjects(results): ResultFormat[] {
-        const projects: ResultFormat[] = [];
+    static parseData(results, text, value): ResultFormat[] {
+        const data: ResultFormat[] = [];
         if (!results || results.length === 0) {
-            return projects;
+            return data;
         }
-        for (let prj of results) {
-            projects.push({text: prj.id, value: prj.id});
+        let objectTextList = text.split(".");
+        let objectValueList = value.split(".");
+        let itemValue, itemText;
+        for (let item of results) {
+            itemText = item[objectTextList[0]];
+            itemValue = item[objectValueList[0]];
+            for (let i = 1; i < objectTextList.length; i++) {
+                itemText = itemText[objectTextList[i]];
+            }
+            for (let i = 1; i < objectValueList.length; i++) {
+               itemValue = itemValue[objectValueList[i]];
+           }
+            data.push({text: itemText, value: itemValue});
         }
-        return projects;
+        //console.log(data)
+        return data;
+    }
+    static parseProjects(results): ResultFormat[] {
+        return ResponseParser.parseData(results,"id" ,"id");
     }
 
     static parseDatasets(results): ResultFormat[] {
-        const datasets: ResultFormat[] = [];
-        if (!results || results.length === 0) {
-            return datasets;
-        }
-        for (let ds of results) {
-            datasets.push({value: ds.datasetReference.datasetId, text: ds.datasetReference.datasetId});
-        }
-        return datasets;
+        return ResponseParser.parseData(results,"datasetReference.datasetId" ,"datasetReference.datasetId");
     }
 
 
     parseTabels(results): ResultFormat[] {
-        let tables: ResultFormat[] = [];
-        if (!results || results.length === 0) {
-            return tables;
-        }
-        for (let tbl of results) {
-            tables.push({
-                value: tbl.tableReference.tableId,
-                text: tbl.tableReference.tableId
-            });
-        }
-        return this._handelWildCardTables(tables);
+        return this._handelWildCardTables(ResponseParser.parseData(results,"tableReference.tableId" ,"tableReference.tableId"));
     }
 
     _handelWildCardTables(tables) {
