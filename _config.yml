@@ -12,7 +12,6 @@ include:
   - CONTRIBUTING.md
   - ISSUE_TEMPLATE.md
   - PULL_REQUEST_TEMPLATE.md
-  - google2b351a3b6855d337.html
 
 show_downloads: true
 title: BigQuery Grafana
