@@ -19,7 +19,7 @@ OR
 Use the [grafana-cli](http://docs.grafana.org/plugins/installation/#installing-plugins-manually)
 
 ```bash
-grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/0.1.0.zip plugins install doitintl-bigquery-datasource
+grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/0.2.0.zip plugins install doitintl-bigquery-datasource
 ```
 
 OR
