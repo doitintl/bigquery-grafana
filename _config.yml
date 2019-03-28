@@ -13,5 +13,8 @@ include:
   - ISSUE_TEMPLATE.md
   - PULL_REQUEST_TEMPLATE.md
 
+show_downloads: BigQuery Grafana
+title: DISTIQUE
+description: BigQuery datasource for Grafana
 
 theme: jekyll-theme-midnight
