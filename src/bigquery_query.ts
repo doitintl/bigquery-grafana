@@ -335,7 +335,7 @@ export default class BigQueryQuery {
         }
 
         const range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
-        return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+        return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
     }
 
     static _getInterval(q, alias) {

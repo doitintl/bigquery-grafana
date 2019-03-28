@@ -33992,7 +33992,7 @@ function () {
     }
 
     var range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
-    return q.replace(/\$__timeFilter\(([\w_]+)\)/g, range);
+    return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
   };
 
   BigQueryQuery._getInterval = function (q, alias) {
