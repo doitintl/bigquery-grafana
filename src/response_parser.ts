@@ -38,7 +38,6 @@ export default class ResponseParser {
            }
             data.push({text: itemText, value: itemValue});
         }
-        //console.log(data)
         return data;
     }
     static parseProjects(results): ResultFormat[] {
