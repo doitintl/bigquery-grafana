@@ -35772,58 +35772,50 @@ function () {
     this.$q = $q;
   }
 
-  ResponseParser.parseProjects = function (results) {
-    var projects = [];
+  ResponseParser.parseData = function (results, text, value) {
+    var data = [];
 
     if (!results || results.length === 0) {
-      return projects;
+      return data;
     }
+
+    var objectTextList = text.split(".");
+    var objectValueList = value.split(".");
+    var itemValue, itemText;
 
     for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
-      var prj = results_1[_i];
-      projects.push({
-        text: prj.id,
-        value: prj.id
-      });
-    }
+      var item = results_1[_i];
+      itemText = item[objectTextList[0]];
+      itemValue = item[objectValueList[0]];
 
-    return projects;
+      for (var i = 1; i < objectTextList.length; i++) {
+        itemText = itemText[objectTextList[i]];
+      }
+
+      for (var i = 1; i < objectValueList.length; i++) {
+        itemValue = itemValue[objectValueList[i]];
+      }
+
+      data.push({
+        text: itemText,
+        value: itemValue
+      });
+    } //console.log(data)
+
+
+    return data;
+  };
+
+  ResponseParser.parseProjects = function (results) {
+    return ResponseParser.parseData(results, "id", "id");
   };
 
   ResponseParser.parseDatasets = function (results) {
-    var datasets = [];
-
-    if (!results || results.length === 0) {
-      return datasets;
-    }
-
-    for (var _i = 0, results_2 = results; _i < results_2.length; _i++) {
-      var ds = results_2[_i];
-      datasets.push({
-        value: ds.datasetReference.datasetId,
-        text: ds.datasetReference.datasetId
-      });
-    }
-
-    return datasets;
+    return ResponseParser.parseData(results, "datasetReference.datasetId", "datasetReference.datasetId");
   };
 
   ResponseParser.prototype.parseTabels = function (results) {
-    var tables = [];
-
-    if (!results || results.length === 0) {
-      return tables;
-    }
-
-    for (var _i = 0, results_3 = results; _i < results_3.length; _i++) {
-      var tbl = results_3[_i];
-      tables.push({
-        value: tbl.tableReference.tableId,
-        text: tbl.tableReference.tableId
-      });
-    }
-
-    return this._handelWildCardTables(tables);
+    return this._handelWildCardTables(ResponseParser.parseData(results, "tableReference.tableId", "tableReference.tableId"));
   };
 
   ResponseParser.prototype._handelWildCardTables = function (tables) {
@@ -35850,8 +35842,8 @@ function () {
   };
 
   ResponseParser._handleRecordFileds = function (results, res) {
-    for (var _i = 0, results_4 = results; _i < results_4.length; _i++) {
-      var fl = results_4[_i];
+    for (var _i = 0, results_2 = results; _i < results_2.length; _i++) {
+      var fl = results_2[_i];
 
       if (fl.type === "RECORD") {
         for (var _a = 0, _b = fl.fields; _a < _b.length; _a++) {
@@ -35892,8 +35884,8 @@ function () {
     var res = [];
     results = ResponseParser._handleRecordFileds(results, res);
 
-    for (var _i = 0, results_5 = results; _i < results_5.length; _i++) {
-      var fl = results_5[_i];
+    for (var _i = 0, results_3 = results; _i < results_3.length; _i++) {
+      var fl = results_3[_i];
 
       if (filter.length > 0) {
         for (var i = 0; i < filter.length; i++) {
