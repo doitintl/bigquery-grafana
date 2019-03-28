@@ -13,8 +13,8 @@ include:
   - ISSUE_TEMPLATE.md
   - PULL_REQUEST_TEMPLATE.md
 
-show_downloads: BigQuery Grafana
-title: DISTIQUE
-description: BigQuery datasource for Grafana
-
+show_downloads: true
+title: BigQuery Grafana
+description: BigQuery Datasource for Grafana
+google_analytics:  UA-137158105-1
 theme: jekyll-theme-midnight
