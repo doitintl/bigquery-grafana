@@ -11,6 +11,7 @@
 BigQuery datasource plugin provide support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
 
 ### Quick start
+## Coming soon
 Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)
 
 OR
