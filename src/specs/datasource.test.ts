@@ -31,18 +31,13 @@ describe('BigQueryDatasource', () => {
 
     describe('formatBigqueryError', () => {
         let error = {
-            statusText: 'status text',
+            message: 'status text',
+            code: "505",
+            errors: [{reason: "just like that"}]
         };
 
-        let res = BigQueryDatasource.formatBigqueryError(error);
-        expect(res).toBe('BigQuery: status text: Cannot connect to BigQuery API');
-        let error_1 = {
-            statusText: 'status text',
-            data: {error: 'error txt'}
-        };
-        res = BigQueryDatasource.formatBigqueryError(error_1);
-        expect(res).toBe('BigQuery: status text: error txt');
-
+        let res = BigQueryDatasource.formatBigqueryError(error).data.message;
+        expect(res).toBe('just like that: status text');
     });
 
 
@@ -1004,8 +999,8 @@ describe('BigQueryDatasource', () => {
             await ctx.ds.testDatasource().then(data => {
                 results = data;
             });
-            expect(results.status).toBe("error");
-            expect(results.message).toBe("Cannot connect to BigQuery API");
+            expect(results.status).toBe("success");
+            expect(results.message).toBe("BigQuery: ");
         });
 
     });

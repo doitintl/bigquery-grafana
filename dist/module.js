@@ -34249,7 +34249,7 @@ function () {
     }
 
     if (maxRetries === void 0) {
-      maxRetries = 1;
+      maxRetries = 3;
     }
 
     return tslib_1.__awaiter(this, void 0, void 0, function () {
@@ -34262,13 +34262,27 @@ function () {
           url: this.url + url,
           method: 'GET',
           requestId: requestId
+        }).then(function (result) {
+          if (result.status !== 200) {
+            if (result.status >= 500 && maxRetries > 0) {
+              return _this.doRequest(url, requestId, maxRetries - 1);
+            }
+
+            throw BigQueryDatasource.formatBigqueryError(result.data.error);
+          }
+
+          return result;
         }).catch(function (error) {
           if (maxRetries > 0) {
             return _this.doRequest(url, requestId, maxRetries - 1);
           }
 
+          if (error.cancelled === true) {
+            return [];
+          }
+
           console.log(error);
-          throw BigQueryDatasource.formatBigqueryError(error);
+          throw BigQueryDatasource.formatBigqueryError(error.data.error);
         })];
       });
     });
@@ -34276,7 +34290,7 @@ function () {
 
   BigQueryDatasource.prototype.doQueryRequest = function (query, requestId, maxRetries) {
     if (maxRetries === void 0) {
-      maxRetries = 1;
+      maxRetries = 3;
     }
 
     return tslib_1.__awaiter(this, void 0, void 0, function () {
@@ -34297,13 +34311,27 @@ function () {
             query: query,
             useLegacySql: false
           }
+        }).then(function (result) {
+          if (result.status !== 200) {
+            if (result.status >= 500 && maxRetries > 0) {
+              return _this.doQueryRequest(query, requestId, maxRetries - 1);
+            }
+
+            throw BigQueryDatasource.formatBigqueryError(result.data.error);
+          }
+
+          return result;
         }).catch(function (error) {
           if (maxRetries > 0) {
             return _this.doQueryRequest(query, requestId, maxRetries - 1);
           }
 
+          if (error.cancelled === true) {
+            return [];
+          }
+
           console.log(error);
-          throw BigQueryDatasource.formatBigqueryError(error);
+          throw BigQueryDatasource.formatBigqueryError(error.data.error);
         })];
       });
     });
@@ -34369,6 +34397,13 @@ function () {
 
           case 1:
             queryResults = _a.sent();
+
+            if (queryResults.length === 0) {
+              return [2
+              /*return*/
+              , rows];
+            }
+
             rows = rows.concat(queryResults.data.rows);
             console.log("getting results for: ", jobId);
             return [3
@@ -34390,11 +34425,27 @@ function () {
     }
 
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var queryResults, jobId, rows, schema;
+      var notReady, queryResults, jobId, rows, schema;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
             if (!query) {
+              return [2
+              /*return*/
+              , {
+                rows: null,
+                schema: null
+              }];
+            }
+
+            notReady = false;
+            ['-- time --', '-- value --'].forEach(function (element) {
+              if (query.indexOf(element) !== -1) {
+                notReady = true;
+              }
+            });
+
+            if (notReady) {
               return [2
               /*return*/
               , {
@@ -34409,6 +34460,16 @@ function () {
 
           case 1:
             queryResults = _a.sent();
+
+            if (queryResults.length === 0) {
+              return [2
+              /*return*/
+              , {
+                rows: null,
+                schema: null
+              }];
+            }
+
             jobId = queryResults.data.jobReference.jobId;
             return [4
             /*yield*/
@@ -34416,6 +34477,16 @@ function () {
 
           case 2:
             queryResults = _a.sent();
+
+            if (queryResults.length === 0) {
+              return [2
+              /*return*/
+              , {
+                rows: null,
+                schema: null
+              }];
+            }
+
             rows = queryResults.data.rows;
             schema = queryResults.data.schema;
             return [4
@@ -34754,20 +34825,22 @@ function () {
 
   BigQueryDatasource.formatBigqueryError = function (error) {
     var message = 'BigQuery: ';
-    message += error.statusText ? error.statusText + ': ' : '';
+    var status = '';
+    var data = '';
 
-    if (error.data && error.data.error) {
-      try {
-        var res = JSON.parse(error.data.error);
-        message += res.error.code + '. ' + res.error.message;
-      } catch (err) {
-        message += error.data.error;
-      }
-    } else {
-      message += 'Cannot connect to BigQuery API';
+    if (error !== undefined) {
+      message += error.message ? error.message : 'Cannot connect to BigQuery API';
+      status = error.code;
+      data = error.errors[0].reason + ": " + error.message;
     }
 
-    return message;
+    return {
+      statusText: message,
+      status: status,
+      data: {
+        message: data
+      }
+    };
   };
 
   return BigQueryDatasource;
@@ -35800,8 +35873,7 @@ function () {
         text: itemText,
         value: itemValue
       });
-    } //console.log(data)
-
+    }
 
     return data;
   };

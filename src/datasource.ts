@@ -38,23 +38,33 @@ export class BigQueryDatasource {
 
     }
 
-    async doRequest(url, requestId = 'requestId', maxRetries = 1) {
+    async doRequest(url, requestId = 'requestId', maxRetries = 3) {
         return this.backendSrv
             .datasourceRequest({
                 url: this.url + url,
                 method: 'GET',
                 requestId: requestId,
-            })
-            .catch(error => {
+            }).then(result => {
+                if (result.status !== 200) {
+                    if (result.status >= 500 && maxRetries > 0) {
+                        return this.doRequest(url, requestId, maxRetries - 1);
+                    }
+                    throw BigQueryDatasource.formatBigqueryError(result.data.error);
+                }
+                return result;
+            }).catch(error => {
                 if (maxRetries > 0) {
                     return this.doRequest(url, requestId, maxRetries - 1);
                 }
+                if (error.cancelled === true) {
+                    return [];
+                }
                 console.log(error);
-                throw BigQueryDatasource.formatBigqueryError(error);
+                throw BigQueryDatasource.formatBigqueryError(error.data.error);
             });
     }
 
-    async doQueryRequest(query, requestId, maxRetries = 1) {
+    async doQueryRequest(query, requestId, maxRetries = 3) {
         const path = `v2/projects/${this.projectName}/queries`;
         const url = this.url + `${this.baseUrl}${path}`;
         return this.backendSrv
@@ -66,13 +76,23 @@ export class BigQueryDatasource {
                     query: query,
                     useLegacySql: false,
                 },
-            })
-            .catch(error => {
+            }).then(result => {
+                if (result.status !== 200) {
+                    if (result.status >= 500 && maxRetries > 0) {
+                        return this.doQueryRequest(query, requestId, maxRetries - 1);
+                    }
+                    throw BigQueryDatasource.formatBigqueryError(result.data.error);
+                }
+                return result;
+            }).catch(error => {
                 if (maxRetries > 0) {
                     return this.doQueryRequest(query, requestId, maxRetries - 1);
                 }
+                if (error.cancelled === true) {
+                    return [];
+                }
                 console.log(error);
-                throw BigQueryDatasource.formatBigqueryError(error);
+                throw BigQueryDatasource.formatBigqueryError(error.data.error);
             });
     }
 
@@ -96,6 +116,9 @@ export class BigQueryDatasource {
         while (queryResults.data.pageToken) {
             const path = `v2/projects/${this.projectName}/queries/` + jobId + '?pageToken=' + queryResults.data.pageToken;
             queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
+            if (queryResults.length === 0) {
+                return rows;
+            }
             rows = rows.concat(queryResults.data.rows);
             console.log("getting results for: ", jobId);
         }
@@ -110,9 +133,33 @@ export class BigQueryDatasource {
                 schema: null
             };
         }
+        let notReady = false;
+        ['-- time --', '-- value --'].forEach(function (element) {
+            if (query.indexOf(element) !== -1) {
+                notReady = true;
+            }
+        });
+        if (notReady) {
+            return {
+                rows: null,
+                schema: null
+            };
+        }
         let queryResults = await this.doQueryRequest(query, requestId, maxRetries = 1);
+        if (queryResults.length === 0) {
+            return {
+                rows: null,
+                schema: null
+            };
+        }
         let jobId = queryResults.data.jobReference.jobId;
         queryResults = await this._waitForJobComplete(queryResults, requestId, jobId);
+        if (queryResults.length === 0) {
+            return {
+                rows: null,
+                schema: null
+            };
+        }
         let rows = queryResults.data.rows;
         let schema = queryResults.data.schema;
         rows = await this._getQueryResults(queryResults, rows, requestId, jobId);
@@ -139,7 +186,7 @@ export class BigQueryDatasource {
             return BigQueryQuery.quoteLiteral(v);
         });
         return quotedValues.join(',');
-    }
+    };
 
     async query(options) {
         const queries = _.filter(options.targets, target => {
@@ -169,11 +216,11 @@ export class BigQueryDatasource {
         });
         return this.$q.all(allQueryPromise).then((responses): any => {
             let data = [];
-            for (let i = 0; i < responses.length; i++){
+            for (let i = 0; i < responses.length; i++) {
 
                 data.push(responses[i]);
             }
-            return  {data: data};
+            return {data: data};
         });
     }
 
@@ -204,11 +251,11 @@ export class BigQueryDatasource {
             .then(data => this.responseParser.transformAnnotationResponse(options, data));
     }
 
-    async paginatedResults(path, dataName){
+    async paginatedResults(path, dataName) {
         let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
         let data = queryResults.data;
         let dataList = dataName.split(".");
-        dataList.forEach(function(element) {
+        dataList.forEach(function (element) {
             data = data[element];
         });
         while (queryResults.data.nextPageToken) {
@@ -217,6 +264,7 @@ export class BigQueryDatasource {
         }
         return data;
     }
+
     async getProjects(): Promise<ResultFormat[]> {
         const path = `v2/projects`;
         const data = await this.paginatedResults(path, "projects");
@@ -284,18 +332,15 @@ export class BigQueryDatasource {
 
     static formatBigqueryError(error) {
         let message = 'BigQuery: ';
-        message += error.statusText ? error.statusText + ': ' : '';
-        if (error.data && error.data.error) {
-            try {
-                const res = JSON.parse(error.data.error);
-                message += res.error.code + '. ' + res.error.message;
-            } catch (err) {
-                message += error.data.error;
-            }
-        } else {
-            message += 'Cannot connect to BigQuery API';
+        let status = '';
+        let data = '';
+        if (error !== undefined) {
+            message += error.message ? error.message : 'Cannot connect to BigQuery API';
+            status = error.code;
+            data = error.errors[0].reason + ": " + error.message;
         }
-        return message;
+        return {statusText: message, status: status,data: {
+                message: data,
+            },};
     }
-
 }
