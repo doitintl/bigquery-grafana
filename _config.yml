@@ -1,5 +1,7 @@
 plugins:
   - jekyll-relative-links
+  - jekyll-seo-tag
+  - jekyll-sitemap
 relative_links:
   enabled: true
   collections: true
@@ -12,9 +14,11 @@ include:
   - CONTRIBUTING.md
   - ISSUE_TEMPLATE.md
   - PULL_REQUEST_TEMPLATE.md
-
+twitter:
+  username: avivl
+  card: summary
 show_downloads: true
-title: BigQuery Grafana
-description: BigQuery Datasource for Grafana
+title: BigQuery Grafana Datasource
+description: BigQuery datasource plugin provide support for BigQuery as a backend database.
 google_analytics:  UA-137158105-1
 theme: jekyll-theme-midnight
