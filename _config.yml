@@ -17,6 +17,9 @@ include:
 twitter:
   username: avivl
   card: summary
+url: "https://doitintl.github.io/bigquery-grafana/" # Site url, also used in jekyll-seo-tag
+repo: "https://github.com/doitintl/bigquery-grafana/"
+
 show_downloads: true
 title: BigQuery Grafana Datasource
 description: BigQuery datasource plugin provide support for BigQuery as a backend database.
