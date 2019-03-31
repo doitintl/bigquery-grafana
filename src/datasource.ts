@@ -75,6 +75,7 @@ export class BigQueryDatasource {
                 data: {
                     query: query,
                     useLegacySql: false,
+                    useQueryCache: true,
                 },
             }).then(result => {
                 if (result.status !== 200) {

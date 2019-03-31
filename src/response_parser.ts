@@ -28,6 +28,7 @@ export default class ResponseParser {
         let objectValueList = value.split(".");
         let itemValue, itemText;
         for (let item of results) {
+            item = ResponseParser.manipulateItem(item);
             itemText = item[objectTextList[0]];
             itemValue = item[objectValueList[0]];
             for (let i = 1; i < objectTextList.length; i++) {
@@ -36,9 +37,19 @@ export default class ResponseParser {
             for (let i = 1; i < objectValueList.length; i++) {
                itemValue = itemValue[objectValueList[i]];
            }
+
             data.push({text: itemText, value: itemValue});
         }
         return data;
+    }
+
+    static manipulateItem(item) {
+        if (item.kind === "bigquery#table") {
+            if (item.timePartitioning) {
+                item.tableReference.tableId = item.tableReference.tableId + '__partitioned';
+            }
+        }
+        return item;
     }
     static parseProjects(results): ResultFormat[] {
         return ResponseParser.parseData(results,"id" ,"id");

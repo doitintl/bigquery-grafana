@@ -246,6 +246,12 @@ export default class BigQueryQuery {
             let to = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d);
             query += " AND  _TABLE_SUFFIX BETWEEN \'" + from +  "\' AND \'" + to + "\' ";
         }
+        if (this.target.partitioned) {
+            console.log(BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-',  true))
+            query += " AND _PARTITIONTIME >= \'" +
+                BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d,'-',  true) + "\' AND _PARTITIONTIME < \'"
+                + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-',  true) + "\'";
+        }
         return query;
     }
 
@@ -338,7 +344,7 @@ export default class BigQueryQuery {
         return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
     }
 
-    static _getInterval(q, alias) {
+    static _getInterval(q, alias: boolean) {
         if (alias) {
             return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
         } else {
@@ -372,7 +378,7 @@ export default class BigQueryQuery {
         return IntervalStr;
     }
 
-    replacetimeGroupAlias(q, alias) {
+    replacetimeGroupAlias(q, alias: boolean) {
         let interval = BigQueryQuery._getInterval(q, alias);
         if (!interval) {
             return q;
