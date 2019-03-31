@@ -33894,7 +33894,6 @@ function () {
     }
 
     if (this.target.partitioned) {
-      console.log(BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true));
       query += " AND _PARTITIONTIME >= \'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, '-', true) + "\' AND _PARTITIONTIME < \'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true) + "\'";
     }
 
@@ -35208,7 +35207,8 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.getTableSegments = function () {
-    return this.datasource.getTables(this.target.project, this.target.dataset).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
+    this.tablesDataPromise = this.datasource.getTables(this.target.project, this.target.dataset);
+    return this.tablesDataPromise.then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
   };
 
   BigQueryQueryCtrl.prototype.tableChanged = function () {
@@ -35217,19 +35217,23 @@ function (_super) {
     this.target.sharded = false;
     this.target.partitioned = false;
     this.target.table = this.tableSegment.value;
+    this.tablesDataPromise.then(function (value) {
+      value.forEach(function (v) {
+        if (v.text === _this.target.table) {
+          var partitioned = v.value.indexOf("__partitioned");
+
+          if (partitioned > -1) {
+            _this.target.partitioned = true;
+          }
+        }
+      });
+    });
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
     var sharded = this.target.table.indexOf("_YYYYMMDD");
 
     if (sharded > -1) {
       this.target.table = this.target.table.substring(0, sharded + 1) + "*";
       this.target.sharded = true;
-    }
-
-    var partitioned = this.target.table.indexOf("__partitioned");
-
-    if (partitioned > -1) {
-      this.target.table = this.target.table.substring(0, partitioned);
-      this.target.partitioned = true;
     }
 
     this.target.where = [];
@@ -35949,10 +35953,10 @@ function () {
       }
     }
 
-    sorted.forEach(function (value, key) {
+    sorted.forEach(function (text, value) {
       new_tables = new_tables.concat({
-        key: key,
-        text: value
+        text: text,
+        value: value
       });
     });
     return new_tables;

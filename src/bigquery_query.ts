@@ -247,7 +247,6 @@ export default class BigQueryQuery {
             query += " AND  _TABLE_SUFFIX BETWEEN \'" + from +  "\' AND \'" + to + "\' ";
         }
         if (this.target.partitioned) {
-            console.log(BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-',  true))
             query += " AND _PARTITIONTIME >= \'" +
                 BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d,'-',  true) + "\' AND _PARTITIONTIME < \'"
                 + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d,'-',  true) + "\'";

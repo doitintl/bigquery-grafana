@@ -4,6 +4,7 @@ import {QueryCtrl} from 'grafana/app/plugins/sdk';
 import {SqlPart} from './sql_part';
 import BigQueryQuery from './bigquery_query';
 import sqlPart from './sql_part';
+import {compact} from "lodash-es";
 
 export interface QueryMeta {
     sql: string;
@@ -28,6 +29,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     projectSegment: any;
     datasetSegment: any;
     tableSegment: any;
+    tablesDataPromise: any;
     whereAdd: any;
     timeColumnSegment: any;
     metricColumnSegment: any;
@@ -210,9 +212,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
     }
 
-    getTableSegments() {
-        return this.datasource.getTables(this.target.project, this.target.dataset)
-            .then(this.uiSegmentSrv.transformToSegments(false))
+     getTableSegments() {
+        this.tablesDataPromise = this.datasource.getTables(this.target.project, this.target.dataset)
+         return this.tablesDataPromise.then(this.uiSegmentSrv.transformToSegments(false))
             .catch(this.handleQueryError.bind(this));
     }
 
@@ -220,17 +222,23 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         this.target.sharded = false;
         this.target.partitioned = false;
         this.target.table = this.tableSegment.value;
+        this.tablesDataPromise.then(value => {
+            value.forEach(v =>  {
+                if (v.text ===  this.target.table ){
+                    const partitioned = v.value.indexOf("__partitioned");
+                    if (partitioned > -1) {
+                        this.target.partitioned = true;
+                    }
+
+                }
+            });
+        });
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
-        let sharded = this.target.table.indexOf("_YYYYMMDD");
+        const sharded = this.target.table.indexOf("_YYYYMMDD");
         if (sharded > -1) {
             this.target.table = this.target.table.substring(0, sharded + 1) + "*";
             this.target.sharded = true;
        }
-        let partitioned = this.target.table.indexOf("__partitioned");
-        if (partitioned > -1) {
-            this.target.table = this.target.table.substring(0, partitioned);
-            this.target.partitioned = true;
-        }
         this.target.where = [];
         this.target.group = [];
         this.target.select = [[{type: 'column', params: ['-- value --']}]];

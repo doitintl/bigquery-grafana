@@ -78,9 +78,8 @@ export default class ResponseParser {
                 sorted.set(t.text.substring(0, t.text.length - 8) + 'YYYYMMDD', t.text.substring(0, t.text.length - 8) + 'YYYYMMDD');
             }
         }
-        sorted.forEach(function (value, key) {
-
-            new_tables = new_tables.concat({key: key, text: value});
+        sorted.forEach(function (text, value) {
+            new_tables = new_tables.concat({text: text, value: value});
         });
         return new_tables;
     }
