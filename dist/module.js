@@ -34337,7 +34337,13 @@ function () {
           }
 
           console.log(error);
-          throw BigQueryDatasource.formatBigqueryError(error.data.error);
+          var msg = error;
+
+          if (error.data !== undefined) {
+            msg = error.data.error;
+          }
+
+          throw BigQueryDatasource.formatBigqueryError(msg);
         })];
       });
     });

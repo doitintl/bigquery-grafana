@@ -93,7 +93,11 @@ export class BigQueryDatasource {
                     return [];
                 }
                 console.log(error);
-                throw BigQueryDatasource.formatBigqueryError(error.data.error);
+                let msg = error;
+                if (error.data !== undefined){
+                    msg = error.data.error;
+                }
+                throw BigQueryDatasource.formatBigqueryError(msg);
             });
     }
 
