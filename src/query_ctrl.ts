@@ -205,6 +205,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     datasetChanged() {
         this.target.dataset = this.datasetSegment.value;
         this.target.sharded = false;
+        this.target.partitioned = false;
         this.applySegment(this.tableSegment, this.fakeSegment('select table'));
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
     }
@@ -217,14 +218,19 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     tableChanged() {
         this.target.sharded = false;
+        this.target.partitioned = false;
         this.target.table = this.tableSegment.value;
         this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
         let sharded = this.target.table.indexOf("_YYYYMMDD");
         if (sharded > -1) {
             this.target.table = this.target.table.substring(0, sharded + 1) + "*";
             this.target.sharded = true;
+       }
+        let partitioned = this.target.table.indexOf("__partitioned");
+        if (partitioned > -1) {
+            this.target.table = this.target.table.substring(0, partitioned);
+            this.target.partitioned = true;
         }
-
         this.target.where = [];
         this.target.group = [];
         this.target.select = [[{type: 'column', params: ['-- value --']}]];

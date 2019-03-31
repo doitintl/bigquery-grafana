@@ -35,6 +35,7 @@ Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/in
  * Table view
  * Annotations
  * Sharded tables (`tablename_YYYYMMDD`)
+ * Partitioned Tables
  
  
 ## Adding the data source to Grafana
