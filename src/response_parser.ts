@@ -68,6 +68,10 @@ export default class ResponseParser {
         let sorted = new Map();
         let new_tables = [];
         for (let t of tables) {
+            let partitioned = t.text.indexOf("__partitioned");
+            if (partitioned > -1) {
+                t.text = t.text.substring(0, partitioned);
+            }
             if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)) {
                 sorted = sorted.set(t.value, t.text);
             } else {
