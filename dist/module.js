@@ -33596,25 +33596,25 @@ function () {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
     this.isWindow = false;
-    this.groupBy = '';
-    this.tmpcost = '';
-    target.format = target.format || 'time_series';
-    target.timeColumn = target.timeColumn || '-- time --';
-    target.timeColumnType = target.timeColumnType || 'TIMESTAMP';
-    target.metricColumn = target.metricColumn || 'none';
+    this.groupBy = "";
+    this.tmpcost = "";
+    target.format = target.format || "time_series";
+    target.timeColumn = target.timeColumn || "-- time --";
+    target.timeColumnType = target.timeColumnType || "TIMESTAMP";
+    target.metricColumn = target.metricColumn || "none";
     target.group = target.group || [];
     target.where = target.where || [{
-      type: 'macro',
-      name: '$__timeFilter',
+      type: "macro",
+      name: "$__timeFilter",
       params: []
     }];
     target.select = target.select || [[{
-      type: 'column',
-      params: ['-- value --']
+      type: "column",
+      params: ["-- value --"]
     }]]; // handle pre query gui panels gracefully
 
-    if (!('rawQuery' in this.target)) {
-      target.rawQuery = 'rawSql' in target;
+    if (!("rawQuery" in this.target)) {
+      target.rawQuery = "rawSql" in target;
     } // give interpolateQueryStr access to this
 
 
@@ -33629,14 +33629,71 @@ function () {
     return String(value).replace(/'/g, "''");
   };
 
+  BigQueryQuery.formatDateToString = function (date, separator, addtime) {
+    if (separator === void 0) {
+      separator = "";
+    }
+
+    if (addtime === void 0) {
+      addtime = false;
+    } // 01, 02, 03, ... 29, 30, 31
+
+
+    var DD = (date.getDate() < 10 ? "0" : "") + date.getDate(); // 01, 02, 03, ... 10, 11, 12
+
+    var MM = (date.getMonth() + 1 < 10 ? "0" : "") + (date.getMonth() + 1); // 1970, 1971, ... 2015, 2016, ...
+
+    var YYYY = date.getFullYear(); // create the format you want
+
+    var dateStr = YYYY + separator + MM + separator + DD;
+
+    if (addtime === true) {
+      dateStr += " " + date.toTimeString().substr(0, 8);
+    }
+
+    return dateStr;
+  };
+
+  BigQueryQuery._getInterval = function (q, alias) {
+    if (alias) {
+      return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
+    } else {
+      return q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+    }
+  };
+
+  BigQueryQuery._getIntervalStr = function (interval) {
+    var IntervalStr = "";
+
+    if (interval === "1s") {
+      {
+        IntervalStr = "1) * 1)";
+      }
+    } else if (interval === "1m") {
+      {
+        IntervalStr = "60) * 60)";
+      }
+    } else if (interval === "1h") {
+      {
+        IntervalStr = "3600) * 3600)";
+      }
+    } else if (interval === "1d") {
+      {
+        IntervalStr = "86400) * 86400)";
+      }
+    }
+
+    return IntervalStr;
+  };
+
   BigQueryQuery.prototype.hasTimeGroup = function () {
     return _lodash2.default.find(this.target.group, function (g) {
-      return g.type === 'time';
+      return g.type === "time";
     });
   };
 
   BigQueryQuery.prototype.hasMetricColumn = function () {
-    return this.target.metricColumn !== 'none';
+    return this.target.metricColumn !== "none";
   };
 
   BigQueryQuery.prototype.interpolateQueryStr = function (value, variable, defaultFormatFn) {
@@ -33645,20 +33702,20 @@ function () {
       return BigQueryQuery.escapeLiteral(value);
     }
 
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return BigQueryQuery.quoteLiteral(value);
     }
 
     var escapedValues = _lodash2.default.map(value, BigQueryQuery.quoteLiteral);
 
-    return escapedValues.join(',');
+    return escapedValues.join(",");
   };
 
   BigQueryQuery.prototype.render = function (interpolate) {
     var target = this.target; // new query with no table set yet
 
-    if (!this.target.rawQuery && !('table' in this.target)) {
-      return '';
+    if (!this.target.rawQuery && !("table" in this.target)) {
+      return "";
     }
 
     if (!target.rawQuery) {
@@ -33674,19 +33731,14 @@ function () {
 
   BigQueryQuery.prototype._buildTimeColumntimeGroup = function (alias, timeGroup) {
     var args;
-    var macro = '$__timeGroup';
-
-    if (timeGroup.params.length > 1 && timeGroup.params[1] !== 'none') {
-      args = timeGroup.params.join(',');
-    } else {
-      args = timeGroup.params[0];
-    }
+    var macro = "$__timeGroup";
+    args = !(timeGroup.params.length > 1 && timeGroup.params[1] !== "none") ? timeGroup.params[0] : timeGroup.params.join(",");
 
     if (alias) {
-      macro += 'Alias';
+      macro += "Alias";
     }
 
-    return macro + '(' + this.target.timeColumn + ',' + args + ')';
+    return macro + "(" + this.target.timeColumn + "," + args + ")";
   };
 
   BigQueryQuery.prototype.buildTimeColumn = function (alias) {
@@ -33703,7 +33755,7 @@ function () {
       query = this.target.timeColumn;
 
       if (alias) {
-        query += ' AS time';
+        query += " AS time";
       }
     }
 
@@ -33712,18 +33764,18 @@ function () {
 
   BigQueryQuery.prototype.buildMetricColumn = function () {
     if (this.hasMetricColumn()) {
-      return this.target.metricColumn + ' AS metric';
+      return this.target.metricColumn + " AS metric";
     }
 
-    return '';
+    return "";
   };
 
   BigQueryQuery.prototype.buildValueColumns = function () {
-    var query = '';
+    var query = "";
 
     for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
       var column = _a[_i];
-      query += ',\n  ' + this.buildValueColumn(column);
+      query += ",\n  " + this.buildValueColumn(column);
     }
 
     return query;
@@ -33734,17 +33786,12 @@ function () {
       var func = aggregate.params[0];
 
       switch (aggregate.type) {
-        case 'aggregate':
-          if (func === 'first' || func === 'last') {
-            query = func + '(' + query + ',' + this.target.timeColumn + ')';
-          } else {
-            query = func + '(' + query + ')';
-          }
-
+        case "aggregate":
+          query = func === "first" || func === "last" ? func + "(" + query + "," + this.target.timeColumn + ")" : func + "(" + query + ")";
           break;
 
-        case 'percentile':
-          query = func + '(' + aggregate.params[1] + ') WITHIN GROUP (ORDER BY ' + query + ')';
+        case "percentile":
+          query = func + "(" + aggregate.params[1] + ") WITHIN GROUP (ORDER BY " + query + ")";
           break;
       }
     }
@@ -33754,17 +33801,17 @@ function () {
 
   BigQueryQuery.prototype.buildValueColumn = function (column) {
     var columnName = _lodash2.default.find(column, function (g) {
-      return g.type === 'column';
+      return g.type === "column";
     });
 
     var query = columnName.params[0];
 
     var aggregate = _lodash2.default.find(column, function (g) {
-      return g.type === 'aggregate' || g.type === 'percentile';
+      return g.type === "aggregate" || g.type === "percentile";
     });
 
     var windows = _lodash2.default.find(column, function (g) {
-      return g.type === 'window' || g.type === 'moving_window';
+      return g.type === "window" || g.type === "moving_window";
     });
 
     query = this._buildAggregate(aggregate, query);
@@ -33774,54 +33821,54 @@ function () {
       var overParts = [];
 
       if (this.hasMetricColumn()) {
-        overParts.push('PARTITION BY ' + this.target.metricColumn);
+        overParts.push("PARTITION BY " + this.target.metricColumn);
       }
 
-      overParts.push('ORDER BY ' + this.buildTimeColumn(false));
-      var over = overParts.join(' ');
+      overParts.push("ORDER BY " + this.buildTimeColumn(false));
+      var over = overParts.join(" ");
       var curr = void 0;
       var prev = void 0;
       var tmpval = query;
 
       switch (windows.type) {
-        case 'window':
+        case "window":
           switch (windows.params[0]) {
-            case 'delta':
+            case "delta":
               curr = query;
-              prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = curr + ' - ' + prev;
+              prev = "lag(" + curr + ") OVER (" + over + ")";
+              query = curr + " - " + prev;
               break;
 
-            case 'increase':
+            case "increase":
               curr = query;
-              prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
-              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
+              prev = "lag(" + curr + ") OVER (" + over + ")";
+              query = "(CASE WHEN " + curr + " >= " + prev + " THEN " + curr + " - " + prev;
+              query += " WHEN " + prev + " IS NULL THEN NULL ELSE " + curr + " END)";
               break;
 
-            case 'rate':
+            case "rate":
               var timeColumn = this.target.timeColumn;
 
               if (aggregate) {
-                timeColumn = 'min(' + timeColumn + ')';
+                timeColumn = "min(" + timeColumn + ")";
               }
 
               curr = query;
-              prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
-              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
-              query += '/(UNIX_SECONDS(' + timeColumn + ') -UNIX_SECONDS(  lag(' + timeColumn + ') OVER (' + over + ')))';
+              prev = "lag(" + curr + ") OVER (" + over + ")";
+              query = "(CASE WHEN " + curr + " >= " + prev + " THEN " + curr + " - " + prev;
+              query += " WHEN " + prev + " IS NULL THEN NULL ELSE " + curr + " END)";
+              query += "/(UNIX_SECONDS(" + timeColumn + ") -UNIX_SECONDS(  lag(" + timeColumn + ") OVER (" + over + ")))";
               break;
 
             default:
-              query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
+              query = windows.params[0] + "(" + query + ") OVER (" + over + ")";
               break;
           }
 
           break;
 
-        case 'moving_window':
-          query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
+        case "moving_window":
+          query = windows.params[0] + "(" + query + ") OVER (" + over + " ROWS " + windows.params[1] + " PRECEDING)";
           query = tmpval + " as tmp" + tmpval + ", " + query;
           break;
       }
@@ -33831,108 +33878,83 @@ function () {
     }
 
     var alias = _lodash2.default.find(column, function (g) {
-      return g.type === 'alias';
+      return g.type === "alias";
     });
 
     if (alias) {
-      query += ' AS ' + alias.params[0];
+      query += " AS " + alias.params[0];
     }
 
     return query;
   };
 
-  BigQueryQuery.formatDateToString = function (date, separator, addtime) {
-    if (separator === void 0) {
-      separator = '';
-    }
-
-    if (addtime === void 0) {
-      addtime = false;
-    } // 01, 02, 03, ... 29, 30, 31
-
-
-    var DD = (date.getDate() < 10 ? '0' : '') + date.getDate(); // 01, 02, 03, ... 10, 11, 12
-
-    var MM = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1); // 1970, 1971, ... 2015, 2016, ...
-
-    var YYYY = date.getFullYear(); // create the format you want
-
-    var dateStr = YYYY + separator + MM + separator + DD;
-
-    if (addtime === true) {
-      dateStr += ' ' + date.toTimeString().substr(0, 8);
-    }
-
-    return dateStr;
-  };
-
   BigQueryQuery.prototype.buildWhereClause = function () {
     var _this = this;
 
-    var query = '';
+    var query = "";
 
     var conditions = _lodash2.default.map(this.target.where, function (tag, index) {
       switch (tag.type) {
-        case 'macro':
-          return tag.name + '(' + _this.target.timeColumn + ')';
+        case "macro":
+          return tag.name + "(" + _this.target.timeColumn + ")";
           break;
 
-        case 'expression':
-          return tag.params.join(' ');
+        case "expression":
+          return tag.params.join(" ");
           break;
       }
     });
 
     if (conditions.length > 0) {
-      query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
+      query = "\nWHERE\n  " + conditions.join(" AND\n  ");
     }
 
     if (this.target.sharded) {
       var from = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d);
       var to = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d);
-      query += " AND  _TABLE_SUFFIX BETWEEN \'" + from + "\' AND \'" + to + "\' ";
+      query += " AND  _TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
     }
 
     if (this.target.partitioned) {
-      query += " AND _PARTITIONTIME >= \'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, '-', true) + "\' AND _PARTITIONTIME < \'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true) + "\'";
+      query += " AND _PARTITIONTIME >= '" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, "-", true) + "' AND _PARTITIONTIME < '" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, "-", true) + "'";
     }
 
     return query;
   };
 
   BigQueryQuery.prototype.buildGroupClause = function () {
-    var query = '';
-    var groupSection = '';
+    var query = "";
+    var groupSection = "";
 
     for (var i = 0; i < this.target.group.length; i++) {
       var part = this.target.group[i];
 
       if (i > 0) {
-        groupSection += ', ';
+        groupSection += ", ";
       }
 
-      if (part.type === 'time') {
-        groupSection += '1';
+      if (part.type === "time") {
+        groupSection += "1";
       } else {
         groupSection += part.params[0];
       }
     }
 
     if (groupSection.length) {
-      query = '\nGROUP BY ' + groupSection;
+      query = "\nGROUP BY " + groupSection;
       this.groupBy = query;
 
       if (this.isWindow) {
         query += "," + this.target.timeColumn;
-        this.groupBy += ',2';
+        this.groupBy += ",2";
       }
 
       if (this.hasMetricColumn()) {
         if (!this.isWindow) {
-          query += ',2';
+          query += ",2";
         } else {
-          query += ',2';
-          this.groupBy += ',3';
+          query += ",2";
+          this.groupBy += ",3";
         }
       }
     }
@@ -33941,23 +33963,23 @@ function () {
   };
 
   BigQueryQuery.prototype.buildQuery = function () {
-    var query = '';
-    query += '\n' + 'SELECT';
-    query += '\n ' + this.buildTimeColumn();
+    var query = "";
+    query += "\n" + "SELECT";
+    query += "\n " + this.buildTimeColumn();
 
     if (this.hasMetricColumn()) {
-      query += ',\n  ' + this.buildMetricColumn();
+      query += ",\n  " + this.buildMetricColumn();
     }
 
     query += this.buildValueColumns();
-    query += '\nFROM ' + "\`" + this.target.dataset + "." + this.target.table + "\`";
+    query += "\nFROM " + "`" + this.target.project + "." + this.target.dataset + "." + this.target.table + "`";
     query += this.buildWhereClause();
     query += this.buildGroupClause();
-    query += '\nORDER BY 1';
+    query += "\nORDER BY 1";
 
     if (this.hasMetricColumn()) {
-      query += ',2';
-    } //query += '\nLIMIT 2';
+      query += ",2";
+    } // query += '\nLIMIT 2';
 
 
     if (this.isWindow) {
@@ -33965,7 +33987,7 @@ function () {
       query = query + ")" + this.groupBy + " order by 1";
     }
 
-    query = '#standardSQL' + query;
+    query = "#standardSQL" + query;
     return query;
   };
 
@@ -33981,54 +34003,22 @@ function () {
   };
 
   BigQueryQuery.prototype.replaceTimeFilters = function (q, options) {
-    var to,
-        from = '';
+    var to = "";
+    var from = "";
 
-    if (this.target.timeColumnType === 'DATE') {
-      from = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-') + "\'";
-      to = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-') + "\'";
-    } else if (this.target.timeColumnType === 'DATETIME') {
-      from = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true) + "\'";
-      to = "\'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, '-', true) + "\'";
+    if (this.target.timeColumnType === "DATE") {
+      from = "'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, "-") + "'";
+      to = "'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, "-") + "'";
+    } else if (this.target.timeColumnType === "DATETIME") {
+      from = "'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, "-", true) + "'";
+      to = "'" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, "-", true) + "'";
     } else {
       from = "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
       to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
     }
 
-    var range = this.target.timeColumn + ' BETWEEN ' + from + ' AND ' + to;
+    var range = this.target.timeColumn + " BETWEEN " + from + " AND " + to;
     return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
-  };
-
-  BigQueryQuery._getInterval = function (q, alias) {
-    if (alias) {
-      return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
-    } else {
-      return q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
-    }
-  };
-
-  BigQueryQuery._getIntervalStr = function (interval) {
-    var IntervalStr = '';
-
-    if (interval === '1s') {
-      {
-        IntervalStr = "1) * 1)";
-      }
-    } else if (interval === '1m') {
-      {
-        IntervalStr = "60) * 60)";
-      }
-    } else if (interval === '1h') {
-      {
-        IntervalStr = "3600) * 3600)";
-      }
-    } else if (interval === '1d') {
-      {
-        IntervalStr = "86400) * 86400)";
-      }
-    }
-
-    return IntervalStr;
   };
 
   BigQueryQuery.prototype.replacetimeGroupAlias = function (q, alias) {
@@ -34075,7 +34065,7 @@ function () {
   /** @ngInject */
   function BigQueryConfigCtrl(datasourceSrv) {
     this.validationErrors = [];
-    this.defaultAuthenticationType = 'jwt';
+    this.defaultAuthenticationType = "jwt";
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.authenticationType = this.current.jsonData.authenticationType ? this.current.jsonData.authenticationType : this.defaultAuthenticationType;
@@ -34083,10 +34073,10 @@ function () {
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [{
       key: this.defaultAuthenticationType,
-      value: 'Google JWT File'
+      value: "Google JWT File"
     }, {
-      key: 'gce',
-      value: 'GCE Default Service Account'
+      key: "gce",
+      value: "GCE Default Service Account"
     }];
   }
 
@@ -34101,19 +34091,19 @@ function () {
     this.resetValidationMessages();
 
     if (!jwt.private_key || jwt.private_key.length === 0) {
-      this.validationErrors.push('Private key field missing in JWT file.');
+      this.validationErrors.push("Private key field missing in JWT file.");
     }
 
     if (!jwt.token_uri || jwt.token_uri.length === 0) {
-      this.validationErrors.push('Token URI field missing in JWT file.');
+      this.validationErrors.push("Token URI field missing in JWT file.");
     }
 
     if (!jwt.client_email || jwt.client_email.length === 0) {
-      this.validationErrors.push('Client Email field missing in JWT file.');
+      this.validationErrors.push("Client Email field missing in JWT file.");
     }
 
     if (!jwt.project_id || jwt.project_id.length === 0) {
-      this.validationErrors.push('Project Id field missing in JWT file.');
+      this.validationErrors.push("Project Id field missing in JWT file.");
     }
 
     if (this.validationErrors.length === 0) {
@@ -34125,7 +34115,7 @@ function () {
   };
 
   BigQueryConfigCtrl.prototype.onUpload = function (json) {
-    this.jsonText = '';
+    this.jsonText = "";
 
     if (this.validateJwt(json)) {
       this.save(json);
@@ -34148,15 +34138,15 @@ function () {
   BigQueryConfigCtrl.prototype.resetValidationMessages = function () {
     this.validationErrors = [];
     this.inputDataValid = false;
-    this.jsonText = '';
-    this.current.jsonData = Object.assign({}, {
+    this.jsonText = "";
+    this.current.jsonData = {
       authenticationType: this.current.jsonData.authenticationType
-    });
+    };
     this.current.secureJsonData = {};
     this.current.secureJsonFields = {};
   };
 
-  BigQueryConfigCtrl.templateUrl = 'partials/config.html';
+  BigQueryConfigCtrl.templateUrl = "partials/config.html";
   return BigQueryConfigCtrl;
 }();
 
@@ -34187,13 +34177,13 @@ var _lodash = __webpack_require__(/*! lodash */ "lodash");
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
-var _response_parser = __webpack_require__(/*! ./response_parser */ "./response_parser.ts");
-
-var _response_parser2 = _interopRequireDefault(_response_parser);
-
 var _bigquery_query = __webpack_require__(/*! ./bigquery_query */ "./bigquery_query.ts");
 
 var _bigquery_query2 = _interopRequireDefault(_bigquery_query);
+
+var _response_parser = __webpack_require__(/*! ./response_parser */ "./response_parser.ts");
+
+var _response_parser2 = _interopRequireDefault(_response_parser);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -34216,7 +34206,7 @@ function () {
     this.timeSrv = timeSrv;
 
     this.interpolateVariable = function (value, variable) {
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         if (variable.multi || variable.includeAll) {
           return _bigquery_query2.default.quoteLiteral(value);
         } else {
@@ -34224,7 +34214,7 @@ function () {
         }
       }
 
-      if (typeof value === 'number') {
+      if (typeof value === "number") {
         return value;
       }
 
@@ -34232,7 +34222,7 @@ function () {
         return _bigquery_query2.default.quoteLiteral(v);
       });
 
-      return quotedValues.join(',');
+      return quotedValues.join(",");
     };
 
     this.name = instanceSettings.name;
@@ -34242,14 +34232,14 @@ function () {
     this.queryModel = new _bigquery_query2.default({});
     this.baseUrl = "/bigquery/";
     this.url = instanceSettings.url;
-    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
-    this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
-    this.projectName = instanceSettings.jsonData.defaultProject || '';
+    this.interval = (instanceSettings.jsonData || {}).timeInterval || "1m";
+    this.authenticationType = instanceSettings.jsonData.authenticationType || "jwt";
+    this.projectName = instanceSettings.jsonData.defaultProject || "";
   }
 
   BigQueryDatasource.prototype.doRequest = function (url, requestId, maxRetries) {
     if (requestId === void 0) {
-      requestId = 'requestId';
+      requestId = "requestId";
     }
 
     if (maxRetries === void 0) {
@@ -34263,9 +34253,9 @@ function () {
         return [2
         /*return*/
         , this.backendSrv.datasourceRequest({
-          url: this.url + url,
-          method: 'GET',
-          requestId: requestId
+          method: "GET",
+          requestId: requestId,
+          url: this.url + url
         }).then(function (result) {
           if (result.status !== 200) {
             if (result.status >= 500 && maxRetries > 0) {
@@ -34285,7 +34275,6 @@ function () {
             return [];
           }
 
-          console.log(error);
           throw BigQueryDatasource.formatBigqueryError(error.data.error);
         })];
       });
@@ -34308,14 +34297,14 @@ function () {
         return [2
         /*return*/
         , this.backendSrv.datasourceRequest({
-          url: url,
-          method: 'POST',
-          requestId: requestId,
           data: {
             query: query,
             useLegacySql: false,
             useQueryCache: true
-          }
+          },
+          method: "POST",
+          requestId: requestId,
+          url: url
         }).then(function (result) {
           if (result.status !== 200) {
             if (result.status >= 500 && maxRetries > 0) {
@@ -34335,7 +34324,6 @@ function () {
             return [];
           }
 
-          console.log(error);
           var msg = error;
 
           if (error.data !== undefined) {
@@ -34377,7 +34365,7 @@ function () {
 
           case 3:
             queryResults = _a.sent();
-            console.log('wating for job to complete ', jobId);
+            console.log("wating for job to complete ", jobId);
             return [3
             /*break*/
             , 1];
@@ -34450,7 +34438,7 @@ function () {
             }
 
             notReady = false;
-            ['-- time --', '-- value --'].forEach(function (element) {
+            ["-- time --", "-- value --"].forEach(function (element) {
               if (query.indexOf(element) !== -1) {
                 notReady = true;
               }
@@ -34530,12 +34518,12 @@ function () {
           var queryModel = new _bigquery_query2.default(target, _this.templateSrv, options.scopedVars);
           _this.queryModel = queryModel;
           return {
-            refId: target.refId,
+            datasourceId: _this.id,
+            format: target.format,
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
-            datasourceId: _this.id,
             rawSql: queryModel.render(_this.interpolateVariable),
-            format: target.format
+            refId: target.refId
           };
         });
 
@@ -34562,8 +34550,12 @@ function () {
           var data = [];
 
           for (var i = 0; i < responses.length; i++) {
-            for (var x = 0; x < responses[i].length; x++) {
-              data.push(responses[i][x]);
+            if (responses[i].type && responses[i].type === "table") {
+              data.push(responses[i]);
+            } else {
+              for (var x = 0; x < responses[i].length; x++) {
+                data.push(responses[i][x]);
+              }
             }
           }
 
@@ -34580,7 +34572,7 @@ function () {
 
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
-        message: 'Query missing in annotation definition'
+        message: "Query missing in annotation definition"
       });
     }
 
@@ -34591,13 +34583,13 @@ function () {
       format: 'table'
     };
     return this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
       data: {
         from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries: [query]
-      }
+        queries: [query],
+        to: options.range.to.valueOf().toString()
+      },
+      method: "POST",
+      url: "/api/tsdb/query"
     }).then(function (data) {
       return _this.responseParser.transformAnnotationResponse(options, data);
     });
@@ -34628,7 +34620,7 @@ function () {
             , 4];
             return [4
             /*yield*/
-            , this.doRequest("" + this.baseUrl + path + '?pageToken=' + queryResults.data.nextPageToken)];
+            , this.doRequest("" + this.baseUrl + path + "?pageToken=" + queryResults.data.nextPageToken)];
 
           case 3:
             queryResults = _a.sent();
@@ -34738,7 +34730,7 @@ function () {
           case 0:
             _a.trys.push([0, 4,, 5]);
 
-            if (!(this.authenticationType === 'gce' || !this.projectName)) return [3
+            if (!(this.authenticationType === "gce" || !this.projectName)) return [3
             /*break*/
             , 2];
             return [4
@@ -34781,9 +34773,9 @@ function () {
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
-            status = 'success';
-            message = 'Successfully queried the BigQuery API.';
-            defaultErrorMessage = 'Cannot connect to BigQuery API';
+            status = "success";
+            message = "Successfully queried the BigQuery API.";
+            defaultErrorMessage = "Cannot connect to BigQuery API";
             _a.label = 1;
 
           case 1:
@@ -34804,7 +34796,7 @@ function () {
             response = _a.sent();
 
             if (response.status !== 200) {
-              status = 'error';
+              status = "error";
               message = response.statusText ? response.statusText : defaultErrorMessage;
             }
 
@@ -34817,7 +34809,7 @@ function () {
             message = error_2.statusText ? error_2.statusText : defaultErrorMessage;
 
             if (error_2.data && error_2.data.error && error_2.data.error.code) {
-              message = ': ' + error_2.data.error.code + '. ' + error_2.data.error.message;
+              message = ": " + error_2.data.error.code + ". " + error_2.data.error.message;
             }
 
             return [3
@@ -34837,9 +34829,9 @@ function () {
   };
 
   BigQueryDatasource.formatBigqueryError = function (error) {
-    var message = 'BigQuery: ';
-    var status = '';
-    var data = '';
+    var message = "BigQuery: ";
+    var status = "";
+    var data = "";
 
     if (error !== undefined) {
       message += error.message ? error.message : 'Cannot connect to BigQuery API';
@@ -34925,15 +34917,15 @@ var _tslib = __webpack_require__(/*! tslib */ "../node_modules/tslib/tslib.es6.j
 
 var tslib_1 = _interopRequireWildcard(_tslib);
 
-var _lodash = __webpack_require__(/*! lodash */ "lodash");
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 var _app_events = __webpack_require__(/*! grafana/app/core/app_events */ "grafana/app/core/app_events");
 
 var _app_events2 = _interopRequireDefault(_app_events);
 
 var _sdk = __webpack_require__(/*! grafana/app/plugins/sdk */ "grafana/app/plugins/sdk");
+
+var _lodash = __webpack_require__(/*! lodash */ "lodash");
+
+var _lodash2 = _interopRequireDefault(_lodash);
 
 var _bigquery_query = __webpack_require__(/*! ./bigquery_query */ "./bigquery_query.ts");
 
@@ -34967,51 +34959,36 @@ function (_super) {
     _this.updateProjection();
 
     _this.formats = [{
-      text: 'Time series',
-      value: 'time_series'
+      text: "Time series",
+      value: "time_series"
     }, {
-      text: 'Table',
-      value: 'table'
+      text: "Table",
+      value: "table"
     }];
 
     if (!_this.target.rawSql) {
       // special handling when in table panel
-      if (_this.panelCtrl.panel.type === 'table') {
-        _this.target.format = 'table';
-        _this.target.rawSql = 'SELECT 1';
+      if (_this.panelCtrl.panel.type === "table") {
+        _this.target.format = "table";
+        _this.target.rawSql = "SELECT 1";
         _this.target.rawQuery = true;
       } else {
         _this.target.rawSql = defaultQuery;
       }
     }
 
-    if (!_this.target.project) {
-      _this.projectSegment = uiSegmentSrv.newSegment({
-        value: 'select project',
-        fake: true
-      });
-    } else {
-      _this.projectSegment = uiSegmentSrv.newSegment(_this.target.project);
-    }
-
-    if (!_this.target.dataset) {
-      _this.datasetSegment = uiSegmentSrv.newSegment({
-        value: 'select dataset',
-        fake: true
-      });
-    } else {
-      _this.datasetSegment = uiSegmentSrv.newSegment(_this.target.dataset);
-    }
-
-    if (!_this.target.table) {
-      _this.tableSegment = uiSegmentSrv.newSegment({
-        value: 'select table',
-        fake: true
-      });
-    } else {
-      _this.tableSegment = uiSegmentSrv.newSegment(_this.target.table);
-    }
-
+    _this.projectSegment = !_this.target.project ? uiSegmentSrv.newSegment({
+      fake: true,
+      value: 'select project'
+    }) : uiSegmentSrv.newSegment(_this.target.project);
+    _this.datasetSegment = !_this.target.dataset ? uiSegmentSrv.newSegment({
+      fake: true,
+      value: 'select dataset'
+    }) : uiSegmentSrv.newSegment(_this.target.dataset);
+    _this.tableSegment = !_this.target.table ? uiSegmentSrv.newSegment({
+      fake: true,
+      value: 'select table'
+    }) : uiSegmentSrv.newSegment(_this.target.table);
     _this.timeColumnSegment = uiSegmentSrv.newSegment(_this.target.timeColumn);
     _this.metricColumnSegment = uiSegmentSrv.newSegment(_this.target.metricColumn);
 
@@ -35020,9 +34997,9 @@ function (_super) {
     _this.whereAdd = _this.uiSegmentSrv.newPlusButton();
     _this.groupAdd = _this.uiSegmentSrv.newPlusButton();
 
-    _this.panelCtrl.events.on('data-received', _this.onDataReceived.bind(_this), $scope);
+    _this.panelCtrl.events.on("data-received", _this.onDataReceived.bind(_this), $scope);
 
-    _this.panelCtrl.events.on('data-error', _this.onDataError.bind(_this), $scope);
+    _this.panelCtrl.events.on("data-error", _this.onDataError.bind(_this), $scope);
 
     return _this;
   }
@@ -35053,17 +35030,17 @@ function (_super) {
     });
     this.target.where = _lodash2.default.map(this.whereParts, function (part) {
       return {
-        type: part.def.type,
         datatype: part.datatype,
         name: part.name,
-        params: part.params
+        params: part.params,
+        type: part.def.type
       };
     });
     this.target.group = _lodash2.default.map(this.groupParts, function (part) {
       return {
-        type: part.def.type,
         datatype: part.datatype,
-        params: part.params
+        params: part.params,
+        type: part.def.type
       };
     });
   };
@@ -35071,40 +35048,40 @@ function (_super) {
   BigQueryQueryCtrl.prototype.buildSelectMenu = function () {
     this.selectMenu = [];
     var aggregates = {
-      text: 'Aggregate Functions',
-      value: 'aggregate',
       submenu: [{
-        text: 'Average',
-        value: 'avg'
+        text: "Average",
+        value: "avg"
       }, {
-        text: 'Count',
-        value: 'count'
+        text: "Count",
+        value: "count"
       }, {
-        text: 'Maximum',
-        value: 'max'
+        text: "Maximum",
+        value: "max"
       }, {
-        text: 'Minimum',
-        value: 'min'
+        text: "Minimum",
+        value: "min"
       }, {
-        text: 'Sum',
-        value: 'sum'
+        text: "Sum",
+        value: "sum"
       }, {
-        text: 'Standard deviation',
-        value: 'stddev'
+        text: "Standard deviation",
+        value: "stddev"
       }, {
-        text: 'Variance',
-        value: 'variance'
-      }]
+        text: "Variance",
+        value: "variance"
+      }],
+      text: "Aggregate Functions",
+      value: "aggregate"
     }; // first and last aggregate are timescaledb specific
 
     if (this.datasource.jsonData.timescaledb === true) {
       aggregates.submenu.push({
-        text: 'First',
-        value: 'first'
+        text: "First",
+        value: "first"
       });
       aggregates.submenu.push({
-        text: 'Last',
-        value: 'last'
+        text: "Last",
+        value: "last"
       });
     }
 
@@ -35112,15 +35089,15 @@ function (_super) {
 
     if (this.datasource.jsonData.postgresVersion >= 904) {
       var aggregates2 = {
-        text: 'Ordered-Set Aggregate Functions',
-        value: 'percentile',
         submenu: [{
-          text: 'Percentile (continuous)',
-          value: 'percentile_cont'
+          text: "Percentile (continuous)",
+          value: "percentile_cont"
         }, {
-          text: 'Percentile (discrete)',
-          value: 'percentile_disc'
-        }]
+          text: "Percentile (discrete)",
+          value: "percentile_disc"
+        }],
+        text: "Ordered-Set Aggregate Functions",
+        value: "percentile"
       };
       this.selectMenu.push(aggregates2);
     }
@@ -35162,13 +35139,13 @@ function (_super) {
 
     if (this.target.rawQuery) {
       _app_events2.default.emit('confirm-modal', {
-        title: 'Warning',
-        text2: 'Switching to query builder may overwrite your raw SQL.',
         icon: 'fa-exclamation',
-        yesText: 'Switch',
         onConfirm: function onConfirm() {
           _this.target.rawQuery = !_this.target.rawQuery;
-        }
+        },
+        text2: 'Switching to query builder may overwrite your raw SQL.',
+        title: 'Warning',
+        yesText: 'Switch'
       });
     } else {
       this.target.rawQuery = !this.target.rawQuery;
@@ -35252,10 +35229,8 @@ function (_super) {
       if (result.length > 0 && !_lodash2.default.find(result, function (r) {
         return r.text === _this.target.timeColumn;
       })) {
-        var segment_1 = _this.uiSegmentSrv.newSegment(result[0].text);
-
-        _this.timeColumnSegment.html = segment_1.html;
-        _this.timeColumnSegment.value = segment_1.value;
+        _this.timeColumnSegment.html = _this.uiSegmentSrv.newSegment(result[0].text).html;
+        _this.timeColumnSegment.value = _this.uiSegmentSrv.newSegment(result[0].text).value;
       }
 
       return _this.timeColumnChanged(false);
@@ -35401,9 +35376,9 @@ function (_super) {
           }
 
           segments.unshift(_this.uiSegmentSrv.newSegment({
+            expandable: true,
             type: 'template',
-            value: value,
-            expandable: true
+            value: value
           }));
         }
       }
@@ -35773,12 +35748,12 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.addWhereAction = function (part, index) {
     switch (this.whereAdd.type) {
-      case 'macro':
+      case "macro":
         {
           var partModel = _sql_part2.default.create({
-            type: 'macro',
             name: this.whereAdd.value,
-            params: []
+            params: [],
+            type: "macro"
           });
 
           this.setwWereParts(partModel);
@@ -35837,7 +35812,7 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.handleQueryError = function (err) {
-    this.error = err.message || 'Failed to issue metric query';
+    this.error = err.message || "Failed to issue metric query";
     return [];
   };
 
@@ -35878,6 +35853,73 @@ function () {
     this.$q = $q;
   }
 
+  ResponseParser.parseProjects = function (results) {
+    return ResponseParser.parseData(results, "id", "id");
+  };
+
+  ResponseParser.parseDatasets = function (results) {
+    return ResponseParser.parseData(results, "datasetReference.datasetId", "datasetReference.datasetId");
+  };
+
+  ResponseParser.parseTableFields = function (results, filter) {
+    var fields = [];
+
+    if (!results || results.length === 0) {
+      return fields;
+    }
+
+    var res = [];
+    results = ResponseParser._handleRecordFields(results, res);
+
+    for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
+      var fl = results_1[_i];
+
+      if (filter.length > 0) {
+        for (var i = 0; i < filter.length; i++) {
+          if (filter[i] === fl.type) {
+            fields.push({
+              text: fl.name,
+              value: fl.type
+            });
+          }
+        }
+      } else {
+        fields.push({
+          text: fl.name,
+          value: fl.type
+        });
+      }
+    }
+
+    return fields;
+  };
+
+  ResponseParser.parseDataQuery = function (results, format) {
+    if (!results.rows) {
+      return {
+        data: []
+      };
+    }
+
+    if (format === "time_series") {
+      return ResponseParser._toTimeSeries(results);
+    } else {
+      return ResponseParser._toTable(results);
+    }
+  };
+
+  ResponseParser._convertValues = function (v, type) {
+    if (["INT64", "NUMERIC", "FLOAT64", "FLOAT", "INT", "INTEGER"].includes(type)) {
+      return Number(v);
+    }
+
+    if (["DATE", "DATETIME", "TIMESTAMP"].includes(type)) {
+      return new Date(Number(v) * 1000).toString();
+    }
+
+    return v;
+  };
+
   ResponseParser.parseData = function (results, text, value) {
     var data = [];
 
@@ -35887,10 +35929,11 @@ function () {
 
     var objectTextList = text.split(".");
     var objectValueList = value.split(".");
-    var itemValue, itemText;
+    var itemValue;
+    var itemText;
 
-    for (var _i = 0, results_1 = results; _i < results_1.length; _i++) {
-      var item = results_1[_i];
+    for (var _i = 0, results_2 = results; _i < results_2.length; _i++) {
+      var item = results_2[_i];
       item = ResponseParser.manipulateItem(item);
       itemText = item[objectTextList[0]];
       itemValue = item[objectValueList[0]];
@@ -35915,28 +35958,181 @@ function () {
   ResponseParser.manipulateItem = function (item) {
     if (item.kind === "bigquery#table") {
       if (item.timePartitioning) {
-        item.tableReference.tableId = item.tableReference.tableId + '__partitioned';
+        item.tableReference.tableId = item.tableReference.tableId + "__partitioned";
       }
     }
 
     return item;
   };
 
-  ResponseParser.parseProjects = function (results) {
-    return ResponseParser.parseData(results, "id", "id");
+  ResponseParser._handleRecordFields = function (results, res) {
+    for (var _i = 0, results_3 = results; _i < results_3.length; _i++) {
+      var fl = results_3[_i];
+
+      if (fl.type === "RECORD") {
+        for (var _a = 0, _b = fl.fields; _a < _b.length; _a++) {
+          var f = _b[_a];
+
+          if (f.type !== "RECORD") {
+            res.push({
+              name: fl.name + "." + f.name,
+              type: f.type
+            });
+          } else {
+            for (var _c = 0, _d = f.fields; _c < _d.length; _c++) {
+              var ff = _d[_c];
+              ff.name = fl.name + "." + f.name + "." + ff.name;
+            }
+
+            res = ResponseParser._handleRecordFields(f.fields, res);
+          }
+        }
+      } else {
+        res.push({
+          name: fl.name,
+          type: fl.type
+        });
+      }
+    }
+
+    return res;
   };
 
-  ResponseParser.parseDatasets = function (results) {
-    return ResponseParser.parseData(results, "datasetReference.datasetId", "datasetReference.datasetId");
+  ResponseParser._toTimeSeries = function (results) {
+    var timeIndex = -1;
+    var metricIndex = -1;
+    var valueIndex = -1;
+
+    for (var i = 0; i < results.schema.fields.length; i++) {
+      if (timeIndex === -1 && ["DATE", "TIMESTAMP", "DATETIME"].includes(results.schema.fields[i].type)) {
+        timeIndex = i;
+      }
+
+      if (metricIndex === -1 && results.schema.fields[i].name === "metric") {
+        metricIndex = i;
+      }
+
+      if (valueIndex === -1 && ["INT64", "NUMERIC", "FLOAT64", "FLOAT", "INT", "INTEGER"].includes(results.schema.fields[i].type)) {
+        valueIndex = i;
+      }
+    }
+
+    if (timeIndex === -1) {
+      throw new Error("No datetime column found in the result. The Time Series format requires a time column.");
+    }
+
+    return ResponseParser._buildDataPoints(results, timeIndex, metricIndex, valueIndex);
+  };
+
+  ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndex) {
+    var data = [];
+    var metricName = "";
+
+    for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
+      var row = _a[_i];
+
+      if (row) {
+        var epoch = Number(row.f[timeIndex].v) * 1000;
+        metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
+        var bucket = ResponseParser.findOrCreateBucket(data, metricName);
+        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
+      }
+    }
+
+    return data;
+  };
+
+  ResponseParser.findOrCreateBucket = function (data, target) {
+    var dataTarget = _lodash2.default.find(data, ["target", target]);
+
+    if (!dataTarget) {
+      dataTarget = {
+        target: target,
+        datapoints: [],
+        refId: "",
+        query: ""
+      };
+      data.push(dataTarget);
+    }
+
+    return dataTarget;
+  };
+
+  ResponseParser._toTable = function (results) {
+    var columns = [];
+
+    for (var i = 0; i < results.schema.fields.length; i++) {
+      columns.push({
+        text: results.schema.fields[i].name,
+        type: results.schema.fields[i].type
+      });
+    }
+
+    var rows = [];
+    (0, _lodashEs.each)(results.rows, function (ser) {
+      var r = [];
+      (0, _lodashEs.each)(ser, function (v) {
+        for (var i = 0; i < v.length; i++) {
+          var val = ResponseParser._convertValues(v[i].v, columns[i].type);
+
+          r.push(val);
+        }
+      });
+      rows.push(r);
+    });
+    return {
+      columns: columns,
+      rows: rows,
+      type: "table"
+    };
   };
 
   ResponseParser.prototype.parseTabels = function (results) {
     return this._handelWildCardTables(ResponseParser.parseData(results, "tableReference.tableId", "tableReference.tableId"));
   };
 
+  ResponseParser.prototype.transformAnnotationResponse = function (options, data) {
+    var table = data.data.results[options.annotation.name].tables[0];
+    var timeColumnIndex = -1;
+    var titleColumnIndex = -1;
+    var textColumnIndex = -1;
+    var tagsColumnIndex = -1;
+
+    for (var i = 0; i < table.columns.length; i++) {
+      if (table.columns[i].text === "time") {
+        timeColumnIndex = i;
+      } else if (table.columns[i].text === "text") {
+        textColumnIndex = i;
+      } else if (table.columns[i].text === "tags") {
+        tagsColumnIndex = i;
+      }
+    }
+
+    if (timeColumnIndex === -1) {
+      return this.$q.reject({
+        message: "Missing mandatory time column in annotation query."
+      });
+    }
+
+    var list = [];
+
+    for (var i = 0; i < table.rows.length; i++) {
+      var row = table.rows[i];
+      list.push({
+        annotation: options.annotation,
+        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
+        text: row[textColumnIndex],
+        time: Math.floor(row[timeColumnIndex]),
+        title: row[titleColumnIndex]
+      });
+    }
+
+    return list;
+  };
+
   ResponseParser.prototype._handelWildCardTables = function (tables) {
     var sorted = new Map();
-    var new_tables = [];
+    var newTables = [];
 
     for (var _i = 0, tables_1 = tables; _i < tables_1.length; _i++) {
       var t = tables_1[_i];
@@ -35954,238 +36150,19 @@ function () {
     }
 
     sorted.forEach(function (text, value) {
-      new_tables = new_tables.concat({
+      newTables = newTables.concat({
         text: text,
         value: value
       });
     });
-    return new_tables;
-  };
-
-  ResponseParser._handleRecordFileds = function (results, res) {
-    for (var _i = 0, results_2 = results; _i < results_2.length; _i++) {
-      var fl = results_2[_i];
-
-      if (fl.type === "RECORD") {
-        for (var _a = 0, _b = fl.fields; _a < _b.length; _a++) {
-          var f = _b[_a];
-
-          if (f.type !== "RECORD") {
-            res.push({
-              name: fl.name + "." + f.name,
-              type: f.type
-            });
-          } else {
-            for (var _c = 0, _d = f.fields; _c < _d.length; _c++) {
-              var ff = _d[_c];
-              ff.name = fl.name + "." + f.name + "." + ff.name;
-            }
-
-            res = ResponseParser._handleRecordFileds(f.fields, res);
-          }
-        }
-      } else {
-        res.push({
-          name: fl.name,
-          type: fl.type
-        });
-      }
-    }
-
-    return res;
-  };
-
-  ResponseParser.parseTableFields = function (results, filter) {
-    var fields = [];
-
-    if (!results || results.length === 0) {
-      return fields;
-    }
-
-    var res = [];
-    results = ResponseParser._handleRecordFileds(results, res);
-
-    for (var _i = 0, results_3 = results; _i < results_3.length; _i++) {
-      var fl = results_3[_i];
-
-      if (filter.length > 0) {
-        for (var i = 0; i < filter.length; i++) {
-          if (filter[i] === fl.type) {
-            fields.push({
-              text: fl.name,
-              value: fl.type
-            });
-          }
-        }
-      } else {
-        fields.push({
-          text: fl.name,
-          value: fl.type
-        });
-      }
-    }
-
-    return fields;
-  };
-
-  ResponseParser.parseDataQuery = function (results, format) {
-    if (format === 'time_series') {
-      if (!results.rows) {
-        return {
-          data: []
-        };
-      }
-
-      return ResponseParser._toTimeSeries(results);
-    } else {
-      return ResponseParser._toTable(results);
-    }
-  };
-
-  ResponseParser._toTimeSeries = function (results) {
-    var timeIndex = -1;
-    var metricIndex = -1;
-    var valueIndex = -1;
-
-    for (var i = 0; i < results.schema.fields.length; i++) {
-      if (timeIndex === -1 && ['DATE', 'TIMESTAMP', 'DATETIME'].includes(results.schema.fields[i].type)) {
-        timeIndex = i;
-      }
-
-      if (metricIndex === -1 && results.schema.fields[i].name === 'metric') {
-        metricIndex = i;
-      }
-
-      if (valueIndex === -1 && ['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(results.schema.fields[i].type)) {
-        valueIndex = i;
-      }
-    }
-
-    if (timeIndex === -1) {
-      throw new Error('No datetime column found in the result. The Time Series format requires a time column.');
-    }
-
-    return ResponseParser._buildDataPoints(results, timeIndex, metricIndex, valueIndex);
-  };
-
-  ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndex) {
-    var data = [];
-    var metricName = '';
-
-    for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
-      var row = _a[_i];
-
-      if (row) {
-        var epoch = Number(row.f[timeIndex].v) * 1000;
-        metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-        var bucket = ResponseParser.findOrCreateBucket(data, metricName);
-        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
-      }
-    }
-
-    return data;
-  };
-
-  ResponseParser.findOrCreateBucket = function (data, target) {
-    var dataTarget = _lodash2.default.find(data, ['target', target]);
-
-    if (!dataTarget) {
-      dataTarget = {
-        target: target,
-        datapoints: [],
-        refId: '',
-        query: ''
-      };
-      data.push(dataTarget);
-    }
-
-    return dataTarget;
-  };
-
-  ResponseParser._convertValues = function (v, type) {
-    if (['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(type)) {
-      return Number(v);
-    }
-
-    if (['DATE', 'DATETIME', 'TIMESTAMP'].includes(type)) {
-      return new Date(Number(v) * 1000).toString();
-    }
-
-    return v;
-  };
-
-  ResponseParser._toTable = function (results) {
-    var columns = [];
-
-    for (var i = 0; i < results.schema.fields.length; i++) {
-      columns.push({
-        "text": results.schema.fields[i].name,
-        "type": results.schema.fields[i].type
-      });
-    }
-
-    var rows = [];
-    (0, _lodashEs.each)(results.rows, function (ser) {
-      var r = [];
-      (0, _lodashEs.each)(ser, function (v) {
-        for (var i = 0; i < v.length; i++) {
-          var val = ResponseParser._convertValues(v[i].v, columns[i].type);
-
-          r.push(val);
-        }
-      });
-      rows.push(r);
-    });
-    return {
-      "columns": columns,
-      "rows": rows,
-      "type": "table"
-    };
-  };
-
-  ResponseParser.prototype.transformAnnotationResponse = function (options, data) {
-    var table = data.data.results[options.annotation.name].tables[0];
-    var timeColumnIndex = -1;
-    var titleColumnIndex = -1;
-    var textColumnIndex = -1;
-    var tagsColumnIndex = -1;
-
-    for (var i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time') {
-        timeColumnIndex = i;
-      } else if (table.columns[i].text === 'text') {
-        textColumnIndex = i;
-      } else if (table.columns[i].text === 'tags') {
-        tagsColumnIndex = i;
-      }
-    }
-
-    if (timeColumnIndex === -1) {
-      return this.$q.reject({
-        message: 'Missing mandatory time column in annotation query.'
-      });
-    }
-
-    var list = [];
-
-    for (var i = 0; i < table.rows.length; i++) {
-      var row = table.rows[i];
-      list.push({
-        annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]),
-        title: row[titleColumnIndex],
-        text: row[textColumnIndex],
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
-      });
-    }
-
-    return list;
+    return newTables;
   };
 
   return ResponseParser;
 }();
 
 exports.default = ResponseParser;
+;
 
 /***/ }),
 
@@ -36219,19 +36196,19 @@ function () {
     if (options.label) {
       this.label = options.label;
     } else {
-      this.label = this.type[0].toUpperCase() + this.type.substring(1) + ':';
+      this.label = this.type[0].toUpperCase() + this.type.substring(1) + ":";
     }
 
     this.style = options.style;
 
-    if (this.style === 'function') {
-      this.wrapOpen = '(';
-      this.wrapClose = ')';
-      this.separator = ', ';
+    if (this.style === "function") {
+      this.wrapOpen = "(";
+      this.wrapClose = ")";
+      this.separator = ", ";
     } else {
-      this.wrapOpen = ' ';
-      this.wrapClose = ' ';
-      this.separator = ' ';
+      this.wrapOpen = " ";
+      this.wrapClose = " ";
+      this.separator = " ";
     }
 
     this.params = options.params;
@@ -36252,7 +36229,7 @@ function () {
 
     if (!this.def) {
       throw {
-        message: 'Could not find sql part ' + part.type
+        message: "Could not find sql part " + part.type
       };
     }
 
@@ -36260,9 +36237,9 @@ function () {
 
     if (part.name) {
       this.name = part.name;
-      this.label = def.label + ' ' + part.name;
+      this.label = def.label + " " + part.name;
     } else {
-      this.name = '';
+      this.name = "";
       this.label = def.label;
     }
 
@@ -36302,39 +36279,39 @@ function register(options) {
 }
 
 register({
-  type: 'column',
-  style: 'label',
+  defaultParams: ["value"],
   params: [{
-    type: 'column',
+    type: "column",
     dynamicLookup: true
   }],
-  defaultParams: ['value']
+  style: "label",
+  type: "column"
 });
 register({
-  type: 'expression',
-  style: 'expression',
-  label: 'Expr:',
+  defaultParams: ["value", "=", "value"],
+  label: "Expr:",
   params: [{
-    name: 'left',
-    type: 'string',
+    name: "left",
+    type: "string",
     dynamicLookup: true
   }, {
-    name: 'op',
-    type: 'string',
+    name: "op",
+    type: "string",
     dynamicLookup: true
   }, {
-    name: 'right',
-    type: 'string',
+    name: "right",
+    type: "string",
     dynamicLookup: true
   }],
-  defaultParams: ['value', '=', 'value']
+  style: "expression",
+  type: "expression"
 });
 register({
-  type: 'macro',
-  style: 'label',
-  label: 'Macro:',
+  defaultParams: [],
+  label: "Macro:",
   params: [],
-  defaultParams: []
+  style: "label",
+  type: "macro"
 });
 register({
   type: 'aggregate',

@@ -109,8 +109,14 @@ Read more about creating and enabling service accounts for GCE VM instances [her
 
 The build works with Yarn:
 
+#### Development build
 ```
 yarn run run build:dev
+```
+
+#### Production build
+```
+yarn run run build:prod
 ```
 
 Tests can be run with Jest:

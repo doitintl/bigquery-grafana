@@ -1,4 +1,5 @@
 import _ from 'lodash';
+
 export class SqlPartDef {
   type: string;
   style: string;
@@ -14,17 +15,17 @@ export class SqlPartDef {
     if (options.label) {
       this.label = options.label;
     } else {
-      this.label = this.type[0].toUpperCase() + this.type.substring(1) + ':';
+      this.label = this.type[0].toUpperCase() + this.type.substring(1) + ":";
     }
     this.style = options.style;
-    if (this.style === 'function') {
-      this.wrapOpen = '(';
-      this.wrapClose = ')';
-      this.separator = ', ';
+    if (this.style === "function") {
+      this.wrapOpen = "(";
+      this.wrapClose = ")";
+      this.separator = ", ";
     } else {
-      this.wrapOpen = ' ';
-      this.wrapClose = ' ';
-      this.separator = ' ';
+      this.wrapOpen = " ";
+      this.wrapClose = " ";
+      this.separator = " ";
     }
     this.params = options.params;
     this.defaultParams = options.defaultParams;
@@ -43,16 +44,16 @@ export class SqlPart {
     this.part = part;
     this.def = def;
     if (!this.def) {
-      throw { message: 'Could not find sql part ' + part.type };
+      throw { message: "Could not find sql part " + part.type };
     }
 
     this.datatype = part.datatype;
 
     if (part.name) {
       this.name = part.name;
-      this.label = def.label + ' ' + part.name;
+      this.label = def.label + " " + part.name;
     } else {
-      this.name = '';
+      this.name = "";
       this.label = def.label;
     }
 
@@ -88,30 +89,30 @@ function register(options: any) {
 }
 
 register({
-  type: 'column',
-  style: 'label',
-  params: [{ type: 'column', dynamicLookup: true }],
-  defaultParams: ['value'],
+  defaultParams: ["value"],
+  params: [{ type: "column", dynamicLookup: true }],
+  style: "label",
+  type: "column"
 });
 
 register({
-  type: 'expression',
-  style: 'expression',
-  label: 'Expr:',
+  defaultParams: ["value", "=", "value"],
+  label: "Expr:",
   params: [
-    { name: 'left', type: 'string', dynamicLookup: true },
-    { name: 'op', type: 'string', dynamicLookup: true },
-    { name: 'right', type: 'string', dynamicLookup: true },
+    { name: "left", type: "string", dynamicLookup: true },
+    { name: "op", type: "string", dynamicLookup: true },
+    { name: "right", type: "string", dynamicLookup: true }
   ],
-  defaultParams: ['value', '=', 'value'],
+  style: "expression",
+  type: "expression"
 });
 
 register({
-  type: 'macro',
-  style: 'label',
-  label: 'Macro:',
-  params: [],
   defaultParams: [],
+  label: "Macro:",
+  params: [],
+  style: "label",
+  type: "macro"
 });
 
 register({
