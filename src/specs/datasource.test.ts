@@ -981,79 +981,47 @@ describe('BigQueryDatasource', () => {
       });
       expect(results.status).toBe("success");
     });
-
   });
   describe('When performing testDatasource', () => {
     let results;
     const response = {
-      statusText: "Failed"
-    };
-
-    beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 400 });
-      });
-    });
-
-    it('should test datasource', async () => {
-      await ctx.ds.testDatasource().then(data => {
-        results = data;
-      });
-      expect(results.status).toBe("success");
-      expect(results.message).toBe("BigQuery: ");
-    });
-
-  });
-  describe('When performing getDefaultProject', () => {
-    let results;
-    const response = {
-      "kind": "bigquery#projectList",
-      "etag": "o48iuUgjDrXb++kcLl2yeQ==",
-      "projects": [
+      "kind": "bigquery#datasetList",
+      "etag": "q6TrWWJHEC7v8Vt1T4+geg==",
+      "datasets": [
         {
-          "kind": "bigquery#project",
-          "id": "prj-1",
-          "numericId": "1",
-          "projectReference": {
+          "kind": "bigquery#dataset",
+          "id": "prj-1:ds-1",
+          "datasetReference": {
+            "datasetId": "ds-1",
             "projectId": "prj-1"
           },
-          "friendlyName": "prj-1"
+          "location": "US"
         },
         {
-          "kind": "bigquery#project",
-          "id": "prj-2",
-          "numericId": "2",
-          "projectReference": {
-            "projectId": "prj-2"
+          "kind": "bigquery#dataset",
+          "id": "prj-1:ds-2",
+          "datasetReference": {
+            "datasetId": "ds-2",
+            "projectId": "prj-1"
           },
-          "friendlyName": "prj-2"
-        }, {
-          "kind": "bigquery#project",
-          "id": "prj-3",
-          "numericId": "3",
-          "projectReference": {
-            "projectId": "prj-3"
+          "labels": {
+            "otag": "ds-2",
           },
-          "friendlyName": "prj-3"
-        },
-
-      ],
-      "totalItems": 3
+          "location": "US"
+        }
+      ]
     };
+
     beforeEach(() => {
-      ctx.ds.projectName = "";
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
     });
-
-
-    it('should return  default projects', async () => {
+    it("should return  default projects", async () => {
       await ctx.ds.getDefaultProject().then(data => {
         results = data;
       });
-      expect(results).toBe('prj-1');
+      expect(results).toBe("my project");
     });
   });
-
 });

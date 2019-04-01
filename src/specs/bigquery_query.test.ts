@@ -249,4 +249,9 @@ describe('BigQueryQuery', () => {
       expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(t), 86400) * 86400), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(t), 60) * 60) WHERE t BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)');
     });
   });
+
+  describe('formatDateToString', () => {
+    const date1 = new Date('December 17, 1995 03:24:00')
+    expect(BigQueryQuery.formatDateToString(date1, "-", true)).toBe("1995-12-17 03:24:00");
+  });
 });
