@@ -22,6 +22,6 @@ repo: "https://github.com/doitintl/bigquery-grafana/"
 
 show_downloads: true
 title: BigQuery Grafana Datasource
-description: BigQuery datasource plugin provide support for BigQuery as a backend database.
+description: BigQuery Grafana datasource plugin provide support for BigQuery as a backend database.
 google_analytics:  UA-137158105-1
 theme: jekyll-theme-midnight
