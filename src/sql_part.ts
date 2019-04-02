@@ -141,9 +141,9 @@ register({
   label: 'time',
   params: [
     {
-      name: 'interval',
-      type: 'interval',
-      options: ['$__interval', '1s', '1m', '1h', '1d'],
+      name: "interval",
+      options: ["$__interval", "1s", "1min", "1h", "1d", "1w", "1m", "1y"],
+      type: "interval"
     },
     {
       name: 'fill',
