@@ -1,5 +1,5 @@
 import _ from "lodash";
-import {compact, each} from "lodash-es";
+import { each } from "lodash-es";
 
 // API interfaces
 export interface IResultFormat {
@@ -36,8 +36,8 @@ export default class ResponseParser {
     results = ResponseParser._handleRecordFields(results, res);
     for (const fl of results) {
       if (filter.length > 0) {
-        for (let i = 0; i < filter.length; i++) {
-          if (filter[i] === fl.type) {
+        for (const flt of filter) {
+          if (flt === fl.type) {
             fields.push({
               text: fl.name,
               value: fl.type
@@ -187,7 +187,6 @@ export default class ResponseParser {
     return data;
   }
 
-
   private static findOrCreateBucket(data, target): IDataTarget {
     let dataTarget = _.find(data, ["target", target]);
     if (!dataTarget) {
@@ -200,15 +199,15 @@ export default class ResponseParser {
 
   private static _toTable(results) {
     const columns = [];
-    for (let i = 0; i < results.schema.fields.length; i++) {
+    for (const fl of results.schema.fields) {
       columns.push({
-        text: results.schema.fields[i].name,
-        type: results.schema.fields[i].type
+        text: fl.name,
+        type: fl.type
       });
     }
-    let rows = [];
-    each(results.rows, function (ser) {
-      let r = [];
+    const rows = [];
+    each(results.rows, function (ser ) {
+      const r = [];
       each(ser, function (v) {
         for (let i = 0; i < v.length; i++) {
           const val = ResponseParser._convertValues(v[i].v, columns[i].type);
@@ -224,8 +223,7 @@ export default class ResponseParser {
     };
   }
 
-  constructor(private $q) {
-  }
+  constructor(private $q) {}
 
   public parseTabels(results): IResultFormat[] {
     return this._handelWildCardTables(
@@ -261,8 +259,7 @@ export default class ResponseParser {
     }
 
     const list = [];
-    for (let i = 0; i < table.rows.length; i++) {
-      const row = table.rows[i];
+    for (const row of table.rows) {
       list.push({
         annotation: options.annotation,
         tags: row[tagsColumnIndex]

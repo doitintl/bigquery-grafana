@@ -57,11 +57,11 @@ export default class BigQueryQuery {
       }
     } else if (interval === "1m") {
       {
-        IntervalStr = "18446400) * 18446400)";
+        IntervalStr = "2635200) * 2635200)";
       }
     } else if (interval === "1y") {
       {
-        IntervalStr = "220752000) * 220752000)";
+        IntervalStr = "31536000) * 31536000)";
       }
     }
     return IntervalStr;
