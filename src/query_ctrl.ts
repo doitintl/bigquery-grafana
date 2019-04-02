@@ -251,7 +251,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
           if (partitioned > -1) {
             this.target.partitioned = true;
           }
-
         }
       });
     });

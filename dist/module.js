@@ -33687,11 +33687,11 @@ function () {
       }
     } else if (interval === "1m") {
       {
-        IntervalStr = "18446400) * 18446400)";
+        IntervalStr = "2635200) * 2635200)";
       }
     } else if (interval === "1y") {
       {
-        IntervalStr = "220752000) * 220752000)";
+        IntervalStr = "31536000) * 31536000)";
       }
     }
 
@@ -34092,6 +34092,38 @@ function () {
     }];
   }
 
+  BigQueryConfigCtrl.prototype.onUpload = function (json) {
+    this.jsonText = "";
+
+    if (this.validateJwt(json)) {
+      this.save(json);
+    }
+  };
+
+  BigQueryConfigCtrl.prototype.onPasteJwt = function (e) {
+    try {
+      var json = JSON.parse(e.originalEvent.clipboardData.getData("text/plain") || this.jsonText);
+
+      if (this.validateJwt(json)) {
+        this.save(json);
+      }
+    } catch (error) {
+      this.resetValidationMessages();
+      this.validationErrors.push("Invalid json: " + error.message);
+    }
+  };
+
+  BigQueryConfigCtrl.prototype.resetValidationMessages = function () {
+    this.validationErrors = [];
+    this.inputDataValid = false;
+    this.jsonText = "";
+    this.current.jsonData = {
+      authenticationType: this.current.jsonData.authenticationType
+    };
+    this.current.secureJsonData = {};
+    this.current.secureJsonFields = {};
+  };
+
   BigQueryConfigCtrl.prototype.save = function (jwt) {
     this.current.secureJsonData.privateKey = jwt.private_key;
     this.current.jsonData.tokenUri = jwt.token_uri;
@@ -34124,38 +34156,6 @@ function () {
     }
 
     return false;
-  };
-
-  BigQueryConfigCtrl.prototype.onUpload = function (json) {
-    this.jsonText = "";
-
-    if (this.validateJwt(json)) {
-      this.save(json);
-    }
-  };
-
-  BigQueryConfigCtrl.prototype.onPasteJwt = function (e) {
-    try {
-      var json = JSON.parse(e.originalEvent.clipboardData.getData('text/plain') || this.jsonText);
-
-      if (this.validateJwt(json)) {
-        this.save(json);
-      }
-    } catch (error) {
-      this.resetValidationMessages();
-      this.validationErrors.push("Invalid json: " + error.message);
-    }
-  };
-
-  BigQueryConfigCtrl.prototype.resetValidationMessages = function () {
-    this.validationErrors = [];
-    this.inputDataValid = false;
-    this.jsonText = "";
-    this.current.jsonData = {
-      authenticationType: this.current.jsonData.authenticationType
-    };
-    this.current.secureJsonData = {};
-    this.current.secureJsonFields = {};
   };
 
   BigQueryConfigCtrl.templateUrl = "partials/config.html";
@@ -34211,11 +34211,10 @@ var BigQueryDatasource =
 /** @class */
 function () {
   /** @ngInject */
-  function BigQueryDatasource(instanceSettings, backendSrv, $q, templateSrv, timeSrv) {
+  function BigQueryDatasource(instanceSettings, backendSrv, $q, templateSrv) {
     this.backendSrv = backendSrv;
     this.$q = $q;
     this.templateSrv = templateSrv;
-    this.timeSrv = timeSrv;
 
     this.interpolateVariable = function (value, variable) {
       if (typeof value === "string") {
@@ -34248,6 +34247,309 @@ function () {
     this.authenticationType = instanceSettings.jsonData.authenticationType || "jwt";
     this.projectName = instanceSettings.jsonData.defaultProject || "";
   }
+
+  BigQueryDatasource.formatBigqueryError = function (error) {
+    var message = "BigQuery: ";
+    var status = "";
+    var data = "";
+
+    if (error !== undefined) {
+      message += error.message ? error.message : "Cannot connect to BigQuery API";
+      status = error.code;
+      data = error.errors[0].reason + ": " + error.message;
+    }
+
+    return {
+      data: {
+        message: data
+      },
+      status: status,
+      statusText: message
+    };
+  };
+
+  BigQueryDatasource.prototype.query = function (options) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var queries, allQueryPromise;
+
+      var _this = this;
+
+      return tslib_1.__generator(this, function (_a) {
+        queries = _lodash2.default.filter(options.targets, function (target) {
+          return target.hide !== true;
+        }).map(function (target) {
+          var queryModel = new _bigquery_query2.default(target, _this.templateSrv, options.scopedVars);
+          _this.queryModel = queryModel;
+          return {
+            datasourceId: _this.id,
+            format: target.format,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            rawSql: queryModel.render(_this.interpolateVariable),
+            refId: target.refId
+          };
+        });
+
+        if (queries.length === 0) {
+          return [2
+          /*return*/
+          , this.$q.when({
+            data: []
+          })];
+        }
+
+        allQueryPromise = _lodash2.default.map(queries, function (query) {
+          _this.queryModel.target.rawSql = query.rawSql;
+
+          var q = _this.queryModel.expend_macros(options);
+
+          return _this.doQuery(q, options.panelId + query.refId).then(function (response) {
+            return _response_parser2.default.parseDataQuery(response, query.format);
+          });
+        });
+        return [2
+        /*return*/
+        , this.$q.all(allQueryPromise).then(function (responses) {
+          var data = [];
+
+          for (var _i = 0, responses_1 = responses; _i < responses_1.length; _i++) {
+            var response = responses_1[_i];
+
+            if (response.type && response.type === "table") {
+              data.push(response);
+            } else {
+              for (var _a = 0, response_1 = response; _a < response_1.length; _a++) {
+                var dp = response_1[_a];
+                data.push(dp);
+              }
+            }
+          }
+
+          return {
+            data: data
+          };
+        })];
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.testDatasource = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var status, message, defaultErrorMessage, projectName, path, response, error_1;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            status = "success";
+            message = "Successfully queried the BigQuery API.";
+            defaultErrorMessage = "Cannot connect to BigQuery API";
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1, 4,, 5]);
+
+            return [4
+            /*yield*/
+            , this.getDefaultProject()];
+
+          case 2:
+            projectName = _a.sent();
+            path = "v2/projects/" + projectName + "/datasets";
+            return [4
+            /*yield*/
+            , this.doRequest("" + this.baseUrl + path)];
+
+          case 3:
+            response = _a.sent();
+
+            if (response.status !== 200) {
+              status = "error";
+              message = response.statusText ? response.statusText : defaultErrorMessage;
+            }
+
+            return [3
+            /*break*/
+            , 5];
+
+          case 4:
+            error_1 = _a.sent();
+            message = error_1.statusText ? error_1.statusText : defaultErrorMessage;
+
+            if (error_1.data && error_1.data.error && error_1.data.error.code) {
+              message = ": " + error_1.data.error.code + ". " + error_1.data.error.message;
+            }
+
+            return [3
+            /*break*/
+            , 5];
+
+          case 5:
+            return [2
+            /*return*/
+            , {
+              message: message,
+              status: status
+            }];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.getProjects = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path, data;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            path = "v2/projects";
+            return [4
+            /*yield*/
+            , this.paginatedResults(path, "projects")];
+
+          case 1:
+            data = _a.sent();
+            return [2
+            /*return*/
+            , _response_parser2.default.parseProjects(data)];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.getDatasets = function (projectName) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path, data;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            path = "v2/projects/" + projectName + "/datasets";
+            return [4
+            /*yield*/
+            , this.paginatedResults(path, "datasets")];
+
+          case 1:
+            data = _a.sent();
+            return [2
+            /*return*/
+            , _response_parser2.default.parseDatasets(data)];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.getTables = function (projectName, datasetName) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path, data;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables";
+            return [4
+            /*yield*/
+            , this.paginatedResults(path, "tables")];
+
+          case 1:
+            data = _a.sent();
+            return [2
+            /*return*/
+            , new _response_parser2.default(this.$q).parseTabels(data)];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.getTableFields = function (projectName, datasetName, tableName, filter) {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var path, data;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables/" + tableName;
+            return [4
+            /*yield*/
+            , this.paginatedResults(path, "schema.fields")];
+
+          case 1:
+            data = _a.sent();
+            return [2
+            /*return*/
+            , _response_parser2.default.parseTableFields(data, filter)];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.getDefaultProject = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var data, error_2;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            _a.trys.push([0, 4,, 5]);
+
+            if (!(this.authenticationType === "gce" || !this.projectName)) return [3
+            /*break*/
+            , 2];
+            return [4
+            /*yield*/
+            , this.getProjects()];
+
+          case 1:
+            data = _a.sent();
+            this.projectName = data[0].value;
+            return [2
+            /*return*/
+            , this.projectName];
+
+          case 2:
+            return [2
+            /*return*/
+            , this.projectName];
+
+          case 3:
+            return [3
+            /*break*/
+            , 5];
+
+          case 4:
+            error_2 = _a.sent();
+            throw BigQueryDatasource.formatBigqueryError(error_2);
+
+          case 5:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  BigQueryDatasource.prototype.annotationQuery = function (options) {
+    var _this = this;
+
+    if (!options.annotation.rawQuery) {
+      return this.$q.reject({
+        message: "Query missing in annotation definition"
+      });
+    }
+
+    var query = {
+      datasourceId: this.id,
+      format: "table",
+      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
+      refId: options.annotation.name
+    };
+    return this.backendSrv.datasourceRequest({
+      data: {
+        from: options.range.from.valueOf().toString(),
+        queries: [query],
+        to: options.range.to.valueOf().toString()
+      },
+      method: "POST",
+      url: "/api/tsdb/query"
+    }).then(function (data) {
+      return _this.responseParser.transformAnnotationResponse(options, data);
+    });
+  };
 
   BigQueryDatasource.prototype.doRequest = function (url, requestId, maxRetries) {
     if (requestId === void 0) {
@@ -34401,7 +34703,7 @@ function () {
             if (!queryResults.data.pageToken) return [3
             /*break*/
             , 2];
-            path = "v2/projects/" + this.projectName + "/queries/" + jobId + '?pageToken=' + queryResults.data.pageToken;
+            path = "v2/projects/" + this.projectName + "/queries/" + jobId + "?pageToken=" + queryResults.data.pageToken;
             return [4
             /*yield*/
             , this.doRequest("" + this.baseUrl + path, requestId)];
@@ -34517,96 +34819,6 @@ function () {
     });
   };
 
-  BigQueryDatasource.prototype.query = function (options) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var queries, allQueryPromise;
-
-      var _this = this;
-
-      return tslib_1.__generator(this, function (_a) {
-        queries = _lodash2.default.filter(options.targets, function (target) {
-          return target.hide !== true;
-        }).map(function (target) {
-          var queryModel = new _bigquery_query2.default(target, _this.templateSrv, options.scopedVars);
-          _this.queryModel = queryModel;
-          return {
-            datasourceId: _this.id,
-            format: target.format,
-            intervalMs: options.intervalMs,
-            maxDataPoints: options.maxDataPoints,
-            rawSql: queryModel.render(_this.interpolateVariable),
-            refId: target.refId
-          };
-        });
-
-        if (queries.length === 0) {
-          return [2
-          /*return*/
-          , this.$q.when({
-            data: []
-          })];
-        }
-
-        allQueryPromise = _lodash2.default.map(queries, function (query) {
-          _this.queryModel.target.rawSql = query.rawSql;
-
-          var q = _this.queryModel.expend_macros(options);
-
-          return _this.doQuery(q, options.panelId + query.refId).then(function (response) {
-            return _response_parser2.default.parseDataQuery(response, query.format);
-          });
-        });
-        return [2
-        /*return*/
-        , this.$q.all(allQueryPromise).then(function (responses) {
-          var data = [];
-
-          for (var i = 0; i < responses.length; i++) {
-            if (responses[i].type && responses[i].type === "table") {
-              data.push(responses[i]);
-            } else {
-              for (var x = 0; x < responses[i].length; x++) {
-                data.push(responses[i][x]);
-              }
-            }
-          }
-
-          return {
-            data: data
-          };
-        })];
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.annotationQuery = function (options) {
-    var _this = this;
-
-    if (!options.annotation.rawQuery) {
-      return this.$q.reject({
-        message: "Query missing in annotation definition"
-      });
-    }
-
-    var query = {
-      refId: options.annotation.name,
-      datasourceId: this.id,
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
-      format: 'table'
-    };
-    return this.backendSrv.datasourceRequest({
-      data: {
-        from: options.range.from.valueOf().toString(),
-        queries: [query],
-        to: options.range.to.valueOf().toString()
-      },
-      method: "POST",
-      url: "/api/tsdb/query"
-    }).then(function (data) {
-      return _this.responseParser.transformAnnotationResponse(options, data);
-    });
-  };
-
   BigQueryDatasource.prototype.paginatedResults = function (path, dataName) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
       var queryResults, data, dataList;
@@ -34648,216 +34860,6 @@ function () {
         }
       });
     });
-  };
-
-  BigQueryDatasource.prototype.getProjects = function () {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, data;
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            path = "v2/projects";
-            return [4
-            /*yield*/
-            , this.paginatedResults(path, "projects")];
-
-          case 1:
-            data = _a.sent();
-            return [2
-            /*return*/
-            , _response_parser2.default.parseProjects(data)];
-        }
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.getDatasets = function (projectName) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, data;
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            path = "v2/projects/" + projectName + "/datasets";
-            return [4
-            /*yield*/
-            , this.paginatedResults(path, "datasets")];
-
-          case 1:
-            data = _a.sent();
-            return [2
-            /*return*/
-            , _response_parser2.default.parseDatasets(data)];
-        }
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.getTables = function (projectName, datasetName) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, data;
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables";
-            return [4
-            /*yield*/
-            , this.paginatedResults(path, "tables")];
-
-          case 1:
-            data = _a.sent();
-            return [2
-            /*return*/
-            , new _response_parser2.default(this.$q).parseTabels(data)];
-        }
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.getTableFields = function (projectName, datasetName, tableName, filter) {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var path, data;
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            path = "v2/projects/" + projectName + "/datasets/" + datasetName + "/tables/" + tableName;
-            return [4
-            /*yield*/
-            , this.paginatedResults(path, "schema.fields")];
-
-          case 1:
-            data = _a.sent();
-            return [2
-            /*return*/
-            , _response_parser2.default.parseTableFields(data, filter)];
-        }
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.getDefaultProject = function () {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var data, error_1;
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            _a.trys.push([0, 4,, 5]);
-
-            if (!(this.authenticationType === "gce" || !this.projectName)) return [3
-            /*break*/
-            , 2];
-            return [4
-            /*yield*/
-            , this.getProjects()];
-
-          case 1:
-            data = _a.sent();
-            this.projectName = data[0].value;
-            return [2
-            /*return*/
-            , this.projectName];
-
-          case 2:
-            return [2
-            /*return*/
-            , this.projectName];
-
-          case 3:
-            return [3
-            /*break*/
-            , 5];
-
-          case 4:
-            error_1 = _a.sent();
-            throw BigQueryDatasource.formatBigqueryError(error_1);
-
-          case 5:
-            return [2
-            /*return*/
-            ];
-        }
-      });
-    });
-  };
-
-  BigQueryDatasource.prototype.testDatasource = function () {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var status, message, defaultErrorMessage, projectName, path, response, error_2;
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            status = "success";
-            message = "Successfully queried the BigQuery API.";
-            defaultErrorMessage = "Cannot connect to BigQuery API";
-            _a.label = 1;
-
-          case 1:
-            _a.trys.push([1, 4,, 5]);
-
-            return [4
-            /*yield*/
-            , this.getDefaultProject()];
-
-          case 2:
-            projectName = _a.sent();
-            path = "v2/projects/" + projectName + "/datasets";
-            return [4
-            /*yield*/
-            , this.doRequest("" + this.baseUrl + path)];
-
-          case 3:
-            response = _a.sent();
-
-            if (response.status !== 200) {
-              status = "error";
-              message = response.statusText ? response.statusText : defaultErrorMessage;
-            }
-
-            return [3
-            /*break*/
-            , 5];
-
-          case 4:
-            error_2 = _a.sent();
-            message = error_2.statusText ? error_2.statusText : defaultErrorMessage;
-
-            if (error_2.data && error_2.data.error && error_2.data.error.code) {
-              message = ": " + error_2.data.error.code + ". " + error_2.data.error.message;
-            }
-
-            return [3
-            /*break*/
-            , 5];
-
-          case 5:
-            return [2
-            /*return*/
-            , {
-              status: status,
-              message: message
-            }];
-        }
-      });
-    });
-  };
-
-  BigQueryDatasource.formatBigqueryError = function (error) {
-    var message = "BigQuery: ";
-    var status = "";
-    var data = "";
-
-    if (error !== undefined) {
-      message += error.message ? error.message : 'Cannot connect to BigQuery API';
-      status = error.code;
-      data = error.errors[0].reason + ": " + error.message;
-    }
-
-    return {
-      statusText: message,
-      status: status,
-      data: {
-        message: data
-      }
-    };
   };
 
   return BigQueryDatasource;
@@ -35887,8 +35889,10 @@ function () {
       var fl = results_1[_i];
 
       if (filter.length > 0) {
-        for (var i = 0; i < filter.length; i++) {
-          if (filter[i] === fl.type) {
+        for (var _a = 0, filter_1 = filter; _a < filter_1.length; _a++) {
+          var flt = filter_1[_a];
+
+          if (flt === fl.type) {
             fields.push({
               text: fl.name,
               value: fl.type
@@ -36073,10 +36077,11 @@ function () {
   ResponseParser._toTable = function (results) {
     var columns = [];
 
-    for (var i = 0; i < results.schema.fields.length; i++) {
+    for (var _i = 0, _a = results.schema.fields; _i < _a.length; _i++) {
+      var fl = _a[_i];
       columns.push({
-        text: results.schema.fields[i].name,
-        type: results.schema.fields[i].type
+        text: fl.name,
+        type: fl.type
       });
     }
 
@@ -36128,8 +36133,8 @@ function () {
 
     var list = [];
 
-    for (var i = 0; i < table.rows.length; i++) {
-      var row = table.rows[i];
+    for (var _i = 0, _a = table.rows; _i < _a.length; _i++) {
+      var row = _a[_i];
       list.push({
         annotation: options.annotation,
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],

@@ -1,20 +1,22 @@
-import {IJwt} from "./types"
+import { IJwt } from "./types";
+
 export class BigQueryConfigCtrl {
-  static templateUrl = "partials/config.html";
-  datasourceSrv: any;
-  current: any;
-  jsonText: string;
-  validationErrors: string[] = [];
-  inputDataValid: boolean;
-  authenticationTypes: any[];
-  defaultAuthenticationType: string;
+  private static templateUrl = "partials/config.html";
+  public authenticationTypes: any[];
+  public inputDataValid: boolean;
+  public jsonText: string;
+  public validationErrors: string[] = [];
+  private datasourceSrv: any;
+  private current: any;
+  private readonly defaultAuthenticationType: string;
 
   /** @ngInject */
   constructor(datasourceSrv) {
     this.defaultAuthenticationType = "jwt";
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
-    this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
+    this.current.jsonData.authenticationType = this.current.jsonData
+      .authenticationType
       ? this.current.jsonData.authenticationType
       : this.defaultAuthenticationType;
     this.current.secureJsonData = this.current.secureJsonData || {};
@@ -25,14 +27,47 @@ export class BigQueryConfigCtrl {
     ];
   }
 
-  save(jwt: IJwt) {
+  public onUpload(json) {
+    this.jsonText = "";
+    if (this.validateJwt(json)) {
+      this.save(json);
+    }
+  }
+
+  public onPasteJwt(e) {
+    try {
+      const json = JSON.parse(
+        e.originalEvent.clipboardData.getData("text/plain") || this.jsonText
+      );
+      if (this.validateJwt(json)) {
+        this.save(json);
+      }
+    } catch (error) {
+      this.resetValidationMessages();
+      this.validationErrors.push(`Invalid json: ${error.message}`);
+    }
+  }
+
+  public resetValidationMessages() {
+    this.validationErrors = [];
+    this.inputDataValid = false;
+    this.jsonText = "";
+
+    this.current.jsonData = {
+      authenticationType: this.current.jsonData.authenticationType
+    };
+    this.current.secureJsonData = {};
+    this.current.secureJsonFields = {};
+  }
+
+  private save(jwt: IJwt) {
     this.current.secureJsonData.privateKey = jwt.private_key;
     this.current.jsonData.tokenUri = jwt.token_uri;
     this.current.jsonData.clientEmail = jwt.client_email;
     this.current.jsonData.defaultProject = jwt.project_id;
   }
 
-  validateJwt(jwt: IJwt) {
+  private validateJwt(jwt: IJwt) {
     this.resetValidationMessages();
     if (!jwt.private_key || jwt.private_key.length === 0) {
       this.validationErrors.push("Private key field missing in JWT file.");
@@ -56,36 +91,5 @@ export class BigQueryConfigCtrl {
     }
 
     return false;
-  }
-
-  onUpload(json) {
-    this.jsonText = "";
-    if (this.validateJwt(json)) {
-      this.save(json);
-    }
-  }
-
-  onPasteJwt(e) {
-    try {
-      const json = JSON.parse(e.originalEvent.clipboardData.getData('text/plain') || this.jsonText);
-      if (this.validateJwt(json)) {
-        this.save(json);
-      }
-    } catch (error) {
-      this.resetValidationMessages();
-      this.validationErrors.push(`Invalid json: ${error.message}`);
-    }
-  }
-
-  resetValidationMessages() {
-    this.validationErrors = [];
-    this.inputDataValid = false;
-    this.jsonText = "";
-
-    this.current.jsonData = {
-      authenticationType: this.current.jsonData.authenticationType
-    };
-    this.current.secureJsonData = {};
-    this.current.secureJsonFields = {};
   }
 }

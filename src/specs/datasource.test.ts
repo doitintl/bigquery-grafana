@@ -25,7 +25,7 @@ describe('BigQueryDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new BigQueryDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new BigQueryDatasource(instanceSettings, backendSrv, {}, templateSrv);
     ctx.ds.projectName = "my project";
   });
 
