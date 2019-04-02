@@ -39,7 +39,7 @@ export default class BigQueryQuery {
       {
         IntervalStr = "1) * 1)";
       }
-    } else if (interval === "1m") {
+    } else if (interval === "1min") {
       {
         IntervalStr = "60) * 60)";
       }
@@ -50,6 +50,18 @@ export default class BigQueryQuery {
     } else if (interval === "1d") {
       {
         IntervalStr = "86400) * 86400)";
+      }
+    } else if (interval === "1w") {
+      {
+        IntervalStr = "604800) * 604800)";
+      }
+    } else if (interval === "1m") {
+      {
+        IntervalStr = "18446400) * 18446400)";
+      }
+    } else if (interval === "1y") {
+      {
+        IntervalStr = "220752000) * 220752000)";
       }
     }
     return IntervalStr;
