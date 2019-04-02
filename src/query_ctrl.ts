@@ -606,7 +606,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
           case 'right':
             return this.$q.when([]);
           case 'op':
-            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=']));
+            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=','LIKE','NOT LIKE']));
           default:
             return this.$q.when([]);
         }
