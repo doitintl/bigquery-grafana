@@ -33687,7 +33687,7 @@ function () {
       }
     } else if (interval === "1m") {
       {
-        IntervalStr = "TIMESTAMP(\n" + "  (\n" + '      PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + timeColumn + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + timeColumn + ")) AS STRING),\n" + "        '-','01'\n" + "        )\n" + "       )\n" + "  )\n" + ")";
+        IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + timeColumn + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + timeColumn + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
       }
     } else if (interval === "1y") {
       {

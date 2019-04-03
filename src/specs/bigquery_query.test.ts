@@ -260,8 +260,32 @@ describe('BigQueryQuery', () => {
     });
   });
 
-  describe('formatDateToString', () => {
-    const date1 = new Date('December 17, 1995 03:24:00')
+  describe("formatDateToString", () => {
+    const date1 = new Date("December 17, 1995 03:24:00");
     expect(BigQueryQuery.formatDateToString(date1, "-", true)).toBe("1995-12-17 03:24:00");
+  });
+
+  describe("_getIntervalStr", () => {
+    expect(BigQueryQuery._getIntervalStr("1s", "my_data")).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 1) * 1)"
+    );
+    expect(BigQueryQuery._getIntervalStr("1min", "my_data")).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 60) * 60)"
+    );
+    expect(BigQueryQuery._getIntervalStr("1h", "my_data")).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 3600) * 3600)"
+    );
+    expect(BigQueryQuery._getIntervalStr("1d", "my_data")).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 86400) * 86400)"
+    );
+    expect(BigQueryQuery._getIntervalStr("1w", "my_data")).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 604800) * 604800)"
+    );
+    expect(BigQueryQuery._getIntervalStr("1m", "my_data")).toBe(
+      "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM my_data)) AS STRING),'-',CAST((EXTRACT(MONTH FROM my_data)) AS STRING),'-','01'))))"
+    );
+    expect(BigQueryQuery._getIntervalStr("1y", "my_data")).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 31536000) * 31536000)"
+    );
   });
 });
