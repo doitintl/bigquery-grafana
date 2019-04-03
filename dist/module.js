@@ -33662,36 +33662,36 @@ function () {
     }
   };
 
-  BigQueryQuery._getIntervalStr = function (interval) {
-    var IntervalStr = "";
+  BigQueryQuery._getIntervalStr = function (interval, timeColumn) {
+    var IntervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + timeColumn + "), ";
 
     if (interval === "1s") {
       {
-        IntervalStr = "1) * 1)";
+        IntervalStr += "1) * 1)";
       }
     } else if (interval === "1min") {
       {
-        IntervalStr = "60) * 60)";
+        IntervalStr += "60) * 60)";
       }
     } else if (interval === "1h") {
       {
-        IntervalStr = "3600) * 3600)";
+        IntervalStr += "3600) * 3600)";
       }
     } else if (interval === "1d") {
       {
-        IntervalStr = "86400) * 86400)";
+        IntervalStr += "86400) * 86400)";
       }
     } else if (interval === "1w") {
       {
-        IntervalStr = "604800) * 604800)";
+        IntervalStr += "604800) * 604800)";
       }
     } else if (interval === "1m") {
       {
-        IntervalStr = "2635200) * 2635200)";
+        IntervalStr = "TIMESTAMP(\n" + "  (\n" + '      PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + timeColumn + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + timeColumn + ")) AS STRING),\n" + "        '-','01'\n" + "        )\n" + "       )\n" + "  )\n" + ")";
       }
     } else if (interval === "1y") {
       {
-        IntervalStr = "31536000) * 31536000)";
+        IntervalStr += "31536000) * 31536000)";
       }
     }
 
@@ -34040,8 +34040,7 @@ function () {
       return q;
     }
 
-    var intervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this.target.timeColumn + "), ";
-    intervalStr += BigQueryQuery._getIntervalStr(interval[0]);
+    var intervalStr = BigQueryQuery._getIntervalStr(interval[0], this.target.timeColumn);
 
     if (alias) {
       return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);

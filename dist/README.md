@@ -11,20 +11,8 @@
 BigQuery datasource plugin provide support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
 
 ### Quick start
-## Coming soon
-Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)
+There are multiple ways to install bigquery-grafana go to [INSTALL](INSTALL.md) for more infromation. 
 
-OR
-
-Use the [grafana-cli](http://docs.grafana.org/plugins/installation/#installing-plugins-manually)
-
-```bash
-grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/0.2.0.zip plugins install doitintl-bigquery-datasource
-```
-
-OR
-
-Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/installation/#grafana-plugin-directory). Restart Grafana, check datasources list at http://your.grafana.instance/datasources/new, and choose BigQuery option.
 ### Features:
 
  * Query setup
