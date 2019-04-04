@@ -230,7 +230,7 @@ export default class BigQueryQuery {
     if (windows) {
       this.isWindow = true;
       const overParts = [];
-      let partBy = "PARTITION BY " + this.target.timeColumn;
+      const partBy = "PARTITION BY " + this.target.timeColumn;
       if (this.hasMetricColumn()) {
         overParts.push(partBy + " " + this.target.metricColumn);
       }

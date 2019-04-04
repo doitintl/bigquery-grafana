@@ -79,9 +79,9 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "v as tmpv, (CASE WHEN v >= lag(v) OVER (ORDER BY -- time --) " +
-        "THEN v - lag(v) OVER (ORDER BY -- time --) " +
-        "WHEN lag(v) OVER (ORDER BY -- time --) IS NULL THEN NULL ELSE v END) AS a"
+      "v as tmpv, (CASE WHEN v >= lag(v) OVER (PARTITION BY -- time -- ORDER BY -- time --) " +
+        "THEN v - lag(v) OVER (PARTITION BY -- time -- ORDER BY -- time --) " +
+        "WHEN lag(v) OVER (PARTITION BY -- time -- ORDER BY -- time --) IS NULL THEN NULL ELSE v END) AS a"
     );
 
     column = [
@@ -90,7 +90,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["delta"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "v as tmpv, v - lag(v) OVER (ORDER BY -- time --) AS a"
+      "v as tmpv, v - lag(v) OVER (PARTITION BY -- time -- ORDER BY -- time --) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -99,7 +99,7 @@ describe("BigQueryQuery", () => {
     ];
     query.target.timeColumn = "timC";
     expect(query.buildValueColumn(column)).toBe(
-      "v as tmpv, (CASE WHEN v >= lag(v) OVER (ORDER BY timC) THEN v - lag(v) OVER (ORDER BY timC) WHEN lag(v) OVER (ORDER BY timC) IS NULL THEN NULL ELSE v END)/(UNIX_SECONDS(timC) -UNIX_SECONDS(  lag(timC) OVER (ORDER BY timC))) AS a"
+      "v as tmpv, (CASE WHEN v >= lag(v) OVER (PARTITION BY timC ORDER BY timC) THEN v - lag(v) OVER (PARTITION BY timC ORDER BY timC) WHEN lag(v) OVER (PARTITION BY timC ORDER BY timC) IS NULL THEN NULL ELSE v END)/(UNIX_SECONDS(timC) -UNIX_SECONDS(  lag(timC) OVER (PARTITION BY timC ORDER BY timC))) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -109,7 +109,7 @@ describe("BigQueryQuery", () => {
     ];
     query.target.timeColumn = "timC";
     expect(query.buildValueColumn(column)).toBe(
-      "first(v,timC) as tmpv, (CASE WHEN first(v,timC) >= lag(first(v,timC)) OVER (ORDER BY timC) THEN first(v,timC) - lag(first(v,timC)) OVER (ORDER BY timC) WHEN lag(first(v,timC)) OVER (ORDER BY timC) IS NULL THEN NULL ELSE first(v,timC) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (ORDER BY timC))) AS a"
+      "first(v,timC) as tmpv, (CASE WHEN first(v,timC) >= lag(first(v,timC)) OVER (PARTITION BY timC ORDER BY timC) THEN first(v,timC) - lag(first(v,timC)) OVER (PARTITION BY timC ORDER BY timC) WHEN lag(first(v,timC)) OVER (PARTITION BY timC ORDER BY timC) IS NULL THEN NULL ELSE first(v,timC) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (PARTITION BY timC ORDER BY timC))) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -118,8 +118,7 @@ describe("BigQueryQuery", () => {
       { type: "percentile", params: ["p1", "p2"] }
     ];
     query.target.timeColumn = "timC";
-    expect(query.buildValueColumn(column)).toBe(
-      "p1(p2) WITHIN GROUP (ORDER BY v) as tmpv, (CASE WHEN p1(p2) WITHIN GROUP (ORDER BY v) >= lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (ORDER BY timC) THEN p1(p2) WITHIN GROUP (ORDER BY v) - lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (ORDER BY timC) WHEN lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (ORDER BY timC) IS NULL THEN NULL ELSE p1(p2) WITHIN GROUP (ORDER BY v) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (ORDER BY timC))) AS a"
+    expect(query.buildValueColumn(column)).toBe("p1(p2) WITHIN GROUP (ORDER BY v) as tmpv, (CASE WHEN p1(p2) WITHIN GROUP (ORDER BY v) >= lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) THEN p1(p2) WITHIN GROUP (ORDER BY v) - lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) WHEN lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) IS NULL THEN NULL ELSE p1(p2) WITHIN GROUP (ORDER BY v) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (PARTITION BY timC ORDER BY timC))) AS a"
     );
 
     column = [
@@ -128,7 +127,7 @@ describe("BigQueryQuery", () => {
       { type: "moving_window", params: ["moving_window"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "v as tmpv, v as tmpv, moving_window(v) OVER (ORDER BY timC ROWS undefined PRECEDING) AS a"
+      "v as tmpv, v as tmpv, moving_window(v) OVER (PARTITION BY timC ORDER BY timC ROWS undefined PRECEDING) AS a"
     );
   });
 
@@ -155,9 +154,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "v as tmpv, (CASE WHEN v >= lag(v) OVER (PARTITION BY host ORDER BY -- time --) " +
-        "THEN v - lag(v) OVER (PARTITION BY host ORDER BY -- time --) " +
-        "WHEN lag(v) OVER (PARTITION BY host ORDER BY -- time --) IS NULL THEN NULL ELSE v END) AS a"
+      "v as tmpv, (CASE WHEN v >= lag(v) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY -- time --) THEN v - lag(v) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY -- time --) WHEN lag(v) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY -- time --) IS NULL THEN NULL ELSE v END) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -166,9 +163,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "max(v) as tmpv, (CASE WHEN max(v) >= lag(max(v)) OVER (PARTITION BY host ORDER BY -- time --) " +
-        "THEN max(v) - lag(max(v)) OVER (PARTITION BY host ORDER BY -- time --) " +
-        "WHEN lag(max(v)) OVER (PARTITION BY host ORDER BY -- time --) IS NULL THEN NULL ELSE max(v) END) AS a"
+      "max(v) as tmpv, (CASE WHEN max(v) >= lag(max(v)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY -- time --) THEN max(v) - lag(max(v)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY -- time --) WHEN lag(max(v)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY -- time --) IS NULL THEN NULL ELSE max(v) END) AS a"
     );
   });
 
