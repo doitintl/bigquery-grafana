@@ -29,6 +29,17 @@ export class BigQueryDatasource {
     };
   }
 
+  private static _handleError(error) {
+    if (error.cancelled === true) {
+      return [];
+    }
+    let msg = error;
+    if (error.data !== undefined) {
+      msg = error.data.error;
+    }
+    throw BigQueryDatasource.formatBigqueryError(msg);
+  }
+
   public authenticationType: string;
   public projectName: string;
   private readonly id: any;
@@ -235,7 +246,7 @@ export class BigQueryDatasource {
         if (error.cancelled === true) {
           return [];
         }
-        throw BigQueryDatasource.formatBigqueryError(error.data.error);
+        return BigQueryDatasource._handleError(error);
       });
   }
 
@@ -266,16 +277,10 @@ export class BigQueryDatasource {
         if (maxRetries > 0) {
           return this.doQueryRequest(query, requestId, maxRetries - 1);
         }
-        if (error.cancelled === true) {
-          return [];
-        }
-        let msg = error;
-        if (error.data !== undefined) {
-          msg = error.data.error;
-        }
-        throw BigQueryDatasource.formatBigqueryError(msg);
+        return BigQueryDatasource._handleError(error);
       });
   }
+
 
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;

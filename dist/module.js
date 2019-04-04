@@ -34267,6 +34267,20 @@ function () {
     };
   };
 
+  BigQueryDatasource._handleError = function (error) {
+    if (error.cancelled === true) {
+      return [];
+    }
+
+    var msg = error;
+
+    if (error.data !== undefined) {
+      msg = error.data.error;
+    }
+
+    throw BigQueryDatasource.formatBigqueryError(msg);
+  };
+
   BigQueryDatasource.prototype.query = function (options) {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
       var queries, allQueryPromise;
@@ -34588,7 +34602,7 @@ function () {
             return [];
           }
 
-          throw BigQueryDatasource.formatBigqueryError(error.data.error);
+          return BigQueryDatasource._handleError(error);
         })];
       });
     });
@@ -34633,17 +34647,7 @@ function () {
             return _this.doQueryRequest(query, requestId, maxRetries - 1);
           }
 
-          if (error.cancelled === true) {
-            return [];
-          }
-
-          var msg = error;
-
-          if (error.data !== undefined) {
-            msg = error.data.error;
-          }
-
-          throw BigQueryDatasource.formatBigqueryError(msg);
+          return BigQueryDatasource._handleError(error);
         })];
       });
     });
