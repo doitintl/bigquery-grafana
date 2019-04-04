@@ -1,9 +1,9 @@
 import appEvents from "grafana/app/core/app_events";
-import {QueryCtrl} from "grafana/app/plugins/sdk";
-import _ from 'lodash';
+import { QueryCtrl } from "grafana/app/plugins/sdk";
+import _ from "lodash";
 import BigQueryQuery from "./bigquery_query";
 import { SqlPart } from "./sql_part";
-import sqlPart from './sql_part';
+import sqlPart from "./sql_part";
 
 export interface QueryMeta {
   sql: string;
@@ -19,24 +19,24 @@ WHERE
 `;
 
 export class BigQueryQueryCtrl extends QueryCtrl {
-  static templateUrl = 'partials/query.editor.html';
-  formats: any[];
-  queryModel: BigQueryQuery;
-  lastQueryMeta: QueryMeta;
-  lastQueryError: string;
-  showHelp: boolean;
-  projectSegment: any;
-  datasetSegment: any;
-  tableSegment: any;
-  tablesDataPromise: any;
-  whereAdd: any;
-  timeColumnSegment: any;
-  metricColumnSegment: any;
-  selectMenu: any[];
-  selectParts: SqlPart[][];
-  groupParts: SqlPart[];
-  whereParts: SqlPart[];
-  groupAdd: any;
+  public static templateUrl = "partials/query.editor.html";
+  public formats: any[];
+  public queryModel: BigQueryQuery;
+  public lastQueryMeta: QueryMeta;
+  public lastQueryError: string;
+  public showHelp: boolean;
+  public projectSegment: any;
+  public datasetSegment: any;
+  public tableSegment: any;
+  public tablesDataPromise: any;
+  public whereAdd: any;
+  public timeColumnSegment: any;
+  public metricColumnSegment: any;
+  public selectMenu: any[];
+  public selectParts: SqlPart[][];
+  public groupParts: SqlPart[];
+  public whereParts: SqlPart[];
+  public groupAdd: any;
 
   /** @ngInject */
   constructor(
@@ -68,23 +68,31 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       }
     }
 
-    this.projectSegment = !this.target.project ? uiSegmentSrv.newSegment({
-      fake: true,
-      value: 'select project'
-    }) : uiSegmentSrv.newSegment(this.target.project);
+    this.projectSegment = !this.target.project
+      ? uiSegmentSrv.newSegment({
+          fake: true,
+          value: "select project"
+        })
+      : uiSegmentSrv.newSegment(this.target.project);
 
-    this.datasetSegment = !this.target.dataset ? uiSegmentSrv.newSegment({
-      fake: true,
-      value: 'select dataset'
-    }) : uiSegmentSrv.newSegment(this.target.dataset);
+    this.datasetSegment = !this.target.dataset
+      ? uiSegmentSrv.newSegment({
+          fake: true,
+          value: "select dataset"
+        })
+      : uiSegmentSrv.newSegment(this.target.dataset);
 
-    this.tableSegment = !this.target.table ? uiSegmentSrv.newSegment({
-      fake: true,
-      value: 'select table'
-    }) : uiSegmentSrv.newSegment(this.target.table);
+    this.tableSegment = !this.target.table
+      ? uiSegmentSrv.newSegment({
+          fake: true,
+          value: "select table"
+        })
+      : uiSegmentSrv.newSegment(this.target.table);
 
     this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
-    this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
+    this.metricColumnSegment = uiSegmentSrv.newSegment(
+      this.target.metricColumn
+    );
 
     this.buildSelectMenu();
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
@@ -97,7 +105,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on("data-error", this.onDataError.bind(this), $scope);
   }
 
-  updateProjection() {
+  public updateProjection() {
     this.selectParts = _.map(this.target.select, (parts: any) => {
       return _.map(parts, sqlPart.create).filter(n => n);
     });
@@ -105,10 +113,14 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.groupParts = _.map(this.target.group, sqlPart.create).filter(n => n);
   }
 
-  updatePersistedParts() {
+  public updatePersistedParts() {
     this.target.select = _.map(this.selectParts, selectParts => {
       return _.map(selectParts, (part: any) => {
-        return { type: part.def.type, datatype: part.datatype, params: part.params };
+        return {
+          datatype: part.datatype,
+          params: part.params,
+          type: part.def.type
+        };
       });
     });
     this.target.where = _.map(this.whereParts, (part: any) => {
@@ -128,7 +140,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     });
   }
 
-  buildSelectMenu() {
+  public buildSelectMenu() {
     this.selectMenu = [];
     const aggregates = {
       submenu: [
@@ -141,7 +153,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         { text: "Variance", value: "variance" }
       ],
       text: "Aggregate Functions",
-      value: "aggregate",
+      value: "aggregate"
     };
 
     // first and last aggregate are timescaledb specific
@@ -166,81 +178,86 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
 
     const windows = {
-      text: 'Window Functions',
-      value: 'window',
+      text: "Window Functions",
+      value: "window",
       submenu: [
-        { text: 'Delta', value: 'delta' },
-        { text: 'Increase', value: 'increase' },
-        { text: 'Rate', value: 'rate' },
-        { text: 'Sum', value: 'sum' },
-        { text: 'Moving Average', value: 'avg', type: 'moving_window' },
-      ],
+        { text: "Delta", value: "delta" },
+        { text: "Increase", value: "increase" },
+        { text: "Rate", value: "rate" },
+        { text: "Sum", value: "sum" },
+        { text: "Moving Average", value: "avg", type: "moving_window" }
+      ]
     };
     this.selectMenu.push(windows);
 
-    this.selectMenu.push({ text: 'Alias', value: 'alias' });
-    this.selectMenu.push({ text: 'Column', value: 'column' });
+    this.selectMenu.push({ text: "Alias", value: "alias" });
+    this.selectMenu.push({ text: "Column", value: "column" });
   }
 
-  toggleEditorMode() {
+  public toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit('confirm-modal', {
-        icon: 'fa-exclamation',
+      appEvents.emit("confirm-modal", {
+        icon: "fa-exclamation",
         onConfirm: () => {
           this.target.rawQuery = !this.target.rawQuery;
         },
-        text2: 'Switching to query builder may overwrite your raw SQL.',
-        title: 'Warning',
-        yesText: 'Switch',
+        text2: "Switching to query builder may overwrite your raw SQL.",
+        title: "Warning",
+        yesText: "Switch"
       });
     } else {
       this.target.rawQuery = !this.target.rawQuery;
     }
   }
 
-  resetPlusButton(button) {
+  public resetPlusButton(button) {
     const plusButton = this.uiSegmentSrv.newPlusButton();
     button.html = plusButton.html;
     button.value = plusButton.value;
   }
 
-  getProjectSegments() {
-    return this.datasource.getProjects()
+  public getProjectSegments() {
+    return this.datasource
+      .getProjects()
       .then(this.uiSegmentSrv.transformToSegments(false))
       .catch(this.handleQueryError.bind(this));
   }
 
-  projectChanged() {
+  public projectChanged() {
     this.target.project = this.projectSegment.value;
     this.datasource.projectName = this.projectSegment.value;
-    this.target.dataset = '';
-    this.applySegment(this.datasetSegment, this.fakeSegment('select dataset'));
-    this.applySegment(this.tableSegment, this.fakeSegment('select table'));
-    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
-
+    this.target.dataset = "";
+    this.applySegment(this.datasetSegment, this.fakeSegment("select dataset"));
+    this.applySegment(this.tableSegment, this.fakeSegment("select table"));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
   }
 
-  getDatasetSegments() {
-    return this.datasource.getDatasets(this.target.project)
+  public getDatasetSegments() {
+    return this.datasource
+      .getDatasets(this.target.project)
       .then(this.uiSegmentSrv.transformToSegments(false))
       .catch(this.handleQueryError.bind(this));
   }
 
-  datasetChanged() {
+  public datasetChanged() {
     this.target.dataset = this.datasetSegment.value;
     this.target.sharded = false;
     this.target.partitioned = false;
-    this.applySegment(this.tableSegment, this.fakeSegment('select table'));
-    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.applySegment(this.tableSegment, this.fakeSegment("select table"));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
   }
 
-  getTableSegments() {
-    this.tablesDataPromise = this.datasource.getTables(this.target.project, this.target.dataset);
-    return this.tablesDataPromise.then(this.uiSegmentSrv.transformToSegments(false))
+  public getTableSegments() {
+    this.tablesDataPromise = this.datasource.getTables(
+      this.target.project,
+      this.target.dataset
+    );
+    return this.tablesDataPromise
+      .then(this.uiSegmentSrv.transformToSegments(false))
       .catch(this.handleQueryError.bind(this));
   }
 
-  tableChanged() {
+  public tableChanged() {
     this.target.sharded = false;
     this.target.partitioned = false;
     this.target.table = this.tableSegment.value;
@@ -254,7 +271,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         }
       });
     });
-    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
     const sharded = this.target.table.indexOf("_YYYYMMDD");
     if (sharded > -1) {
       this.target.table = this.target.table.substring(0, sharded + 1) + "*";
@@ -262,26 +279,33 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
     this.target.where = [];
     this.target.group = [];
-    this.target.select = [[{ type: 'column', params: ['-- value --'] }]];
+    this.target.select = [[{ type: "column", params: ["-- value --"] }]];
     this.updateProjection();
 
-    const segment = this.uiSegmentSrv.newSegment('none');
+    const segment = this.uiSegmentSrv.newSegment("none");
     this.metricColumnSegment.html = segment.html;
     this.metricColumnSegment.value = segment.value;
-    this.target.metricColumn = 'none';
+    this.target.metricColumn = "none";
 
     const task1 = this.getTimeColumnSegments().then(result => {
       // check if time column is still valid
-      if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
-        this.timeColumnSegment.html = this.uiSegmentSrv.newSegment(result[0].text).html;
-        this.timeColumnSegment.value = this.uiSegmentSrv.newSegment(result[0].text).value;
+      if (
+        result.length > 0 &&
+        !_.find(result, (r: any) => r.text === this.target.timeColumn)
+      ) {
+        this.timeColumnSegment.html = this.uiSegmentSrv.newSegment(
+          result[0].text
+        ).html;
+        this.timeColumnSegment.value = this.uiSegmentSrv.newSegment(
+          result[0].text
+        ).value;
       }
       return this.timeColumnChanged(false);
     });
 
     const task2 = this.getValueColumnSegments().then(result => {
       if (result.length > 0) {
-        this.target.select = [[{ type: 'column', params: [result[0].text] }]];
+        this.target.select = [[{ type: "column", params: [result[0].text] }]];
         this.updateProjection();
       }
     });
@@ -291,38 +315,29 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   }
 
   public getTimeColumnSegments() {
-    return this._getColumnSegments(['DATE', 'TIMESTAMP', 'DATETIME']);
+    return this._getColumnSegments(["DATE", "TIMESTAMP", "DATETIME"]);
   }
 
   public getValueColumnSegments() {
-    return this._getColumnSegments(['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']);
-  }
-
-  private _getColumnSegments(filter) {
-    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-      filter)
-      .then(this.uiSegmentSrv.transformToSegments(false))
-      .catch(this.handleQueryError.bind(this));
-  }
-
-  private async _getDateFieldType() {
-    let res = '';
-    await this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-      ['DATE', 'TIMESTAMP', 'DATETIME']).then(result => {
-      for (let f of result) {
-        if (f.text === this.target.timeColumn) {
-          res = f.value;
-        }
-      }
-    });
-    return res;
+    return this._getColumnSegments([
+      "INT64",
+      "NUMERIC",
+      "FLOAT64",
+      "FLOAT",
+      "INT",
+      "INTEGER"
+    ]);
   }
 
   public async timeColumnChanged(refresh?: boolean) {
     this.target.timeColumn = this.timeColumnSegment.value;
     this.target.timeColumnType = await this._getDateFieldType();
     let partModel;
-    partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
+    partModel = sqlPart.create({
+      name: "$__timeFilter",
+      params: [],
+      type: "macro"
+    });
     this.setwWereParts(partModel);
     this.updatePersistedParts();
     if (refresh !== false) {
@@ -330,22 +345,28 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
   }
 
-  getMetricColumnSegments() {
-    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['STRING', 'BYTES'])
+  public getMetricColumnSegments() {
+    return this.datasource
+      .getTableFields(
+        this.target.project,
+        this.target.dataset,
+        this.target.table,
+        ["STRING", "BYTES"]
+      )
       .then(this.uiSegmentSrv.transformToSegments(false))
       .catch(this.handleQueryError.bind(this));
   }
 
-  metricColumnChanged() {
+  public metricColumnChanged() {
     this.target.metricColumn = this.metricColumnSegment.value;
     this.panelCtrl.refresh();
   }
 
-  onDataReceived(dataList) {
+  public onDataReceived(dataList) {
     return;
   }
 
-  onDataError(err) {
+  public onDataError(err) {
     if (err.data && err.data.results) {
       const queryRes = err.data.results[this.target.refId];
       if (queryRes) {
@@ -355,57 +376,69 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
   }
 
-  transformToSegments(config) {
+  public transformToSegments(config) {
     return results => {
       const segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
-          expandable: segment.expandable,
+          expandable: segment.expandable
         });
       });
       if (config.addTemplateVars) {
         for (const variable of this.templateSrv.variables) {
           let value;
-          value = '$' + variable.name;
+          value = "$" + variable.name;
           if (config.templateQuoter && variable.multi === false) {
             value = config.templateQuoter(value);
           }
           segments.unshift(
             this.uiSegmentSrv.newSegment({
               expandable: true,
-              type: 'template',
-              value: value
+              type: "template",
+              value
             })
           );
         }
       }
 
       if (config.addNone) {
-        segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: 'none', expandable: true }));
+        segments.unshift(
+          this.uiSegmentSrv.newSegment({
+            type: "template",
+            value: "none",
+            expandable: true
+          })
+        );
       }
       return segments;
     };
   }
 
-  findAggregateIndex(selectParts) {
-    return _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
+  public findAggregateIndex(selectParts) {
+    return _.findIndex(
+      selectParts,
+      (p: any) => p.def.type === "aggregate" || p.def.type === "percentile"
+    );
   }
 
-  findWindowIndex(selectParts) {
-    return _.findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
+  public findWindowIndex(selectParts) {
+    return _.findIndex(
+      selectParts,
+      (p: any) => p.def.type === "window" || p.def.type === "moving_window"
+    );
   }
 
-  applySegment(dst, src) {
+  public applySegment(dst, src) {
     dst.value = src.value;
     dst.html = src.html || src.value;
     dst.fake = src.fake === undefined ? false : src.fake;
   }
 
-  fakeSegment(value) {
-    return this.uiSegmentSrv.newSegment({ fake: true, value: value });
+  public fakeSegment(value) {
+    return this.uiSegmentSrv.newSegment({ fake: true, value });
   }
 
-  addSelectPart(selectParts, item, subItem) {
+  public addSelectPart(selectParts, item, subItem) {
     let partType = item.value;
     if (subItem && subItem.type) {
       partType = subItem.type;
@@ -415,21 +448,24 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       partModel.params[0] = subItem.value;
     }
     let addAlias = false;
-    let _addAlias = function () {
-      return !_.find(selectParts, (p: any) => p.def.type === 'alias');
+    const _addAlias = function() {
+      return !_.find(selectParts, (p: any) => p.def.type === "alias");
     };
     switch (partType) {
-      case 'column':
+      case "column":
         const parts = _.map(selectParts, (part: any) => {
-          return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
+          return sqlPart.create({
+            type: part.def.type,
+            params: _.clone(part.params)
+          });
         });
         this.selectParts.push(parts);
         break;
-      case 'percentile':
-      case 'aggregate':
+      case "percentile":
+      case "aggregate":
         // add group by if no group by yet
         if (this.target.group.length === 0) {
-          this.addGroup('time', '$__interval');
+          this.addGroup("time", "$__interval");
         }
         const aggIndex = this.findAggregateIndex(selectParts);
         if (aggIndex !== -1) {
@@ -442,8 +478,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
           addAlias = true;
         }
         break;
-      case 'moving_window':
-      case 'window':
+      case "moving_window":
+      case "window":
         const windowIndex = this.findWindowIndex(selectParts);
         if (windowIndex !== -1) {
           // replace current window function
@@ -460,15 +496,18 @@ export class BigQueryQueryCtrl extends QueryCtrl {
           addAlias = true;
         }
         break;
-      case 'alias':
+      case "alias":
         addAlias = true;
         break;
     }
 
     if (addAlias) {
       // set initial alias name to column name
-      partModel = sqlPart.create({ type: 'alias', params: [selectParts[0].params[0].replace(/"/g, '')] });
-      if (selectParts[selectParts.length - 1].def.type === 'alias') {
+      partModel = sqlPart.create({
+        type: "alias",
+        params: [selectParts[0].params[0].replace(/"/g, "")]
+      });
+      if (selectParts[selectParts.length - 1].def.type === "alias") {
         selectParts[selectParts.length - 1] = partModel;
       } else {
         selectParts.push(partModel);
@@ -479,8 +518,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  removeSelectPart(selectParts, part) {
-    if (part.def.type === 'column') {
+  public removeSelectPart(selectParts, part) {
+    if (part.def.type === "column") {
       // remove all parts of column unless its last column
       if (this.selectParts.length > 1) {
         const modelsIndex = _.indexOf(this.selectParts, selectParts);
@@ -494,80 +533,68 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-
-  handleSelectPartEvent(selectParts, part, evt) {
+  public handleSelectPartEvent(selectParts, part, evt) {
     switch (evt.name) {
-      case 'get-param-options': {
+      case "get-param-options": {
         switch (part.def.type) {
-          case 'aggregate':
+          case "aggregate":
             return;
-          case 'column':
+          case "column":
             return this.getValueColumnSegments();
         }
       }
-      case 'part-param-changed': {
+      case "part-param-changed": {
         this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
-      case 'action': {
+      case "action": {
         this.removeSelectPart(selectParts, part);
         this.panelCtrl.refresh();
         break;
       }
-      case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+      case "get-part-actions": {
+        return this.$q.when([{ text: "Remove", value: "remove-part" }]);
       }
     }
   }
 
-  handleGroupPartEvent(part, index, evt) {
+  public handleGroupPartEvent(part, index, evt) {
     switch (evt.name) {
-      case 'get-param-options': {
-        return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, [])
-          .then(this.transformToSegments({}))
-          .catch(this.handleQueryError.bind(this));
+      case "get-param-options": {
+        return this._getAllFields();
       }
-      case 'part-param-changed': {
+      case "part-param-changed": {
         this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
-      case 'action': {
+      case "action": {
         this.removeGroup(part, index);
         this.panelCtrl.refresh();
         break;
       }
-      case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+      case "get-part-actions": {
+        return this.$q.when([{ text: "Remove", value: "remove-part" }]);
       }
     }
   }
 
-  _setgroupParts(partType, value) {
-    let params = [value];
-    if (partType === 'time') {
-      params = ['$__interval', 'none'];
-    }
-    const partModel = sqlPart.create({ type: partType, params: params });
-
-    if (partType === 'time') {
-      // put timeGroup at start
-      this.groupParts.splice(0, 0, partModel);
-    } else {
-      this.groupParts.push(partModel);
-    }
-  }
-
-  addGroup(partType, value) {
-    this._setgroupParts(partType, value);
+  public addGroup(partType: string, value: string) {
+    this._setGroupParts(partType, value);
     // add aggregates when adding group by
     for (const selectParts of this.selectParts) {
-      if (!selectParts.some(part => part.def.type === 'aggregate')) {
-        const aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
+      if (!selectParts.some(part => part.def.type === "aggregate")) {
+        const aggregate = sqlPart.create({
+          params: ["avg"],
+          type: "aggregate"
+        });
         selectParts.splice(1, 0, aggregate);
-        if (!selectParts.some(part => part.def.type === 'alias')) {
-          const alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
+        if (!selectParts.some(part => part.def.type === "alias")) {
+          const alias = sqlPart.create({
+            params: [selectParts[0].part.params[0]],
+            type: "alias"
+          });
           selectParts.push(alias);
         }
       }
@@ -576,15 +603,14 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-  removeGroup(part, index) {
-    if (part.def.type === 'time') {
+  public removeGroup(part, index) {
+    if (part.def.type === "time") {
       // remove aggregations
       this.selectParts = _.map(this.selectParts, (s: any) => {
         return _.filter(s, (part: any) => {
-          if (part.def.type === 'aggregate' || part.def.type === 'percentile') {
-            return false;
-          }
-          return true;
+          return !(
+            part.def.type === "aggregate" || part.def.type === "percentile"
+          );
         });
       });
     }
@@ -593,50 +619,76 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-  handleWherePartEvent(whereParts, part, evt, index) {
+  public _getAllFields() {
+    return this.datasource
+      .getTableFields(
+        this.target.project,
+        this.target.dataset,
+        this.target.table,
+        []
+      )
+      .then(this.transformToSegments({}))
+      .catch(this.handleQueryError.bind(this));
+  }
+  public handleWherePartEvent(whereParts, part, evt, index) {
     switch (evt.name) {
-      case 'get-param-options': {
+      case "get-param-options": {
         switch (evt.param.name) {
-          case 'left':
-            return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table,
-              [])
-              .then(this.transformToSegments({}))
-              .catch(this.handleQueryError.bind(this));
-          case 'right':
+          case "left":
+            return this._getAllFields();
+          case "right":
             return this.$q.when([]);
-          case 'op':
-            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=','LIKE','NOT LIKE']));
+          case "op":
+            return this.$q.when(
+              this.uiSegmentSrv.newOperators([
+                "=",
+                "!=",
+                "<",
+                "<=",
+                ">",
+                ">=",
+                "LIKE",
+                "NOT LIKE"
+              ])
+            );
           default:
             return this.$q.when([]);
         }
       }
-      case 'part-param-changed': {
+      case "part-param-changed": {
         this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
-      case 'action': {
+      case "action": {
         // remove element
         whereParts.splice(index, 1);
         this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
-      case 'get-part-actions': {
-        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+      case "get-part-actions": {
+        return this.$q.when([{ text: "Remove", value: "remove-part" }]);
       }
     }
   }
 
-  getWhereOptions() {
+  public getWhereOptions() {
     const options = [];
-    options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
-    options.push(this.uiSegmentSrv.newSegment({ type: 'expression', value: 'Expression' }));
+    options.push(
+      this.uiSegmentSrv.newSegment({ type: "macro", value: "$__timeFilter" })
+    );
+    options.push(
+      this.uiSegmentSrv.newSegment({ type: "expression", value: "Expression" })
+    );
     return this.$q.when(options);
   }
 
-  setwWereParts(partModel) {
-    if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+  public setwWereParts(partModel) {
+    if (
+      this.whereParts.length >= 1 &&
+      this.whereParts[0].def.type === "macro"
+    ) {
       // replace current macro
       this.whereParts[0] = partModel;
     } else {
@@ -644,7 +696,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     }
   }
 
-  addWhereAction(part, index) {
+  public addWhereAction(part, index) {
     switch (this.whereAdd.type) {
       case "macro": {
         const partModel = sqlPart.create({
@@ -656,7 +708,12 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         break;
       }
       default: {
-        this.whereParts.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
+        this.whereParts.push(
+          sqlPart.create({
+            params: ["value", "=", "value"],
+            type: "expression"
+          })
+        );
       }
     }
 
@@ -665,22 +722,29 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getGroupOptions() {
+  public getGroupOptions() {
     return this.getMetricColumnSegments()
       .then(tags => {
         const options = [];
         if (!this.queryModel.hasTimeGroup()) {
-          options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
+          options.push(
+            this.uiSegmentSrv.newSegment({
+              type: "time",
+              value: "time($__interval,none)"
+            })
+          );
         }
         for (const tag of tags) {
-          options.push(this.uiSegmentSrv.newSegment({ type: 'column', value: tag.text }));
+          options.push(
+            this.uiSegmentSrv.newSegment({ type: "column", value: tag.text })
+          );
         }
         return options;
       })
       .catch(this.handleQueryError.bind(this));
   }
 
-  addGroupAction() {
+  public addGroupAction() {
     switch (this.groupAdd.value) {
       default: {
         this.addGroup(this.groupAdd.type, this.groupAdd.value);
@@ -691,8 +755,52 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  handleQueryError(err) {
+  public handleQueryError(err) {
     this.error = err.message || "Failed to issue metric query";
     return [];
+  }
+  private _setGroupParts(partType: string, value: string) {
+    let params = [value];
+    if (partType === "time") {
+      params = ["$__interval", "none"];
+    }
+    const partModel = sqlPart.create({ type: partType, params });
+
+    if (partType === "time") {
+      // put timeGroup at start
+      this.groupParts.splice(0, 0, partModel);
+    } else {
+      this.groupParts.push(partModel);
+    }
+  }
+  private _getColumnSegments(filter) {
+    return this.datasource
+      .getTableFields(
+        this.target.project,
+        this.target.dataset,
+        this.target.table,
+        filter
+      )
+      .then(this.uiSegmentSrv.transformToSegments(false))
+      .catch(this.handleQueryError.bind(this));
+  }
+
+  private async _getDateFieldType() {
+    let res = "";
+    await this.datasource
+      .getTableFields(
+        this.target.project,
+        this.target.dataset,
+        this.target.table,
+        ["DATE", "TIMESTAMP", "DATETIME"]
+      )
+      .then(result => {
+        for (const f of result) {
+          if (f.text === this.target.timeColumn) {
+            res = f.value;
+          }
+        }
+      });
+    return res;
   }
 }

@@ -206,9 +206,9 @@ export default class ResponseParser {
       });
     }
     const rows = [];
-    each(results.rows, function (ser ) {
+    each(results.rows, ser => {
       const r = [];
-      each(ser, function (v) {
+      each(ser, v => {
         for (let i = 0; i < v.length; i++) {
           const val = ResponseParser._convertValues(v[i].v, columns[i].type);
           r.push(val);
@@ -251,13 +251,11 @@ export default class ResponseParser {
         tagsColumnIndex = i;
       }
     }
-
     if (timeColumnIndex === -1) {
       return this.$q.reject({
         message: "Missing mandatory time column in annotation query."
       });
     }
-
     const list = [];
     for (const row of table.rows) {
       list.push({
@@ -270,7 +268,6 @@ export default class ResponseParser {
         title: row[titleColumnIndex]
       });
     }
-
     return list;
   }
 
@@ -289,12 +286,15 @@ export default class ResponseParser {
       ) {
         sorted = sorted.set(t.value, t.text);
       } else {
-        sorted.set(t.text.substring(0, t.text.length - 8) + 'YYYYMMDD', t.text.substring(0, t.text.length - 8) + 'YYYYMMDD');
+        sorted.set(
+          t.text.substring(0, t.text.length - 8) + "YYYYMMDD",
+          t.text.substring(0, t.text.length - 8) + "YYYYMMDD"
+        );
       }
     }
-    sorted.forEach(function (text, value) {
+    sorted.forEach((text, value) => {
       newTables = newTables.concat({ text, value });
     });
     return newTables;
   }
-};
+}

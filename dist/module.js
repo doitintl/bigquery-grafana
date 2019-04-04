@@ -33597,7 +33597,7 @@ function () {
     this.scopedVars = scopedVars;
     this.isWindow = false;
     this.groupBy = "";
-    this.tmpcost = "";
+    this.tmpValue = "";
     target.format = target.format || "time_series";
     target.timeColumn = target.timeColumn || "-- time --";
     target.timeColumnType = target.timeColumnType || "TIMESTAMP";
@@ -33666,33 +33666,19 @@ function () {
     var IntervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + timeColumn + "), ";
 
     if (interval === "1s") {
-      {
-        IntervalStr += "1) * 1)";
-      }
+      IntervalStr += "1) * 1)";
     } else if (interval === "1min") {
-      {
-        IntervalStr += "60) * 60)";
-      }
+      IntervalStr += "60) * 60)";
     } else if (interval === "1h") {
-      {
-        IntervalStr += "3600) * 3600)";
-      }
+      IntervalStr += "3600) * 3600)";
     } else if (interval === "1d") {
-      {
-        IntervalStr += "86400) * 86400)";
-      }
+      IntervalStr += "86400) * 86400)";
     } else if (interval === "1w") {
-      {
-        IntervalStr += "604800) * 604800)";
-      }
+      IntervalStr += "604800) * 604800)";
     } else if (interval === "1m") {
-      {
-        IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + timeColumn + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + timeColumn + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
-      }
+      IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + timeColumn + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + timeColumn + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
     } else if (interval === "1y") {
-      {
-        IntervalStr += "31536000) * 31536000)";
-      }
+      IntervalStr += "31536000) * 31536000)";
     }
 
     return IntervalStr;
@@ -33831,11 +33817,13 @@ function () {
     if (windows) {
       this.isWindow = true;
       var overParts = [];
+      var partBy = "PARTITION BY " + this.target.timeColumn;
 
       if (this.hasMetricColumn()) {
-        overParts.push("PARTITION BY " + this.target.metricColumn);
+        overParts.push(partBy + " " + this.target.metricColumn);
       }
 
+      overParts.push(partBy);
       overParts.push("ORDER BY " + this.buildTimeColumn(false));
       var over = overParts.join(" ");
       var curr = void 0;
@@ -33885,8 +33873,8 @@ function () {
           break;
       }
 
-      this.tmpcost = "tmp" + columnName.params[0];
-      query = tmpval + " as " + this.tmpcost + ", " + query;
+      this.tmpValue = "tmp" + columnName.params[0];
+      query = tmpval + " as " + this.tmpValue + ", " + query;
     }
 
     var alias = _lodash2.default.find(column, function (g) {
@@ -33957,15 +33945,14 @@ function () {
       this.groupBy = query;
 
       if (this.isWindow) {
-        query += "," + this.target.timeColumn;
+        query += "," + this.target.timeColumn + "," + this.tmpValue;
         this.groupBy += ",2";
       }
 
       if (this.hasMetricColumn()) {
-        if (!this.isWindow) {
-          query += ",2";
-        } else {
-          query += ",2";
+        query += ",2";
+
+        if (this.isWindow) {
           this.groupBy += ",3";
         }
       }
@@ -33987,16 +33974,19 @@ function () {
     query += "\nFROM " + "`" + this.target.project + "." + this.target.dataset + "." + this.target.table + "`";
     query += this.buildWhereClause();
     query += this.buildGroupClause();
-    query += "\nORDER BY 1";
 
-    if (this.hasMetricColumn()) {
-      query += ",2";
+    if (!this.isWindow) {
+      query += "\nORDER BY 1";
+
+      if (this.hasMetricColumn()) {
+        query += ",2";
+      }
     } // query += '\nLIMIT 2';
 
 
     if (this.isWindow) {
-      query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
-      query = query + ")" + this.groupBy + " order by 1";
+      query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;
+      query = query + ")" + this.groupBy;
     }
 
     query = "#standardSQL" + query;
@@ -34386,11 +34376,6 @@ function () {
           case 4:
             error_1 = _a.sent();
             message = error_1.statusText ? error_1.statusText : defaultErrorMessage;
-
-            if (error_1.data && error_1.data.error && error_1.data.error.code) {
-              message = ": " + error_1.data.error.code + ". " + error_1.data.error.message;
-            }
-
             return [3
             /*break*/
             , 5];
@@ -34996,15 +34981,15 @@ function (_super) {
 
     _this.projectSegment = !_this.target.project ? uiSegmentSrv.newSegment({
       fake: true,
-      value: 'select project'
+      value: "select project"
     }) : uiSegmentSrv.newSegment(_this.target.project);
     _this.datasetSegment = !_this.target.dataset ? uiSegmentSrv.newSegment({
       fake: true,
-      value: 'select dataset'
+      value: "select dataset"
     }) : uiSegmentSrv.newSegment(_this.target.dataset);
     _this.tableSegment = !_this.target.table ? uiSegmentSrv.newSegment({
       fake: true,
-      value: 'select table'
+      value: "select table"
     }) : uiSegmentSrv.newSegment(_this.target.table);
     _this.timeColumnSegment = uiSegmentSrv.newSegment(_this.target.timeColumn);
     _this.metricColumnSegment = uiSegmentSrv.newSegment(_this.target.metricColumn);
@@ -35039,9 +35024,9 @@ function (_super) {
     this.target.select = _lodash2.default.map(this.selectParts, function (selectParts) {
       return _lodash2.default.map(selectParts, function (part) {
         return {
-          type: part.def.type,
           datatype: part.datatype,
-          params: part.params
+          params: part.params,
+          type: part.def.type
         };
       });
     });
@@ -35120,34 +35105,34 @@ function (_super) {
     }
 
     var windows = {
-      text: 'Window Functions',
-      value: 'window',
+      text: "Window Functions",
+      value: "window",
       submenu: [{
-        text: 'Delta',
-        value: 'delta'
+        text: "Delta",
+        value: "delta"
       }, {
-        text: 'Increase',
-        value: 'increase'
+        text: "Increase",
+        value: "increase"
       }, {
-        text: 'Rate',
-        value: 'rate'
+        text: "Rate",
+        value: "rate"
       }, {
-        text: 'Sum',
-        value: 'sum'
+        text: "Sum",
+        value: "sum"
       }, {
-        text: 'Moving Average',
-        value: 'avg',
-        type: 'moving_window'
+        text: "Moving Average",
+        value: "avg",
+        type: "moving_window"
       }]
     };
     this.selectMenu.push(windows);
     this.selectMenu.push({
-      text: 'Alias',
-      value: 'alias'
+      text: "Alias",
+      value: "alias"
     });
     this.selectMenu.push({
-      text: 'Column',
-      value: 'column'
+      text: "Column",
+      value: "column"
     });
   };
 
@@ -35155,14 +35140,14 @@ function (_super) {
     var _this = this;
 
     if (this.target.rawQuery) {
-      _app_events2.default.emit('confirm-modal', {
-        icon: 'fa-exclamation',
+      _app_events2.default.emit("confirm-modal", {
+        icon: "fa-exclamation",
         onConfirm: function onConfirm() {
           _this.target.rawQuery = !_this.target.rawQuery;
         },
-        text2: 'Switching to query builder may overwrite your raw SQL.',
-        title: 'Warning',
-        yesText: 'Switch'
+        text2: "Switching to query builder may overwrite your raw SQL.",
+        title: "Warning",
+        yesText: "Switch"
       });
     } else {
       this.target.rawQuery = !this.target.rawQuery;
@@ -35182,10 +35167,10 @@ function (_super) {
   BigQueryQueryCtrl.prototype.projectChanged = function () {
     this.target.project = this.projectSegment.value;
     this.datasource.projectName = this.projectSegment.value;
-    this.target.dataset = '';
-    this.applySegment(this.datasetSegment, this.fakeSegment('select dataset'));
-    this.applySegment(this.tableSegment, this.fakeSegment('select table'));
-    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.target.dataset = "";
+    this.applySegment(this.datasetSegment, this.fakeSegment("select dataset"));
+    this.applySegment(this.tableSegment, this.fakeSegment("select table"));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
   };
 
   BigQueryQueryCtrl.prototype.getDatasetSegments = function () {
@@ -35196,8 +35181,8 @@ function (_super) {
     this.target.dataset = this.datasetSegment.value;
     this.target.sharded = false;
     this.target.partitioned = false;
-    this.applySegment(this.tableSegment, this.fakeSegment('select table'));
-    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.applySegment(this.tableSegment, this.fakeSegment("select table"));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
   };
 
   BigQueryQueryCtrl.prototype.getTableSegments = function () {
@@ -35222,7 +35207,7 @@ function (_super) {
         }
       });
     });
-    this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+    this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
     var sharded = this.target.table.indexOf("_YYYYMMDD");
 
     if (sharded > -1) {
@@ -35233,14 +35218,14 @@ function (_super) {
     this.target.where = [];
     this.target.group = [];
     this.target.select = [[{
-      type: 'column',
-      params: ['-- value --']
+      type: "column",
+      params: ["-- value --"]
     }]];
     this.updateProjection();
-    var segment = this.uiSegmentSrv.newSegment('none');
+    var segment = this.uiSegmentSrv.newSegment("none");
     this.metricColumnSegment.html = segment.html;
     this.metricColumnSegment.value = segment.value;
-    this.target.metricColumn = 'none';
+    this.target.metricColumn = "none";
     var task1 = this.getTimeColumnSegments().then(function (result) {
       // check if time column is still valid
       if (result.length > 0 && !_lodash2.default.find(result, function (r) {
@@ -35255,7 +35240,7 @@ function (_super) {
     var task2 = this.getValueColumnSegments().then(function (result) {
       if (result.length > 0) {
         _this.target.select = [[{
-          type: 'column',
+          type: "column",
           params: [result[0].text]
         }]];
 
@@ -35268,48 +35253,11 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.getTimeColumnSegments = function () {
-    return this._getColumnSegments(['DATE', 'TIMESTAMP', 'DATETIME']);
+    return this._getColumnSegments(["DATE", "TIMESTAMP", "DATETIME"]);
   };
 
   BigQueryQueryCtrl.prototype.getValueColumnSegments = function () {
-    return this._getColumnSegments(['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']);
-  };
-
-  BigQueryQueryCtrl.prototype._getColumnSegments = function (filter) {
-    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, filter).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
-  };
-
-  BigQueryQueryCtrl.prototype._getDateFieldType = function () {
-    return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var res;
-
-      var _this = this;
-
-      return tslib_1.__generator(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            res = '';
-            return [4
-            /*yield*/
-            , this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['DATE', 'TIMESTAMP', 'DATETIME']).then(function (result) {
-              for (var _i = 0, result_1 = result; _i < result_1.length; _i++) {
-                var f = result_1[_i];
-
-                if (f.text === _this.target.timeColumn) {
-                  res = f.value;
-                }
-              }
-            })];
-
-          case 1:
-            _a.sent();
-
-            return [2
-            /*return*/
-            , res];
-        }
-      });
-    });
+    return this._getColumnSegments(["INT64", "NUMERIC", "FLOAT64", "FLOAT", "INT", "INTEGER"]);
   };
 
   BigQueryQueryCtrl.prototype.timeColumnChanged = function (refresh) {
@@ -35328,9 +35276,9 @@ function (_super) {
           case 1:
             _a.timeColumnType = _b.sent();
             partModel = _sql_part2.default.create({
-              type: 'macro',
-              name: '$__timeFilter',
-              params: []
+              name: "$__timeFilter",
+              params: [],
+              type: "macro"
             });
             this.setwWereParts(partModel);
             this.updatePersistedParts();
@@ -35348,7 +35296,7 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.getMetricColumnSegments = function () {
-    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ['STRING', 'BYTES']).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
+    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ["STRING", "BYTES"]).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
   };
 
   BigQueryQueryCtrl.prototype.metricColumnChanged = function () {
@@ -35386,7 +35334,7 @@ function (_super) {
         for (var _i = 0, _a = _this.templateSrv.variables; _i < _a.length; _i++) {
           var variable = _a[_i];
           var value = void 0;
-          value = '$' + variable.name;
+          value = "$" + variable.name;
 
           if (config.templateQuoter && variable.multi === false) {
             value = config.templateQuoter(value);
@@ -35394,7 +35342,7 @@ function (_super) {
 
           segments.unshift(_this.uiSegmentSrv.newSegment({
             expandable: true,
-            type: 'template',
+            type: "template",
             value: value
           }));
         }
@@ -35402,8 +35350,8 @@ function (_super) {
 
       if (config.addNone) {
         segments.unshift(_this.uiSegmentSrv.newSegment({
-          type: 'template',
-          value: 'none',
+          type: "template",
+          value: "none",
           expandable: true
         }));
       }
@@ -35414,13 +35362,13 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.findAggregateIndex = function (selectParts) {
     return _lodash2.default.findIndex(selectParts, function (p) {
-      return p.def.type === 'aggregate' || p.def.type === 'percentile';
+      return p.def.type === "aggregate" || p.def.type === "percentile";
     });
   };
 
   BigQueryQueryCtrl.prototype.findWindowIndex = function (selectParts) {
     return _lodash2.default.findIndex(selectParts, function (p) {
-      return p.def.type === 'window' || p.def.type === 'moving_window';
+      return p.def.type === "window" || p.def.type === "moving_window";
     });
   };
 
@@ -35456,12 +35404,12 @@ function (_super) {
 
     var _addAlias = function _addAlias() {
       return !_lodash2.default.find(selectParts, function (p) {
-        return p.def.type === 'alias';
+        return p.def.type === "alias";
       });
     };
 
     switch (partType) {
-      case 'column':
+      case "column":
         var parts = _lodash2.default.map(selectParts, function (part) {
           return _sql_part2.default.create({
             type: part.def.type,
@@ -35472,11 +35420,11 @@ function (_super) {
         this.selectParts.push(parts);
         break;
 
-      case 'percentile':
-      case 'aggregate':
+      case "percentile":
+      case "aggregate":
         // add group by if no group by yet
         if (this.target.group.length === 0) {
-          this.addGroup('time', '$__interval');
+          this.addGroup("time", "$__interval");
         }
 
         var aggIndex = this.findAggregateIndex(selectParts);
@@ -35494,8 +35442,8 @@ function (_super) {
 
         break;
 
-      case 'moving_window':
-      case 'window':
+      case "moving_window":
+      case "window":
         var windowIndex = this.findWindowIndex(selectParts);
 
         if (windowIndex !== -1) {
@@ -35517,7 +35465,7 @@ function (_super) {
 
         break;
 
-      case 'alias':
+      case "alias":
         addAlias = true;
         break;
     }
@@ -35525,11 +35473,11 @@ function (_super) {
     if (addAlias) {
       // set initial alias name to column name
       partModel = _sql_part2.default.create({
-        type: 'alias',
-        params: [selectParts[0].params[0].replace(/"/g, '')]
+        type: "alias",
+        params: [selectParts[0].params[0].replace(/"/g, "")]
       });
 
-      if (selectParts[selectParts.length - 1].def.type === 'alias') {
+      if (selectParts[selectParts.length - 1].def.type === "alias") {
         selectParts[selectParts.length - 1] = partModel;
       } else {
         selectParts.push(partModel);
@@ -35541,7 +35489,7 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.removeSelectPart = function (selectParts, part) {
-    if (part.def.type === 'column') {
+    if (part.def.type === "column") {
       // remove all parts of column unless its last column
       if (this.selectParts.length > 1) {
         var modelsIndex = _lodash2.default.indexOf(this.selectParts, selectParts);
@@ -35559,36 +35507,36 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.handleSelectPartEvent = function (selectParts, part, evt) {
     switch (evt.name) {
-      case 'get-param-options':
+      case "get-param-options":
         {
           switch (part.def.type) {
-            case 'aggregate':
+            case "aggregate":
               return;
 
-            case 'column':
+            case "column":
               return this.getValueColumnSegments();
           }
         }
 
-      case 'part-param-changed':
+      case "part-param-changed":
         {
           this.updatePersistedParts();
           this.panelCtrl.refresh();
           break;
         }
 
-      case 'action':
+      case "action":
         {
           this.removeSelectPart(selectParts, part);
           this.panelCtrl.refresh();
           break;
         }
 
-      case 'get-part-actions':
+      case "get-part-actions":
         {
           return this.$q.when([{
-            text: 'Remove',
-            value: 'remove-part'
+            text: "Remove",
+            value: "remove-part"
           }]);
         }
     }
@@ -35596,78 +35544,58 @@ function (_super) {
 
   BigQueryQueryCtrl.prototype.handleGroupPartEvent = function (part, index, evt) {
     switch (evt.name) {
-      case 'get-param-options':
+      case "get-param-options":
         {
-          return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, []).then(this.transformToSegments({})).catch(this.handleQueryError.bind(this));
+          return this._getAllFields();
         }
 
-      case 'part-param-changed':
+      case "part-param-changed":
         {
           this.updatePersistedParts();
           this.panelCtrl.refresh();
           break;
         }
 
-      case 'action':
+      case "action":
         {
           this.removeGroup(part, index);
           this.panelCtrl.refresh();
           break;
         }
 
-      case 'get-part-actions':
+      case "get-part-actions":
         {
           return this.$q.when([{
-            text: 'Remove',
-            value: 'remove-part'
+            text: "Remove",
+            value: "remove-part"
           }]);
         }
     }
   };
 
-  BigQueryQueryCtrl.prototype._setgroupParts = function (partType, value) {
-    var params = [value];
-
-    if (partType === 'time') {
-      params = ['$__interval', 'none'];
-    }
-
-    var partModel = _sql_part2.default.create({
-      type: partType,
-      params: params
-    });
-
-    if (partType === 'time') {
-      // put timeGroup at start
-      this.groupParts.splice(0, 0, partModel);
-    } else {
-      this.groupParts.push(partModel);
-    }
-  };
-
   BigQueryQueryCtrl.prototype.addGroup = function (partType, value) {
-    this._setgroupParts(partType, value); // add aggregates when adding group by
+    this._setGroupParts(partType, value); // add aggregates when adding group by
 
 
     for (var _i = 0, _a = this.selectParts; _i < _a.length; _i++) {
       var selectParts = _a[_i];
 
       if (!selectParts.some(function (part) {
-        return part.def.type === 'aggregate';
+        return part.def.type === "aggregate";
       })) {
         var aggregate = _sql_part2.default.create({
-          type: 'aggregate',
-          params: ['avg']
+          params: ["avg"],
+          type: "aggregate"
         });
 
         selectParts.splice(1, 0, aggregate);
 
         if (!selectParts.some(function (part) {
-          return part.def.type === 'alias';
+          return part.def.type === "alias";
         })) {
           var alias = _sql_part2.default.create({
-            type: 'alias',
-            params: [selectParts[0].part.params[0]]
+            params: [selectParts[0].part.params[0]],
+            type: "alias"
           });
 
           selectParts.push(alias);
@@ -35679,15 +35607,11 @@ function (_super) {
   };
 
   BigQueryQueryCtrl.prototype.removeGroup = function (part, index) {
-    if (part.def.type === 'time') {
+    if (part.def.type === "time") {
       // remove aggregations
       this.selectParts = _lodash2.default.map(this.selectParts, function (s) {
         return _lodash2.default.filter(s, function (part) {
-          if (part.def.type === 'aggregate' || part.def.type === 'percentile') {
-            return false;
-          }
-
-          return true;
+          return !(part.def.type === "aggregate" || part.def.type === "percentile");
         });
       });
     }
@@ -35696,33 +35620,37 @@ function (_super) {
     this.updatePersistedParts();
   };
 
+  BigQueryQueryCtrl.prototype._getAllFields = function () {
+    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, []).then(this.transformToSegments({})).catch(this.handleQueryError.bind(this));
+  };
+
   BigQueryQueryCtrl.prototype.handleWherePartEvent = function (whereParts, part, evt, index) {
     switch (evt.name) {
-      case 'get-param-options':
+      case "get-param-options":
         {
           switch (evt.param.name) {
-            case 'left':
-              return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, []).then(this.transformToSegments({})).catch(this.handleQueryError.bind(this));
+            case "left":
+              return this._getAllFields();
 
-            case 'right':
+            case "right":
               return this.$q.when([]);
 
-            case 'op':
-              return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'LIKE', 'NOT LIKE']));
+            case "op":
+              return this.$q.when(this.uiSegmentSrv.newOperators(["=", "!=", "<", "<=", ">", ">=", "LIKE", "NOT LIKE"]));
 
             default:
               return this.$q.when([]);
           }
         }
 
-      case 'part-param-changed':
+      case "part-param-changed":
         {
           this.updatePersistedParts();
           this.panelCtrl.refresh();
           break;
         }
 
-      case 'action':
+      case "action":
         {
           // remove element
           whereParts.splice(index, 1);
@@ -35731,11 +35659,11 @@ function (_super) {
           break;
         }
 
-      case 'get-part-actions':
+      case "get-part-actions":
         {
           return this.$q.when([{
-            text: 'Remove',
-            value: 'remove-part'
+            text: "Remove",
+            value: "remove-part"
           }]);
         }
     }
@@ -35744,18 +35672,18 @@ function (_super) {
   BigQueryQueryCtrl.prototype.getWhereOptions = function () {
     var options = [];
     options.push(this.uiSegmentSrv.newSegment({
-      type: 'macro',
-      value: '$__timeFilter'
+      type: "macro",
+      value: "$__timeFilter"
     }));
     options.push(this.uiSegmentSrv.newSegment({
-      type: 'expression',
-      value: 'Expression'
+      type: "expression",
+      value: "Expression"
     }));
     return this.$q.when(options);
   };
 
   BigQueryQueryCtrl.prototype.setwWereParts = function (partModel) {
-    if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+    if (this.whereParts.length >= 1 && this.whereParts[0].def.type === "macro") {
       // replace current macro
       this.whereParts[0] = partModel;
     } else {
@@ -35780,8 +35708,8 @@ function (_super) {
       default:
         {
           this.whereParts.push(_sql_part2.default.create({
-            type: 'expression',
-            params: ['value', '=', 'value']
+            params: ["value", "=", "value"],
+            type: "expression"
           }));
         }
     }
@@ -35799,15 +35727,15 @@ function (_super) {
 
       if (!_this.queryModel.hasTimeGroup()) {
         options.push(_this.uiSegmentSrv.newSegment({
-          type: 'time',
-          value: 'time($__interval,none)'
+          type: "time",
+          value: "time($__interval,none)"
         }));
       }
 
       for (var _i = 0, tags_1 = tags; _i < tags_1.length; _i++) {
         var tag = tags_1[_i];
         options.push(_this.uiSegmentSrv.newSegment({
-          type: 'column',
+          type: "column",
           value: tag.text
         }));
       }
@@ -35833,7 +35761,64 @@ function (_super) {
     return [];
   };
 
-  BigQueryQueryCtrl.templateUrl = 'partials/query.editor.html';
+  BigQueryQueryCtrl.prototype._setGroupParts = function (partType, value) {
+    var params = [value];
+
+    if (partType === "time") {
+      params = ["$__interval", "none"];
+    }
+
+    var partModel = _sql_part2.default.create({
+      type: partType,
+      params: params
+    });
+
+    if (partType === "time") {
+      // put timeGroup at start
+      this.groupParts.splice(0, 0, partModel);
+    } else {
+      this.groupParts.push(partModel);
+    }
+  };
+
+  BigQueryQueryCtrl.prototype._getColumnSegments = function (filter) {
+    return this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, filter).then(this.uiSegmentSrv.transformToSegments(false)).catch(this.handleQueryError.bind(this));
+  };
+
+  BigQueryQueryCtrl.prototype._getDateFieldType = function () {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var res;
+
+      var _this = this;
+
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            res = "";
+            return [4
+            /*yield*/
+            , this.datasource.getTableFields(this.target.project, this.target.dataset, this.target.table, ["DATE", "TIMESTAMP", "DATETIME"]).then(function (result) {
+              for (var _i = 0, result_1 = result; _i < result_1.length; _i++) {
+                var f = result_1[_i];
+
+                if (f.text === _this.target.timeColumn) {
+                  res = f.value;
+                }
+              }
+            })];
+
+          case 1:
+            _a.sent();
+
+            return [2
+            /*return*/
+            , res];
+        }
+      });
+    });
+  };
+
+  BigQueryQueryCtrl.templateUrl = "partials/query.editor.html";
   return BigQueryQueryCtrl;
 }(_sdk.QueryCtrl);
 
@@ -36165,7 +36150,7 @@ function () {
       if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)) {
         sorted = sorted.set(t.value, t.text);
       } else {
-        sorted.set(t.text.substring(0, t.text.length - 8) + 'YYYYMMDD', t.text.substring(0, t.text.length - 8) + 'YYYYMMDD');
+        sorted.set(t.text.substring(0, t.text.length - 8) + "YYYYMMDD", t.text.substring(0, t.text.length - 8) + "YYYYMMDD");
       }
     }
 
@@ -36182,7 +36167,6 @@ function () {
 }();
 
 exports.default = ResponseParser;
-;
 
 /***/ }),
 

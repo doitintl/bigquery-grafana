@@ -37,45 +37,31 @@ export default class BigQueryQuery {
     let IntervalStr =
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + timeColumn + "), ";
     if (interval === "1s") {
-      {
-        IntervalStr += "1) * 1)";
-      }
+      IntervalStr += "1) * 1)";
     } else if (interval === "1min") {
-      {
-        IntervalStr += "60) * 60)";
-      }
+      IntervalStr += "60) * 60)";
     } else if (interval === "1h") {
-      {
-        IntervalStr += "3600) * 3600)";
-      }
+      IntervalStr += "3600) * 3600)";
     } else if (interval === "1d") {
-      {
-        IntervalStr += "86400) * 86400)";
-      }
+      IntervalStr += "86400) * 86400)";
     } else if (interval === "1w") {
-      {
-        IntervalStr += "604800) * 604800)";
-      }
+      IntervalStr += "604800) * 604800)";
     } else if (interval === "1m") {
-      {
-        IntervalStr =
-          "TIMESTAMP(" +
-          "  (" +
-          'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' +
-          timeColumn +
-          ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " +
-          timeColumn +
-          ")) AS STRING)," +
-          "'-','01'" +
-          ")" +
-          ")" +
-          ")" +
-          ")";
-      }
+      IntervalStr =
+        "TIMESTAMP(" +
+        "  (" +
+        'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' +
+        timeColumn +
+        ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " +
+        timeColumn +
+        ")) AS STRING)," +
+        "'-','01'" +
+        ")" +
+        ")" +
+        ")" +
+        ")";
     } else if (interval === "1y") {
-      {
-        IntervalStr += "31536000) * 31536000)";
-      }
+      IntervalStr += "31536000) * 31536000)";
     }
     return IntervalStr;
   }
@@ -84,7 +70,7 @@ export default class BigQueryQuery {
   public scopedVars: any;
   public isWindow: boolean;
   public groupBy: string;
-  public tmpcost: string;
+  public tmpValue: string;
 
   /** @ngInject */
   constructor(target, templateSrv?, scopedVars?) {
@@ -93,7 +79,7 @@ export default class BigQueryQuery {
     this.scopedVars = scopedVars;
     this.isWindow = false;
     this.groupBy = "";
-    this.tmpcost = "";
+    this.tmpValue = "";
 
     target.format = target.format || "time_series";
     target.timeColumn = target.timeColumn || "-- time --";
@@ -244,9 +230,11 @@ export default class BigQueryQuery {
     if (windows) {
       this.isWindow = true;
       const overParts = [];
+      let partBy = "PARTITION BY " + this.target.timeColumn;
       if (this.hasMetricColumn()) {
-        overParts.push("PARTITION BY " + this.target.metricColumn);
+        overParts.push(partBy + " " + this.target.metricColumn);
       }
+      overParts.push(partBy);
       overParts.push("ORDER BY " + this.buildTimeColumn(false));
       const over = overParts.join(" ");
       let curr: string;
@@ -321,8 +309,8 @@ export default class BigQueryQuery {
           query = tmpval + " as tmp" + tmpval + ", " + query;
           break;
       }
-      this.tmpcost = "tmp" + columnName.params[0];
-      query = tmpval + " as " + this.tmpcost + ", " + query;
+      this.tmpValue = "tmp" + columnName.params[0];
+      query = tmpval + " as " + this.tmpValue + ", " + query;
     }
 
     const alias = _.find(column, (g: any) => g.type === "alias");
@@ -330,6 +318,7 @@ export default class BigQueryQuery {
       query += " AS " + alias.params[0];
     }
     return query;
+
   }
 
   public buildWhereClause() {
@@ -393,14 +382,12 @@ export default class BigQueryQuery {
       query = "\nGROUP BY " + groupSection;
       this.groupBy = query;
       if (this.isWindow) {
-        query += "," + this.target.timeColumn;
+        query += "," + this.target.timeColumn + "," + this.tmpValue;
         this.groupBy += ",2";
       }
       if (this.hasMetricColumn()) {
-        if (!this.isWindow) {
-          query += ",2";
-        } else {
-          query += ",2";
+        query += ",2";
+        if (this.isWindow) {
           this.groupBy += ",3";
         }
       }
@@ -429,15 +416,16 @@ export default class BigQueryQuery {
 
     query += this.buildWhereClause();
     query += this.buildGroupClause();
-
-    query += "\nORDER BY 1";
-    if (this.hasMetricColumn()) {
-      query += ",2";
+    if (!this.isWindow) {
+      query += "\nORDER BY 1";
+      if (this.hasMetricColumn()) {
+        query += ",2";
+      }
     }
     // query += '\nLIMIT 2';
     if (this.isWindow) {
-      query = "select *  EXCEPT (" + this.tmpcost + ") From \n (" + query;
-      query = query + ")" + this.groupBy + " order by 1";
+      query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;
+      query = query + ")" + this.groupBy;
     }
     query = "#standardSQL" + query;
     return query;
