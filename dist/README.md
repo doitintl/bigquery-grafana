@@ -25,6 +25,10 @@ There are multiple ways to install bigquery-grafana go to [INSTALL](INSTALL.md) 
  * Sharded tables (`tablename_YYYYMMDD`)
  * Partitioned Tables
  
+ **Plugin Demo:**
+ 
+ ![plugin demo](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/grafana-bigquery-demo.gif)
+ 
  
 ## Adding the data source to Grafana
 

@@ -41,9 +41,9 @@ describe("BigQueryQuery", () => {
 
     query = new BigQueryQuery(
       {
+        group: [{ type: "time", params: ["5m", "none"] }],
         timeColumn: "time",
-        timeColumnType: "int4",
-        group: [{ type: "time", params: ["5m", "none"] }]
+        timeColumnType: "int4"
       },
       templateSrv
     );
@@ -118,7 +118,8 @@ describe("BigQueryQuery", () => {
       { type: "percentile", params: ["p1", "p2"] }
     ];
     query.target.timeColumn = "timC";
-    expect(query.buildValueColumn(column)).toBe("p1(p2) WITHIN GROUP (ORDER BY v) as tmpv, (CASE WHEN p1(p2) WITHIN GROUP (ORDER BY v) >= lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) THEN p1(p2) WITHIN GROUP (ORDER BY v) - lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) WHEN lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) IS NULL THEN NULL ELSE p1(p2) WITHIN GROUP (ORDER BY v) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (PARTITION BY timC ORDER BY timC))) AS a"
+    expect(query.buildValueColumn(column)).toBe(
+      "p1(p2) WITHIN GROUP (ORDER BY v) as tmpv, (CASE WHEN p1(p2) WITHIN GROUP (ORDER BY v) >= lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) THEN p1(p2) WITHIN GROUP (ORDER BY v) - lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) WHEN lag(p1(p2) WITHIN GROUP (ORDER BY v)) OVER (PARTITION BY timC ORDER BY timC) IS NULL THEN NULL ELSE p1(p2) WITHIN GROUP (ORDER BY v) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (PARTITION BY timC ORDER BY timC))) AS a"
     );
 
     column = [
@@ -203,16 +204,16 @@ describe("BigQueryQuery", () => {
 
   describe("When generating complete statement", () => {
     const target = {
-      timeColumn: "t",
-      table: "table",
       select: [[{ type: "column", params: ["value"] }]],
+      table: "table",
+      timeColumn: "t",
       where: []
     };
     let result =
       "#standardSQL\nSELECT\n t AS time,\n  value\nFROM `undefined.undefined.table`\nORDER BY 1";
     const query = new BigQueryQuery(target, templateSrv);
 
-    expect(query. buildQuery()).toBe(result);
+    expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = "m";
     result =
@@ -226,26 +227,26 @@ describe("BigQueryQuery", () => {
   });
   describe("macros", () => {
     const target = {
-      timeColumn: "t",
-      table: "table",
-      select: [[{ type: "column", params: ["value"] }]],
-      where: [],
       rawSql:
-        "$__timeGroupAlias(start_date,1d), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)"
+        "$__timeGroupAlias(start_date,1d), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)",
+      select: [[{ type: "column", params: ["value"] }]],
+      table: "table",
+      timeColumn: "t",
+      where: []
     };
     const query = new BigQueryQuery(target, templateSrv);
     const options = {
-      timezone: "browser",
-      panelId: 2,
       dashboardId: null,
-      range: {
-        from: "2017-03-24T07:20:12.788Z",
-        to: "2019-03-24T08:20:12.788Z",
-        raw: { from: "now-2y", to: "now" }
-      },
-      rangeRaw: { from: "now-2y", to: "now" },
       interval: "12h",
       intervalMs: 43200000,
+      panelId: 2,
+      range: {
+        from: "2017-03-24T07:20:12.788Z",
+        raw: { from: "now-2y", to: "now" },
+        to: "2019-03-24T08:20:12.788Z"
+      },
+      rangeRaw: { from: "now-2y", to: "now" },
+      timezone: "browser",
       targets: [
         {
           refId: "A",
@@ -259,8 +260,8 @@ describe("BigQueryQuery", () => {
               { type: "column", params: ["trip_id"] },
               { type: "aggregate", params: ["count"] },
               {
-                type: "alias",
-                params: ["trip_id"]
+                params: ["trip_id"],
+                type: "alias"
               }
             ]
           ],
