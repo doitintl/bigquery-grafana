@@ -33915,7 +33915,7 @@ function () {
       query += " AND  _TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
     }
 
-    if (this.target.partitioned) {
+    if (this.target.partitioned && this.target.partitionedField === "") {
       query += " AND _PARTITIONTIME >= '" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, "-", true) + "' AND _PARTITIONTIME < '" + BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, "-", true) + "'";
     }
 
@@ -35181,6 +35181,7 @@ function (_super) {
     this.target.dataset = this.datasetSegment.value;
     this.target.sharded = false;
     this.target.partitioned = false;
+    this.target.partitionedField = "";
     this.applySegment(this.tableSegment, this.fakeSegment("select table"));
     this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
   };
@@ -35195,6 +35196,7 @@ function (_super) {
 
     this.target.sharded = false;
     this.target.partitioned = false;
+    this.target.partitionedField = "";
     this.target.table = this.tableSegment.value;
     this.tablesDataPromise.then(function (value) {
       value.forEach(function (v) {
@@ -35203,6 +35205,7 @@ function (_super) {
 
           if (partitioned > -1) {
             _this.target.partitioned = true;
+            _this.target.partitionedField = v.value.substr(partitioned + "__partitioned".length + 2);
           }
         }
       });
@@ -35963,6 +35966,10 @@ function () {
     if (item.kind === "bigquery#table") {
       if (item.timePartitioning) {
         item.tableReference.tableId = item.tableReference.tableId + "__partitioned";
+
+        if (item.timePartitioning.field) {
+          item.tableReference.tableId += "__" + item.timePartitioning.field;
+        }
       }
     }
 

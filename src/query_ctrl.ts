@@ -243,6 +243,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.target.dataset = this.datasetSegment.value;
     this.target.sharded = false;
     this.target.partitioned = false;
+    this.target.partitionedField = "";
     this.applySegment(this.tableSegment, this.fakeSegment("select table"));
     this.applySegment(this.timeColumnSegment, this.fakeSegment("-- time --"));
   }
@@ -260,6 +261,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   public tableChanged() {
     this.target.sharded = false;
     this.target.partitioned = false;
+    this.target.partitionedField = "";
     this.target.table = this.tableSegment.value;
     this.tablesDataPromise.then(value => {
       value.forEach(v => {
@@ -267,6 +269,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
           const partitioned = v.value.indexOf("__partitioned");
           if (partitioned > -1) {
             this.target.partitioned = true;
+            this.target.partitionedField = v.value.substr(
+              partitioned + "__partitioned".length + 2
+            );
           }
         }
       });
