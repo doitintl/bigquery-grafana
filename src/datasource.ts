@@ -392,7 +392,9 @@ export class BigQueryDatasource {
           "?pageToken=" +
           queryResults.data.nextPageToken
       );
-      data = data.concat(queryResults.data.projects);
+      dataList.forEach(element => {
+        data = data.concat(queryResults.data[element]);
+      });
     }
     return data;
   }

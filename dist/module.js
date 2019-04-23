@@ -33655,11 +33655,13 @@ function () {
   };
 
   BigQueryQuery._getInterval = function (q, alias) {
-    if (alias) {
-      return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
-    } else {
-      return q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+    var res = alias ? q.match(/(.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g) : q.match(/(.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+
+    if (res) {
+      res = res[0].substr(1 + res[0].lastIndexOf(","));
     }
+
+    return res;
   };
 
   BigQueryQuery._getIntervalStr = function (interval, timeColumn) {
@@ -33994,6 +33996,8 @@ function () {
   };
 
   BigQueryQuery.prototype.expend_macros = function (options) {
+    console.log(this.target.rawSql);
+
     if (this.target.rawSql) {
       var q = this.target.rawSql;
       q = this.replaceTimeFilters(q, options);
@@ -34030,7 +34034,7 @@ function () {
       return q;
     }
 
-    var intervalStr = BigQueryQuery._getIntervalStr(interval[0], this.target.timeColumn);
+    var intervalStr = BigQueryQuery._getIntervalStr(interval, this.target.timeColumn);
 
     if (alias) {
       return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
@@ -34836,7 +34840,9 @@ function () {
 
           case 3:
             queryResults = _a.sent();
-            data = data.concat(queryResults.data.projects);
+            dataList.forEach(function (element) {
+              data = data.concat(queryResults.data[element]);
+            });
             return [3
             /*break*/
             , 2];
@@ -36154,7 +36160,7 @@ function () {
         t.text = t.text.substring(0, partitioned);
       }
 
-      if (!t.value.match(/_(?<!\d)(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)) {
+      if (!t.value.match(/_(?:(?:20\d{2})(?:(?:(?:0[13578]|1[02])31)|(?:(?:0[1,3-9]|1[0-2])(?:29|30)))|(?:(?:20(?:0[48]|[2468][048]|[13579][26]))0229)|(?:20\d{2})(?:(?:0?[1-9])|(?:1[0-2]))(?:0?[1-9]|1\d|2[0-8]))(?!\d)$/g)) {
         sorted = sorted.set(t.value, t.text);
       } else {
         sorted.set(t.text.substring(0, t.text.length - 8) + "YYYYMMDD", t.text.substring(0, t.text.length - 8) + "YYYYMMDD");

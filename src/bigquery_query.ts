@@ -26,11 +26,13 @@ export default class BigQueryQuery {
   }
 
   public static _getInterval(q, alias: boolean) {
-    if (alias) {
-      return q.match(/(?<=.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g);
-    } else {
-      return q.match(/(?<=.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+    let res = alias
+      ? q.match(/(.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g)
+      : q.match(/(.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+    if (res) {
+      res = res[0].substr(1 + res[0].lastIndexOf(","));
     }
+    return res;
   }
 
   public static _getIntervalStr(interval: string, timeColumn: string) {
@@ -432,6 +434,7 @@ export default class BigQueryQuery {
   }
 
   public expend_macros(options) {
+    console.log(this.target.rawSql)
     if (this.target.rawSql) {
       let q = this.target.rawSql;
       q = this.replaceTimeFilters(q, options);
@@ -494,7 +497,7 @@ export default class BigQueryQuery {
     }
 
     const intervalStr = BigQueryQuery._getIntervalStr(
-      interval[0],
+      interval,
       this.target.timeColumn
     );
     if (alias) {
