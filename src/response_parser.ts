@@ -107,6 +107,9 @@ export default class ResponseParser {
       if (item.timePartitioning) {
         item.tableReference.tableId =
           item.tableReference.tableId + "__partitioned";
+        if (item.timePartitioning.field) {
+          item.tableReference.tableId += "__" + item.timePartitioning.field;
+        }
       }
     }
     return item;

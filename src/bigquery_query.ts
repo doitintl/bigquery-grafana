@@ -345,7 +345,7 @@ export default class BigQueryQuery {
       );
       query += " AND  _TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
     }
-    if (this.target.partitioned) {
+    if (this.target.partitioned && this.target.partitionedField === "") {
       query +=
         " AND _PARTITIONTIME >= '" +
         BigQueryQuery.formatDateToString(
