@@ -35093,23 +35093,7 @@ function (_super) {
       });
     }
 
-    this.selectMenu.push(aggregates); // ordered set aggregates require postgres 9.4+
-
-    if (this.datasource.jsonData.postgresVersion >= 904) {
-      var aggregates2 = {
-        submenu: [{
-          text: "Percentile (continuous)",
-          value: "percentile_cont"
-        }, {
-          text: "Percentile (discrete)",
-          value: "percentile_disc"
-        }],
-        text: "Ordered-Set Aggregate Functions",
-        value: "percentile"
-      };
-      this.selectMenu.push(aggregates2);
-    }
-
+    this.selectMenu.push(aggregates);
     var windows = {
       text: "Window Functions",
       value: "window",

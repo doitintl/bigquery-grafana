@@ -29,7 +29,7 @@
       "path": "bigquery",
       "url": "https://www.googleapis.com/bigquery",
       "jwtTokenAuth": {
-        "scopes": ["https://www.googleapis.com/auth/bigquery"],
+        "scopes": ["https://www.googleapis.com/auth/bigquery", "https://www.googleapis.com/auth/drive"],
         "params": {
           "token_uri": "{{.JsonData.tokenUri}}",
           "client_email": "{{.JsonData.clientEmail}}",
