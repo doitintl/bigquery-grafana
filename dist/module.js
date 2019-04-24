@@ -33655,7 +33655,7 @@ function () {
   };
 
   BigQueryQuery._getInterval = function (q, alias) {
-    var res = alias ? q.match(/(.*\$__timeGroupAlias\(([\w_]+,)).*?(?=\))/g) : q.match(/(.*\$__timeGroup\(([\w_]+,)).*?(?=\))/g);
+    var res = alias ? q.match(/(.*\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g) : q.match(/(.*\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
 
     if (res) {
       res = res[0].substr(1 + res[0].lastIndexOf(","));
@@ -34035,9 +34035,9 @@ function () {
     var intervalStr = BigQueryQuery._getIntervalStr(interval, this.target.timeColumn);
 
     if (alias) {
-      return q.replace(/\$__timeGroupAlias\(([\w_]+,+[\w_]+\))/g, intervalStr);
+      return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[\w_]+\))/g, intervalStr);
     } else {
-      return q.replace(/\$__timeGroup\(([\w_]+,+[\w_]+\))/g, intervalStr);
+      return q.replace(/\$__timeGroup\(([\w_.]+,+[\w_]+\))/g, intervalStr);
     }
   };
 
