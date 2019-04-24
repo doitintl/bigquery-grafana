@@ -434,7 +434,6 @@ export default class BigQueryQuery {
   }
 
   public expend_macros(options) {
-    console.log(this.target.rawSql)
     if (this.target.rawSql) {
       let q = this.target.rawSql;
       q = this.replaceTimeFilters(q, options);
