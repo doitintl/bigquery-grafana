@@ -33996,8 +33996,6 @@ function () {
   };
 
   BigQueryQuery.prototype.expend_macros = function (options) {
-    console.log(this.target.rawSql);
-
     if (this.target.rawSql) {
       var q = this.target.rawSql;
       q = this.replaceTimeFilters(q, options);
@@ -34306,10 +34304,12 @@ function () {
         }
 
         allQueryPromise = _lodash2.default.map(queries, function (query) {
+          var tmpQ = _this.queryModel.target.rawSql;
           _this.queryModel.target.rawSql = query.rawSql;
 
           var q = _this.queryModel.expend_macros(options);
 
+          _this.queryModel.target.rawSql = tmpQ;
           return _this.doQuery(q, options.panelId + query.refId).then(function (response) {
             return _response_parser2.default.parseDataQuery(response, query.format);
           });

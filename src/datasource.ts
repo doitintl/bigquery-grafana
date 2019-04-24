@@ -95,8 +95,10 @@ export class BigQueryDatasource {
       return this.$q.when({ data: [] });
     }
     const allQueryPromise = _.map(queries, query => {
+      const tmpQ = this.queryModel.target.rawSql;
       this.queryModel.target.rawSql = query.rawSql;
       const q = this.queryModel.expend_macros(options);
+      this.queryModel.target.rawSql = tmpQ;
       return this.doQuery(q, options.panelId + query.refId).then(response => {
         return ResponseParser.parseDataQuery(response, query.format);
       });
