@@ -320,7 +320,6 @@ export default class BigQueryQuery {
       query += " AS " + alias.params[0];
     }
     return query;
-
   }
 
   public buildWhereClause() {
@@ -329,10 +328,8 @@ export default class BigQueryQuery {
       switch (tag.type) {
         case "macro":
           return tag.name + "(" + this.target.timeColumn + ")";
-          break;
         case "expression":
           return tag.params.join(" ");
-          break;
       }
     });
     if (conditions.length > 0) {

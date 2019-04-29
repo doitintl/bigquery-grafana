@@ -33899,11 +33899,9 @@ function () {
       switch (tag.type) {
         case "macro":
           return tag.name + "(" + _this.target.timeColumn + ")";
-          break;
 
         case "expression":
           return tag.params.join(" ");
-          break;
       }
     });
 

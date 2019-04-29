@@ -279,7 +279,6 @@ export class BigQueryDatasource {
       });
   }
 
-
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;
     console.log("New job id: ", jobId);
