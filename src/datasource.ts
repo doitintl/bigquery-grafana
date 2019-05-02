@@ -68,7 +68,8 @@ export class BigQueryDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || "1m";
     this.authenticationType =
       instanceSettings.jsonData.authenticationType || "jwt";
-    this.projectName = instanceSettings.jsonData.defaultProject || "";
+    this.projectName =
+      instanceSettings.jsonData.defaultProject || this.getDefaultProject();
   }
 
   public async query(options) {
@@ -125,7 +126,7 @@ export class BigQueryDatasource {
     let message = "Successfully queried the BigQuery API.";
     const defaultErrorMessage = "Cannot connect to BigQuery API";
     try {
-      const projectName = await this.getDefaultProject();
+      const projectName = this.getDefaultProject();
       const path = `v2/projects/${projectName}/datasets`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
       if (response.status !== 200) {
@@ -175,17 +176,24 @@ export class BigQueryDatasource {
     return ResponseParser.parseTableFields(data, filter);
   }
 
-  public async getDefaultProject() {
+  public getDefaultProject() {
     try {
       if (this.authenticationType === "gce" || !this.projectName) {
-        const data = await this.getProjects();
+        let data;
+        this.getProjects()
+          .then(results => {
+            data = results;
+          })
+          .catch(err => {
+            return (this.projectName = "");
+          });
         this.projectName = data[0].value;
         return this.projectName;
       } else {
         return this.projectName;
       }
     } catch (error) {
-      throw BigQueryDatasource.formatBigqueryError(error);
+      return (this.projectName = "");
     }
   }
 
