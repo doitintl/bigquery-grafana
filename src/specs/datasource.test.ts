@@ -1057,11 +1057,9 @@ describe("BigQueryDatasource", () => {
         return Promise.resolve({ data: response, status: 200 });
       });
     });
-    it("should return  default projects", async () => {
-      await ctx.ds.getDefaultProject().then(data => {
-        results = data;
-      });
-      expect(results).toBe("my project");
+    it("should return  default projects", () => {
+      results = ctx.ds.getDefaultProject();
     });
+    expect(results).toBe(undefined);
   });
 });
