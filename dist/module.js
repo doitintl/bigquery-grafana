@@ -34079,6 +34079,7 @@ function () {
       key: "gce",
       value: "GCE Default Service Account"
     }];
+    console.log("current", this.current);
   }
 
   BigQueryConfigCtrl.prototype.onUpload = function (json) {
@@ -34201,6 +34202,8 @@ var BigQueryDatasource =
 function () {
   /** @ngInject */
   function BigQueryDatasource(instanceSettings, backendSrv, $q, templateSrv) {
+    var _this = this;
+
     this.backendSrv = backendSrv;
     this.$q = $q;
     this.templateSrv = templateSrv;
@@ -34234,7 +34237,11 @@ function () {
     this.url = instanceSettings.url;
     this.interval = (instanceSettings.jsonData || {}).timeInterval || "1m";
     this.authenticationType = instanceSettings.jsonData.authenticationType || "jwt";
-    this.projectName = instanceSettings.jsonData.defaultProject || this.getDefaultProject();
+    var prj = "";
+    this.getDefaultProject().then(function (res) {
+      prj = res;
+      _this.projectName = instanceSettings.jsonData.defaultProject || prj;
+    });
   }
 
   BigQueryDatasource.formatBigqueryError = function (error) {
@@ -34340,7 +34347,7 @@ function () {
 
   BigQueryDatasource.prototype.testDatasource = function () {
     return tslib_1.__awaiter(this, void 0, void 0, function () {
-      var status, message, defaultErrorMessage, projectName, path, response, error_1;
+      var status, message, defaultErrorMessage, path, response, error_1;
       return tslib_1.__generator(this, function (_a) {
         switch (_a.label) {
           case 0:
@@ -34352,8 +34359,7 @@ function () {
           case 1:
             _a.trys.push([1, 3,, 4]);
 
-            projectName = this.getDefaultProject();
-            path = "v2/projects/" + projectName + "/datasets";
+            path = "v2/projects/" + this.projectName + "/datasets";
             return [4
             /*yield*/
             , this.doRequest("" + this.baseUrl + path)];
@@ -34474,24 +34480,51 @@ function () {
   };
 
   BigQueryDatasource.prototype.getDefaultProject = function () {
-    var _this = this;
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
+      var data, error_2;
+      return tslib_1.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            _a.trys.push([0, 4,, 5]);
 
-    try {
-      if (this.authenticationType === "gce" || !this.projectName) {
-        var data_1;
-        this.getProjects().then(function (results) {
-          data_1 = results;
-        }).catch(function (err) {
-          return _this.projectName = "";
-        });
-        this.projectName = data_1[0].value;
-        return this.projectName;
-      } else {
-        return this.projectName;
-      }
-    } catch (error) {
-      return this.projectName = "";
-    }
+            if (!(this.authenticationType === "gce" || !this.projectName)) return [3
+            /*break*/
+            , 2];
+            data = void 0;
+            return [4
+            /*yield*/
+            , this.getProjects()];
+
+          case 1:
+            data = _a.sent();
+            this.projectName = data[0].value;
+            return [2
+            /*return*/
+            , this.projectName];
+
+          case 2:
+            return [2
+            /*return*/
+            , this.projectName];
+
+          case 3:
+            return [3
+            /*break*/
+            , 5];
+
+          case 4:
+            error_2 = _a.sent();
+            return [2
+            /*return*/
+            , this.projectName = ""];
+
+          case 5:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
   };
 
   BigQueryDatasource.prototype.annotationQuery = function (options) {
