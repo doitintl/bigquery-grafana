@@ -1,6 +1,7 @@
 import _ from "lodash";
 import BigQueryQuery from "./bigquery_query";
 import ResponseParser, { IResultFormat } from "./response_parser";
+import {countBy} from "lodash-es";
 
 function sleep(ms) {
   return new Promise(resolve => {
@@ -68,8 +69,11 @@ export class BigQueryDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || "1m";
     this.authenticationType =
       instanceSettings.jsonData.authenticationType || "jwt";
-    this.projectName =
-      instanceSettings.jsonData.defaultProject || this.getDefaultProject();
+    let prj = "";
+    this.getDefaultProject().then(res => {
+      prj = res;
+      this.projectName = instanceSettings.jsonData.defaultProject || prj;
+    });
   }
 
   public async query(options) {
@@ -126,8 +130,7 @@ export class BigQueryDatasource {
     let message = "Successfully queried the BigQuery API.";
     const defaultErrorMessage = "Cannot connect to BigQuery API";
     try {
-      const projectName = this.getDefaultProject();
-      const path = `v2/projects/${projectName}/datasets`;
+      const path = `v2/projects/${this.projectName}/datasets`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
       if (response.status !== 200) {
         status = "error";
@@ -176,17 +179,11 @@ export class BigQueryDatasource {
     return ResponseParser.parseTableFields(data, filter);
   }
 
-  public getDefaultProject() {
+  public async getDefaultProject() {
     try {
       if (this.authenticationType === "gce" || !this.projectName) {
         let data;
-        this.getProjects()
-          .then(results => {
-            data = results;
-          })
-          .catch(err => {
-            return (this.projectName = "");
-          });
+        data = await this.getProjects();
         this.projectName = data[0].value;
         return this.projectName;
       } else {

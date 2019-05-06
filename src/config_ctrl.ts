@@ -25,6 +25,7 @@ export class BigQueryConfigCtrl {
       { key: this.defaultAuthenticationType, value: "Google JWT File" },
       { key: "gce", value: "GCE Default Service Account" }
     ];
+    console.log("current", this.current)
   }
 
   public onUpload(json) {
