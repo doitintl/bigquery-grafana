@@ -63,29 +63,29 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-![Enable GCP APIs](bigquery_enable_api.png)
+![Enable GCP APIs](img/bigquery_enable_api.png)
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-    ![](createserviceaccountbutton.png)
+    ![](img/createserviceaccountbutton.png)
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-    ![](newserviceaccount.png)
+    ![](img/newserviceaccount.png)
 
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-    ![](bq_service_account_choose_role.png)
+    ![](img/bq_service_account_choose_role.png)
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
-   ![](bq__grafana_upload_key.png)
+   ![](img/bq__grafana_upload_key.png)
    
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-    ![](bq_grafana_key_uploaded.png)
+    ![](img/bq_grafana_key_uploaded.png)
 
 ### Using GCE Default Service Account
 
