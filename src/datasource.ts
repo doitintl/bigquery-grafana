@@ -69,11 +69,11 @@ export class BigQueryDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || "1m";
     this.authenticationType =
       instanceSettings.jsonData.authenticationType || "jwt";
-    let prj = "";
-    this.getDefaultProject().then(res => {
-      prj = res;
-      this.projectName = instanceSettings.jsonData.defaultProject || prj;
-    });
+    (async () => {
+      this.projectName =
+        instanceSettings.jsonData.defaultProject ||
+        (await this.getDefaultProject());
+    })();
   }
 
   public async query(options) {
@@ -179,13 +179,14 @@ export class BigQueryDatasource {
     return ResponseParser.parseTableFields(data, filter);
   }
 
-  public async getDefaultProject() {
+
+  public  async getDefaultProject(){
     try {
       if (this.authenticationType === "gce" || !this.projectName) {
         let data;
         data = await this.getProjects();
         this.projectName = data[0].value;
-        return this.projectName;
+        return data[0].value;
       } else {
         return this.projectName;
       }

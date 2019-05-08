@@ -34079,7 +34079,6 @@ function () {
       key: "gce",
       value: "GCE Default Service Account"
     }];
-    console.log("current", this.current);
   }
 
   BigQueryConfigCtrl.prototype.onUpload = function (json) {
@@ -34237,11 +34236,36 @@ function () {
     this.url = instanceSettings.url;
     this.interval = (instanceSettings.jsonData || {}).timeInterval || "1m";
     this.authenticationType = instanceSettings.jsonData.authenticationType || "jwt";
-    var prj = "";
-    this.getDefaultProject().then(function (res) {
-      prj = res;
-      _this.projectName = instanceSettings.jsonData.defaultProject || prj;
-    });
+
+    (function () {
+      return tslib_1.__awaiter(_this, void 0, void 0, function () {
+        var _a, _b;
+
+        return tslib_1.__generator(this, function (_c) {
+          switch (_c.label) {
+            case 0:
+              _a = this;
+              _b = instanceSettings.jsonData.defaultProject;
+              if (_b) return [3
+              /*break*/
+              , 2];
+              return [4
+              /*yield*/
+              , this.getDefaultProject()];
+
+            case 1:
+              _b = _c.sent();
+              _c.label = 2;
+
+            case 2:
+              _a.projectName = _b;
+              return [2
+              /*return*/
+              ];
+          }
+        });
+      });
+    })();
   }
 
   BigQueryDatasource.formatBigqueryError = function (error) {
@@ -34500,7 +34524,7 @@ function () {
             this.projectName = data[0].value;
             return [2
             /*return*/
-            , this.projectName];
+            , data[0].value];
 
           case 2:
             return [2
