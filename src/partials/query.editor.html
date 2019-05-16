@@ -13,7 +13,7 @@
     <div ng-if="!ctrl.target.rawQuery">
         <div class="gf-form-inline">
             <div class="gf-form">
-                <label class="gf-form-label query-keyword width-6">FROM</label>
+                <label class="gf-form-label query-keyword width-8">FROM</label>
                 <metric-segment segment="ctrl.projectSegment"
                                 get-options="ctrl.getProjectSegments()"
                                 on-change="ctrl.projectChanged()"></metric-segment>
@@ -27,7 +27,7 @@
                 <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()"
                                 on-change="ctrl.timeColumnChanged()"></metric-segment>
 
-                <label class="gf-form-label query-keyword width-9">
+                <label class="gf-form-label query-keyword width-10">
                     Metric column
                     <info-popover mode="right-normal">Column to be used as metric name for the value column.
                     </info-popover>
@@ -44,7 +44,7 @@
 
         <div class="gf-form-inline" ng-repeat="selectParts in ctrl.selectParts">
             <div class="gf-form">
-                <label class="gf-form-label query-keyword width-6">
+                <label class="gf-form-label query-keyword width-8">
                     <span ng-show="$index === 0">SELECT</span>&nbsp;
                 </label>
             </div>
@@ -71,7 +71,7 @@
 
         <div class="gf-form-inline">
             <div class="gf-form">
-                <label class="gf-form-label query-keyword width-6">WHERE</label>
+                <label class="gf-form-label query-keyword width-8">WHERE</label>
             </div>
 
             <div class="gf-form" ng-repeat="part in ctrl.whereParts">
@@ -93,7 +93,7 @@
 
         <div class="gf-form-inline">
             <div class="gf-form">
-                <label class="gf-form-label query-keyword width-6">
+                <label class="gf-form-label query-keyword width-8">
                     <span>GROUP BY</span>
                 </label>
 
@@ -112,7 +112,6 @@
                 <div class="gf-form-label gf-form-label--grow"></div>
             </div>
         </div>
-
     </div>
 
     <div class="gf-form-inline">
@@ -171,6 +170,7 @@ Table:
 Macros:
 - $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
 - $__timeGroup(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300 AS "time"
+- $__timeShifting(1m) -&gt; compare data from the current range to the previous range
 
 
 Example of group by and order by with $__timeGroup:

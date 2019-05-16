@@ -116,14 +116,27 @@ register({
 });
 
 register({
+  defaultParams: ["1m"],
+  params: [
+    {
+      name: "name",
+      options: ["1s", "1min", "1h", "1d", "1w", "1m", "1y"],
+      type: "string"
+    }
+  ],
+  style: "label",
+  type: "timeshift",
+});
+
+register({
   type: 'aggregate',
-  style: 'label',
+  style: "label",
   params: [
     {
       name: 'name',
       type: 'string',
       options: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance'],
-    },
+    }
   ],
   defaultParams: ['avg'],
 });
@@ -185,6 +198,7 @@ register({
   ],
   defaultParams: ['avg', '5'],
 });
+
 
 export default {
   create: createPart,

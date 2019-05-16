@@ -1,8 +1,11 @@
 import _ from "lodash";
+import moment from "moment";
 import BigQueryQuery from "./bigquery_query";
 import ResponseParser, { IResultFormat } from "./response_parser";
-import {countBy} from "lodash-es";
+import {countBy, size} from "lodash-es";
+import {sheets} from "googleapis/build/src/apis/sheets";
 
+const Shifted = "_shifted";
 function sleep(ms) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
@@ -40,7 +43,95 @@ export class BigQueryDatasource {
     }
     throw BigQueryDatasource.formatBigqueryError(msg);
   }
+  private static _createTimeShiftQuery(query) {
+    const res = BigQueryQuery.getTimeShift(query.rawSql);
+    if (!res) {
+      return res;
+    }
+    const copy = query.constructor();
+    for (const attr in query) {
+      if (query.hasOwnProperty(attr)) {
+        copy[attr] = query[attr];
+      }
+    }
+    copy.rawSql = BigQueryQuery.replaceTimeShift(copy.rawSql);
+    copy.format += "#" + res;
+    copy.refId += Shifted + "_" + res;
+    return copy;
+  }
 
+  private static _getShiftPeriod(strInterval) {
+    const shift = strInterval.match(/\d+/)[0];
+    strInterval = strInterval.substr(shift.length, strInterval.length);
+    if (strInterval === "m") {
+      strInterval = "M";
+    }
+
+    if (strInterval === "min") {
+      strInterval = "m";
+    }
+    return [strInterval, shift];
+  }
+  private static _setupTimeShiftQuery(query, options) {
+    const index = query.format.indexOf("#");
+    const copy = options.constructor();
+    for (const attr in options) {
+      if (options.hasOwnProperty(attr)) {
+        copy[attr] = options[attr];
+      }
+    }
+    if (index === -1) {
+      return copy;
+    }
+    let strInterval = query.format.substr(index + 1, query.format.len);
+    const res = BigQueryDatasource._getShiftPeriod(strInterval);
+    strInterval = res[0];
+    if (
+      !["s", "min", "h", "d", "w", "m", "w", "y", "M"].includes(strInterval)
+    ) {
+      return copy;
+    }
+    query.format = query.format.substr(0, index);
+    strInterval = res[0];
+    const shift = res[1];
+    if (strInterval === "m") {
+      strInterval = "M";
+    }
+
+    if (strInterval === "min") {
+      strInterval = "m";
+    }
+    copy.range.from = options.range.from.subtract(
+      parseInt(shift, 10),
+      strInterval
+    );
+    copy.range.to = options.range.to.subtract(parseInt(shift, 10), strInterval);
+    return copy;
+  }
+
+  private static _updatePartition(q, options) {
+    if (q.indexOf("AND _PARTITIONTIME >= ") < 1) {
+      return q;
+    }
+    if (q.indexOf("AND _PARTITIONTIME <") < 1) {
+      return q;
+    }
+    const from = q.substr(q.indexOf("AND _PARTITIONTIME >= ") + 22, 21);
+
+    const newFrom =
+      "'" +
+      BigQueryQuery.formatDateToString(options.range.from._d, "-", true) +
+      "'";
+    q = q.replace(from, newFrom);
+    const to = q.substr(q.indexOf("AND _PARTITIONTIME < ") + 21, 21);
+    const newTo =
+      "'" +
+      BigQueryQuery.formatDateToString(options.range.to._d, "-", true) +
+      "'";
+
+    q = q.replace(to, newTo) + "\n ";
+    return q;
+  }
   public authenticationType: string;
   public projectName: string;
   private readonly id: any;
@@ -99,10 +190,25 @@ export class BigQueryDatasource {
     if (queries.length === 0) {
       return this.$q.when({ data: [] });
     }
+    _.map(queries, query => {
+      const newQuery = BigQueryDatasource._createTimeShiftQuery(query);
+      if (newQuery) {
+        queries.push(newQuery);
+      }
+    });
     const allQueryPromise = _.map(queries, query => {
       const tmpQ = this.queryModel.target.rawSql;
       this.queryModel.target.rawSql = query.rawSql;
-      const q = this.queryModel.expend_macros(options);
+      const modOptions = BigQueryDatasource._setupTimeShiftQuery(
+        query,
+        options
+      );
+      let q = this.queryModel.expend_macros(modOptions);
+      q = BigQueryDatasource._updatePartition(q, modOptions);
+      if (query.refId.search(Shifted) > -1) {
+        q = this._updateAlias(q, modOptions, query.refId);
+      }
+      console.log(q);
       this.queryModel.target.rawSql = tmpQ;
       return this.doQuery(q, options.panelId + query.refId).then(response => {
         return ResponseParser.parseDataQuery(response, query.format);
@@ -117,6 +223,20 @@ export class BigQueryDatasource {
           } else {
             for (const dp of response) {
               data.push(dp);
+            }
+          }
+        }
+        for (const d of data) {
+          if (d.target.search(Shifted) > -1) {
+            const res = BigQueryDatasource._getShiftPeriod(
+              d.target.substring(d.target.lastIndexOf("_") + 1, d.target.length)
+            );
+            const shiftPeriod = res[0];
+            const shiftVal = res[1];
+            for(let i = 0; i < d.datapoints.length; i++){
+              d.datapoints[i][1] = moment(d.datapoints[i][1])
+                .subtract(shiftVal, shiftPeriod)
+                .valueOf();
             }
           }
         }
@@ -179,8 +299,7 @@ export class BigQueryDatasource {
     return ResponseParser.parseTableFields(data, filter);
   }
 
-
-  public  async getDefaultProject(){
+  public async getDefaultProject() {
     try {
       if (this.authenticationType === "gce" || !this.projectName) {
         let data;
@@ -404,5 +523,26 @@ export class BigQueryDatasource {
       });
     }
     return data;
+  }
+  private _updateAlias(q, options, shiftstr) {
+    const index = shiftstr.search(Shifted);
+    const shifted = shiftstr.substr(index, shiftstr.length);
+    for (const al of options.targets[0].select[0]) {
+      if (al.type === "alias") {
+        q = q.replace("AS " + al.params[0], "AS " + al.params[0] + shifted);
+        return q;
+      }
+    }
+    const aliasshiftted = [options.targets[0].select[0][0].params[0] + shifted];
+    const oldSelect = this.queryModel.buildValueColumn(
+      options.targets[0].select[0]
+    );
+    const newSelect = this.queryModel.buildValueColumn([
+      options.targets[0].select[0][0],
+      options.targets[0].select[0][1],
+      { type: "alias", params: [aliasshiftted] }
+    ]);
+    q = q.replace(oldSelect, newSelect);
+    return q;
   }
 }
