@@ -34,21 +34,30 @@ export default class BigQueryQuery {
     }
     return res;
   }
-
+  public static getUnixSecondsFromString(str) {
+    switch (str) {
+      case "1s":
+        return "1";
+      case "1min":
+        return "60";
+      case "1h":
+        return "3600";
+      case "1d":
+        return "86400";
+      case "1w":
+        return "604800";
+      case "1m":
+        return "2629743"
+      case "1y":
+        return "31536000";
+    }
+    return "0";
+  }
   public static _getIntervalStr(interval: string, timeColumn: string) {
     let IntervalStr =
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + timeColumn + "), ";
-    if (interval === "1s") {
-      IntervalStr += "1) * 1)";
-    } else if (interval === "1min") {
-      IntervalStr += "60) * 60)";
-    } else if (interval === "1h") {
-      IntervalStr += "3600) * 3600)";
-    } else if (interval === "1d") {
-      IntervalStr += "86400) * 86400)";
-    } else if (interval === "1w") {
-      IntervalStr += "604800) * 604800)";
-    } else if (interval === "1m") {
+    const unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
+    if (interval === "1m") {
       IntervalStr =
         "TIMESTAMP(" +
         "  (" +
@@ -62,10 +71,22 @@ export default class BigQueryQuery {
         ")" +
         ")" +
         ")";
-    } else if (interval === "1y") {
-      IntervalStr += "31536000) * 31536000)";
+    } else {
+      IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
     return IntervalStr;
+  }
+
+  public static getTimeShift(q) {
+    let res: string;
+    res = q.match(/(.*\$__timeShifting\().*?(?=\))/g);
+    if (res) {
+      res = res[0].substr(1 + res[0].lastIndexOf("("));
+    }
+    return res;
+  }
+  public static replaceTimeShift(q) {
+    return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   }
   public target: any;
   public templateSrv: any;
@@ -94,7 +115,6 @@ export default class BigQueryQuery {
     target.select = target.select || [
       [{ type: "column", params: ["-- value --"] }]
     ];
-
     // handle pre query gui panels gracefully
     if (!("rawQuery" in this.target)) {
       target.rawQuery = "rawSql" in target;
@@ -128,12 +148,10 @@ export default class BigQueryQuery {
 
   public render(interpolate?) {
     const target = this.target;
-
     // new query with no table set yet
     if (!this.target.rawQuery && !("table" in this.target)) {
       return "";
     }
-
     if (!target.rawQuery) {
       target.rawSql = this.buildQuery();
     }
@@ -172,7 +190,6 @@ export default class BigQueryQuery {
         query += " AS time";
       }
     }
-
     return query;
   }
 
@@ -227,6 +244,10 @@ export default class BigQueryQuery {
     const windows = _.find(
       column,
       (g: any) => g.type === "window" || g.type === "moving_window"
+    );
+    const timeshift = _.find(
+      column,
+      (g: any) => g.type === "timeshift"
     );
     query = this._buildAggregate(aggregate, query);
     if (windows) {
@@ -319,9 +340,11 @@ export default class BigQueryQuery {
     if (alias) {
       query += " AS " + alias.params[0];
     }
+    if (timeshift) {
+      query += " $__timeShifting(" + timeshift.params[0] + ")";
+    }
     return query;
   }
-
   public buildWhereClause() {
     let query = "";
     const conditions = _.map(this.target.where, (tag, index) => {
@@ -433,10 +456,10 @@ export default class BigQueryQuery {
   public expend_macros(options) {
     if (this.target.rawSql) {
       let q = this.target.rawSql;
+      q = BigQueryQuery.replaceTimeShift(q);
       q = this.replaceTimeFilters(q, options);
       q = this.replacetimeGroupAlias(q, true);
       q = this.replacetimeGroupAlias(q, false);
-      console.log(q);
       return q;
     }
   }

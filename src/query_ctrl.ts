@@ -179,6 +179,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     this.selectMenu.push({ text: "Alias", value: "alias" });
     this.selectMenu.push({ text: "Column", value: "column" });
+    this.selectMenu.push({ text: "Time Shift", value: "timeshift" });
   }
 
   public toggleEditorMode() {
@@ -420,6 +421,12 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     );
   }
 
+  public findTimeShiftIndex(selectParts) {
+    return _.findIndex(
+      selectParts,
+      (p: any) => p.def.type === "timeshift"
+    );
+  }
   public applySegment(dst, src) {
     dst.value = src.value;
     dst.html = src.html || src.value;
@@ -491,8 +498,15 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       case "alias":
         addAlias = true;
         break;
+      case "timeshift":
+        const timeShiftIndex = this.findTimeShiftIndex(selectParts);
+        if (timeShiftIndex !== -1) {
+          selectParts[timeShiftIndex] = partModel;
+        } else {
+          selectParts.push(partModel);
+        }
+        break;
     }
-
     if (addAlias) {
       // set initial alias name to column name
       partModel = sqlPart.create({
@@ -505,7 +519,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         selectParts.push(partModel);
       }
     }
-
     this.updatePersistedParts();
     this.panelCtrl.refresh();
   }
