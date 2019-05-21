@@ -52134,6 +52134,7 @@ function () {
             q = _this._updateAlias(q, modOptions, query.refId);
           }
 
+          q += " LIMIT " + options.maxDataPoints;
           console.log(q);
           _this.queryModel.target.rawSql = tmpQ;
           return _this.doQuery(q, options.panelId + query.refId).then(function (response) {
