@@ -130,6 +130,15 @@ describe("BigQueryQuery", () => {
     expect(query.buildValueColumn(column)).toBe(
       "v as tmpv, v as tmpv, moving_window(v) OVER (PARTITION BY timC ORDER BY timC ROWS undefined PRECEDING) AS a"
     );
+    column = [
+      { type: "column", params: ["v"] },
+      { type: "alias", params: ["a"] },
+      { type: "moving_window", params: ["moving_window"] },
+      { type: "timeshift", params: ["zz"] }
+    ];
+    expect(query.buildValueColumn(column)).toBe(
+      "v as tmpv, v as tmpv, moving_window(v) OVER (PARTITION BY timC ORDER BY timC ROWS undefined PRECEDING) AS a $__timeShifting(zz)"
+    );
   });
 
   describe("When generating value column SQL with metric column", () => {
@@ -330,5 +339,24 @@ describe("BigQueryQuery", () => {
     expect(BigQueryQuery._getIntervalStr("1y", "my_data")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(my_data), 31536000) * 31536000)"
     );
+  });
+
+  describe("getUnixSecondsFromString", () => {
+    expect(BigQueryQuery.getUnixSecondsFromString("1s")).toBe("1");
+    expect(BigQueryQuery.getUnixSecondsFromString("1min")).toBe("60");
+    expect(BigQueryQuery.getUnixSecondsFromString("1h")).toBe("3600");
+    expect(BigQueryQuery.getUnixSecondsFromString("1d")).toBe("86400");
+    expect(BigQueryQuery.getUnixSecondsFromString("1w")).toBe("604800");
+    expect(BigQueryQuery.getUnixSecondsFromString("1m")).toBe("2629743");
+    expect(BigQueryQuery.getUnixSecondsFromString("1y")).toBe("31536000");
+    expect(BigQueryQuery.getUnixSecondsFromString("1z")).toBe("0");
+  });
+
+  describe("replaceTimeShift", () => {
+    expect(BigQueryQuery.replaceTimeShift("$__timeShifting(1d)")).toBe("");
+  });
+  describe("getTimeShift", () => {
+    expect(BigQueryQuery.getTimeShift("$__timeShifting(1d)")).toBe("1d");
+    expect(BigQueryQuery.getTimeShift("$__timeShifting(1d")).toBe(null);
   });
 });
