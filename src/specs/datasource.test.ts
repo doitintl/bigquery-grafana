@@ -1062,4 +1062,5 @@ describe("BigQueryDatasource", () => {
     });
     expect(results).toBe(undefined);
   });
+
 });
