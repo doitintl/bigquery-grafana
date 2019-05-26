@@ -262,6 +262,20 @@ export class BigQueryDatasource {
     } catch (error) {
       message = error.statusText ? error.statusText : defaultErrorMessage;
     }
+    try {
+      const path = `v2/projects/${this.projectName}/jobs/no-such-jobs`;
+      const response = await this.doRequest(`${this.baseUrl}${path}`);
+      if (response.status !== 200) {
+        status = "error";
+        message = response.statusText
+          ? response.statusText
+          : defaultErrorMessage;
+      }
+    } catch (error) {
+      if (error.status !== 404) {
+        message = error.statusText ? error.statusText : defaultErrorMessage;
+      }
+    }
     return {
       message,
       status
