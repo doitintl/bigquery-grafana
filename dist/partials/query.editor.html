@@ -136,6 +136,7 @@
                 <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
             </label>
         </div>
+
         <div class="gf-form" ng-show="ctrl.lastQueryMeta">
             <label class="gf-form-label query-keyword pointer"
                    ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
@@ -152,7 +153,6 @@
     <div class="gf-form" ng-show="ctrl.showLastQuerySQL">
         <pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
     </div>
-
     <div class="gf-form" ng-show="ctrl.showHelp">
     <pre class="gf-form-pre alert alert-info">Time series:
 - return column named <i>time</i> (UTC in seconds or timestamp)

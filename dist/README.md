@@ -103,12 +103,12 @@ The build works with Yarn:
 
 #### Development build
 ```
-yarn run run build:dev
+yarn run build:dev
 ```
 
 #### Production build
 ```
-yarn run run build:prod
+yarn run build:prod
 ```
 
 Tests can be run with Jest:

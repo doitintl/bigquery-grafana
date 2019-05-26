@@ -6,7 +6,13 @@
   "tables": true,
   "annotations": true,
   "alerting": false,
+
+  "queryOptions": {
+    "maxDataPoints": true
+  },
+
   "state": "beta",
+
   "info": {
     "description": "Google BigQuery datasource for Grafana",
     "author": {
