@@ -51885,12 +51885,13 @@ var BigQueryDatasource =
 /** @class */
 function () {
   /** @ngInject */
-  function BigQueryDatasource(instanceSettings, backendSrv, $q, templateSrv) {
+  function BigQueryDatasource(instanceSettings, backendSrv, $q, templateSrv, timeSrv) {
     var _this = this;
 
     this.backendSrv = backendSrv;
     this.$q = $q;
     this.templateSrv = templateSrv;
+    this.timeSrv = timeSrv;
 
     this.interpolateVariable = function (value, variable) {
       if (typeof value === "string") {
@@ -52179,6 +52180,30 @@ function () {
           };
         })];
       });
+    });
+  };
+
+  BigQueryDatasource.prototype.metricFindQuery = function (query, optionalOptions) {
+    var refId = "tempvar";
+
+    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
+      refId = optionalOptions.variable.name;
+    }
+
+    var interpolatedQuery = {
+      datasourceId: this.id,
+      format: "table",
+      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      refId: refId
+    };
+    var range = this.timeSrv.timeRange();
+    var data = {
+      from: range.from.valueOf().toString(),
+      queries: [interpolatedQuery],
+      to: range.to.valueOf().toString()
+    };
+    return this.doQuery(query, refId).then(function (metricData) {
+      return _response_parser2.default.parseDataQuery(metricData, "var");
     });
   };
 
@@ -53814,9 +53839,17 @@ function () {
 
     if (format === "time_series") {
       return ResponseParser._toTimeSeries(results);
-    } else {
+    }
+
+    if (format === "table") {
       return ResponseParser._toTable(results);
     }
+
+    if (format === "var") {
+      return ResponseParser._toVar(results);
+    }
+
+    return [];
   };
 
   ResponseParser._convertValues = function (v, type) {
@@ -54001,6 +54034,21 @@ function () {
       rows: rows,
       type: "table"
     };
+  };
+
+  ResponseParser._toVar = function (results) {
+    var res = [];
+
+    for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
+      var row = _a[_i];
+      res.push(row.f[0].v);
+    }
+
+    return _lodash2.default.map(res, function (value) {
+      return {
+        text: value
+      };
+    });
   };
 
   ResponseParser.prototype.parseTabels = function (results) {

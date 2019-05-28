@@ -12,6 +12,7 @@ describe("BigQueryDatasource", () => {
   const templateSrv = {
     replace: jest.fn(text => text)
   };
+  const timeSrv = {};
   const raw = {
     from: moment.utc("2018-04-25 10:00"),
     to: moment.utc("2018-04-25 11:00")
@@ -32,7 +33,8 @@ describe("BigQueryDatasource", () => {
       instanceSettings,
       backendSrv,
       {},
-      templateSrv
+      templateSrv,
+      timeSrv
     );
     ctx.ds.projectName = "my project";
   });
@@ -970,12 +972,79 @@ describe("BigQueryDatasource", () => {
     };
 
     results = ResponseParser.parseDataQuery(response, "time_series");
-    it("should return a table", () => {
+    it("should return a time_series", () => {
       expect(results[0].datapoints.length).toBe(3);
       expect(results[0].datapoints[0][0]).toBe(37.7753058);
       expect(results[0].datapoints[0][1]).toBe(1521578851000);
       expect(results[0].datapoints[2][0]).toBe(37.781752);
       expect(results[0].datapoints[2][1]).toBe(1521578927000);
+    });
+  });
+  describe("When performing parseDataQuery for vars", () => {
+    let results;
+    const response = {
+      kind: "bigquery#queryResponse",
+      schema: {
+        fields: [
+          {
+            name: "time",
+            type: "TIMESTAMP",
+            mode: "NULLABLE"
+          },
+          {
+            name: "start_station_latitude",
+            type: "FLOAT",
+            mode: "NULLABLE"
+          }
+        ]
+      },
+      jobReference: {
+        projectId: "proj-1",
+        jobId: "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5",
+        location: "US"
+      },
+      totalRows: "3",
+      rows: [
+        {
+          f: [
+            {
+              v: "1.521578851E9"
+            },
+            {
+              v: "37.7753058"
+            }
+          ]
+        },
+        {
+          f: [
+            {
+              v: "1.521578916E9"
+            },
+            {
+              v: "37.3322326"
+            }
+          ]
+        },
+        {
+          f: [
+            {
+              v: "1.521578927E9"
+            },
+            {
+              v: "37.781752"
+            }
+          ]
+        }
+      ],
+      totalBytesProcessed: "23289520",
+      jobComplete: true,
+      cacheHit: false
+    };
+
+    results = ResponseParser.parseDataQuery(response, "var");
+    it("should return a var", () => {
+      expect(results.length).toBe(3);
+      expect(results[0].text).toBe("1.521578851E9");
     });
   });
 

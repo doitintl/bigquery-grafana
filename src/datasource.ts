@@ -4,6 +4,7 @@ import BigQueryQuery from "./bigquery_query";
 import ResponseParser, { IResultFormat } from "./response_parser";
 import {countBy, size} from "lodash-es";
 import {sheets} from "googleapis/build/src/apis/sheets";
+import {validate} from "@babel/types";
 
 const Shifted = "_shifted";
 function sleep(ms) {
@@ -148,7 +149,8 @@ export class BigQueryDatasource {
     instanceSettings,
     private backendSrv,
     private $q,
-    private templateSrv
+    private templateSrv,
+    private timeSrv
   ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -246,6 +248,33 @@ export class BigQueryDatasource {
     );
   }
 
+  public metricFindQuery(query, optionalOptions) {
+    let refId = "tempvar";
+    if (
+      optionalOptions &&
+      optionalOptions.variable &&
+      optionalOptions.variable.name
+    ) {
+      refId = optionalOptions.variable.name;
+    }
+
+    const interpolatedQuery = {
+      datasourceId: this.id,
+      format: "table",
+      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      refId
+    };
+
+    const range = this.timeSrv.timeRange();
+    const data = {
+      from: range.from.valueOf().toString(),
+      queries: [interpolatedQuery],
+      to: range.to.valueOf().toString()
+    };
+    return this.doQuery(query, refId).then(metricData =>
+      ResponseParser.parseDataQuery(metricData, "var")
+    );
+  }
   public async testDatasource() {
     let status = "success";
     let message = "Successfully queried the BigQuery API.";
