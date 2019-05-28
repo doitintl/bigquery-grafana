@@ -60,9 +60,14 @@ export default class ResponseParser {
     }
     if (format === "time_series") {
       return ResponseParser._toTimeSeries(results);
-    } else {
+    }
+    if (format === "table") {
       return ResponseParser._toTable(results);
     }
+    if (format === "var") {
+      return ResponseParser._toVar(results);
+    }
+    return [];
   }
 
   public static _convertValues(v, type) {
@@ -224,6 +229,17 @@ export default class ResponseParser {
       rows,
       type: "table"
     };
+  }
+
+  private static _toVar(results) {
+    const res = [];
+    for (const row of results.rows) {
+      res.push(row.f[0].v);
+    }
+
+    return _.map(res, value => {
+      return { text: value };
+    });
   }
 
   constructor(private $q) {}
