@@ -652,6 +652,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
                 "<=",
                 ">",
                 ">=",
+                "IN",
                 "LIKE",
                 "NOT LIKE"
               ])
