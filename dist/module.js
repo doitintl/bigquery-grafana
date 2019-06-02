@@ -51296,7 +51296,7 @@ function () {
     var res = alias ? q.match(/(.*\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g) : q.match(/(.*\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
 
     if (res) {
-      res = res[0].substr(1 + res[0].lastIndexOf(","));
+      res = res[0].substr(1 + res[0].lastIndexOf(",")).trim();
     }
 
     return res;
@@ -51712,9 +51712,9 @@ function () {
     var intervalStr = BigQueryQuery._getIntervalStr(interval, this.target.timeColumn);
 
     if (alias) {
-      return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[\w_]+\))/g, intervalStr);
+      return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g, intervalStr);
     } else {
-      return q.replace(/\$__timeGroup\(([\w_.]+,+[\w_]+\))/g, intervalStr);
+      return q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g, intervalStr);
     }
   };
 
