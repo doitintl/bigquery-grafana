@@ -569,24 +569,28 @@ export class BigQueryDatasource {
     return data;
   }
   private _updateAlias(q, options, shiftstr) {
-    const index = shiftstr.search(Shifted);
-    const shifted = shiftstr.substr(index, shiftstr.length);
-    for (const al of options.targets[0].select[0]) {
-      if (al.type === "alias") {
-        q = q.replace("AS " + al.params[0], "AS " + al.params[0] + shifted);
-        return q;
+    if (shiftstr !== undefined) {
+      const index = shiftstr.search(Shifted);
+      const shifted = shiftstr.substr(index, shiftstr.length);
+      for (const al of options.targets[0].select[0]) {
+        if (al.type === "alias") {
+          q = q.replace("AS " + al.params[0], "AS " + al.params[0] + shifted);
+          return q;
+        }
       }
+      const aliasshiftted = [
+        options.targets[0].select[0][0].params[0] + shifted
+      ];
+      const oldSelect = this.queryModel.buildValueColumn(
+        options.targets[0].select[0]
+      );
+      const newSelect = this.queryModel.buildValueColumn([
+        options.targets[0].select[0][0],
+        options.targets[0].select[0][1],
+        { type: "alias", params: [aliasshiftted] }
+      ]);
+      q = q.replace(oldSelect, newSelect);
     }
-    const aliasshiftted = [options.targets[0].select[0][0].params[0] + shifted];
-    const oldSelect = this.queryModel.buildValueColumn(
-      options.targets[0].select[0]
-    );
-    const newSelect = this.queryModel.buildValueColumn([
-      options.targets[0].select[0][0],
-      options.targets[0].select[0][1],
-      { type: "alias", params: [aliasshiftted] }
-    ]);
-    q = q.replace(oldSelect, newSelect);
     return q;
   }
 }
