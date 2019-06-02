@@ -52752,25 +52752,28 @@ function () {
   };
 
   BigQueryDatasource.prototype._updateAlias = function (q, options, shiftstr) {
-    var index = shiftstr.search(Shifted);
-    var shifted = shiftstr.substr(index, shiftstr.length);
+    if (shiftstr !== undefined) {
+      var index = shiftstr.search(Shifted);
+      var shifted = shiftstr.substr(index, shiftstr.length);
 
-    for (var _i = 0, _a = options.targets[0].select[0]; _i < _a.length; _i++) {
-      var al = _a[_i];
+      for (var _i = 0, _a = options.targets[0].select[0]; _i < _a.length; _i++) {
+        var al = _a[_i];
 
-      if (al.type === "alias") {
-        q = q.replace("AS " + al.params[0], "AS " + al.params[0] + shifted);
-        return q;
+        if (al.type === "alias") {
+          q = q.replace("AS " + al.params[0], "AS " + al.params[0] + shifted);
+          return q;
+        }
       }
+
+      var aliasshiftted = [options.targets[0].select[0][0].params[0] + shifted];
+      var oldSelect = this.queryModel.buildValueColumn(options.targets[0].select[0]);
+      var newSelect = this.queryModel.buildValueColumn([options.targets[0].select[0][0], options.targets[0].select[0][1], {
+        type: "alias",
+        params: [aliasshiftted]
+      }]);
+      q = q.replace(oldSelect, newSelect);
     }
 
-    var aliasshiftted = [options.targets[0].select[0][0].params[0] + shifted];
-    var oldSelect = this.queryModel.buildValueColumn(options.targets[0].select[0]);
-    var newSelect = this.queryModel.buildValueColumn([options.targets[0].select[0][0], options.targets[0].select[0][1], {
-      type: "alias",
-      params: [aliasshiftted]
-    }]);
-    q = q.replace(oldSelect, newSelect);
     return q;
   };
 
