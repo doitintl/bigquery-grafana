@@ -22,6 +22,7 @@ There are multiple ways to install bigquery-grafana go to [INSTALL](INSTALL.md) 
  * Additional functions
  * Table view
  * Annotations
+ * BQ queries in variables
  * Sharded tables (`tablename_YYYYMMDD`)
  * Partitioned Tables
  
