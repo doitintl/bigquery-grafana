@@ -230,7 +230,10 @@ export class BigQueryDatasource {
           }
         }
         for (const d of data) {
-          if (d.target.search(Shifted) > -1) {
+          if (
+            typeof d.target !== "undefined" &&
+            d.target.search(Shifted) > -1
+          ) {
             const res = BigQueryDatasource._getShiftPeriod(
               d.target.substring(d.target.lastIndexOf("_") + 1, d.target.length)
             );
