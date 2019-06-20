@@ -11,7 +11,7 @@
 BigQuery datasource plugin provide support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
 
 ### Quick start
-There are multiple ways to install bigquery-grafana go to [INSTALL](INSTALL.md) for more infromation. 
+There are multiple ways to install bigquery-grafana go to [INSTALL](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/INSTALL.md) for more infromation. 
 
 ### Features:
 
@@ -120,9 +120,9 @@ yarn run test
 
 ## Contributing
 
-See the [Contribution Guide](./CONTRIBUTING.md).
+See the [Contribution Guide](.https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/CONTRIBUTING.md).
 
 ## License
 
-See the [License File](LICENSE.md).
-**
+See the [License File](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/LICENSE.md).
+
