@@ -51698,6 +51698,11 @@ function () {
       to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
     }
 
+    if (this.target.timeColumn === "-- time --") {
+      var myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
+      this.target.timeColumn = myRegexp.exec(q)[1];
+    }
+
     var range = this.target.timeColumn + " BETWEEN " + from + " AND " + to;
     return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
   };
