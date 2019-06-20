@@ -8,7 +8,7 @@ relative_links:
 include:
   - CONTRIBUTING.md
   - README.md
-  - https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/LICENSE.md
+  - LICENSE.md
   - COPYING.md
   - CODE_OF_CONDUCT.md
   - CONTRIBUTING.md
