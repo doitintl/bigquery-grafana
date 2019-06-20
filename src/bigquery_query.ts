@@ -9,6 +9,9 @@ export default class BigQueryQuery {
     return String(value).replace(/'/g, "''");
   }
 
+  public static quoteFiledName(value) {
+    return "`" + String(value) + "`";
+  }
   public static formatDateToString(date, separator = "", addtime = false) {
     // 01, 02, 03, ... 29, 30, 31
     const DD = (date.getDate() < 10 ? "0" : "") + date.getDate();
@@ -55,16 +58,18 @@ export default class BigQueryQuery {
   }
   public static _getIntervalStr(interval: string, timeColumn: string) {
     let IntervalStr =
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + timeColumn + "), ";
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" +
+      BigQueryQuery.quoteFiledName(timeColumn) +
+      "), ";
     const unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
     if (interval === "1m") {
       IntervalStr =
         "TIMESTAMP(" +
         "  (" +
         'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' +
-        timeColumn +
+        BigQueryQuery.quoteFiledName(timeColumn) +
         ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " +
-        timeColumn +
+        BigQueryQuery.quoteFiledName(timeColumn) +
         ")) AS STRING)," +
         "'-','01'" +
         ")" +
@@ -185,7 +190,7 @@ export default class BigQueryQuery {
     if (timeGroup) {
       query = this._buildTimeColumntimeGroup(alias, timeGroup);
     } else {
-      query = this.target.timeColumn;
+      query = BigQueryQuery.quoteFiledName(this.target.timeColumn);
       if (alias) {
         query += " AS time";
       }
@@ -195,7 +200,9 @@ export default class BigQueryQuery {
 
   public buildMetricColumn() {
     if (this.hasMetricColumn()) {
-      return this.target.metricColumn + " AS metric";
+      return (
+        BigQueryQuery.quoteFiledName(this.target.metricColumn) + " AS metric"
+      );
     }
 
     return "";
@@ -236,7 +243,7 @@ export default class BigQueryQuery {
 
   public buildValueColumn(column) {
     const columnName = _.find(column, (g: any) => g.type === "column");
-    let query = columnName.params[0];
+    let query = BigQueryQuery.quoteFiledName(columnName.params[0]);
     const aggregate = _.find(
       column,
       (g: any) => g.type === "aggregate" || g.type === "percentile"
@@ -508,7 +515,7 @@ export default class BigQueryQuery {
       const myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
       this.target.timeColumn = myRegexp.exec(q)[1];
     }
-    const range = this.target.timeColumn + " BETWEEN " + from + " AND " + to;
+    const range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " BETWEEN " + from + " AND " + to;
     return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
   }
 

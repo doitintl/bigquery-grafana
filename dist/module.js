@@ -51267,6 +51267,10 @@ function () {
     return String(value).replace(/'/g, "''");
   };
 
+  BigQueryQuery.quoteFiledName = function (value) {
+    return "`" + String(value) + "`";
+  };
+
   BigQueryQuery.formatDateToString = function (date, separator, addtime) {
     if (separator === void 0) {
       separator = "";
@@ -51330,11 +51334,11 @@ function () {
   };
 
   BigQueryQuery._getIntervalStr = function (interval, timeColumn) {
-    var IntervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + timeColumn + "), ";
+    var IntervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + BigQueryQuery.quoteFiledName(timeColumn) + "), ";
     var unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
 
     if (interval === "1m") {
-      IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + timeColumn + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + timeColumn + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
+      IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + BigQueryQuery.quoteFiledName(timeColumn) + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + BigQueryQuery.quoteFiledName(timeColumn) + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
     } else {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
@@ -51423,7 +51427,7 @@ function () {
     if (timeGroup) {
       query = this._buildTimeColumntimeGroup(alias, timeGroup);
     } else {
-      query = this.target.timeColumn;
+      query = BigQueryQuery.quoteFiledName(this.target.timeColumn);
 
       if (alias) {
         query += " AS time";
@@ -51435,7 +51439,7 @@ function () {
 
   BigQueryQuery.prototype.buildMetricColumn = function () {
     if (this.hasMetricColumn()) {
-      return this.target.metricColumn + " AS metric";
+      return BigQueryQuery.quoteFiledName(this.target.metricColumn) + " AS metric";
     }
 
     return "";
@@ -51475,7 +51479,7 @@ function () {
       return g.type === "column";
     });
 
-    var query = columnName.params[0];
+    var query = BigQueryQuery.quoteFiledName(columnName.params[0]);
 
     var aggregate = _lodash2.default.find(column, function (g) {
       return g.type === "aggregate" || g.type === "percentile";
@@ -51703,7 +51707,7 @@ function () {
       this.target.timeColumn = myRegexp.exec(q)[1];
     }
 
-    var range = this.target.timeColumn + " BETWEEN " + from + " AND " + to;
+    var range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " BETWEEN " + from + " AND " + to;
     return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
   };
 
