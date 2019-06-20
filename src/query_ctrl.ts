@@ -10,7 +10,7 @@ export interface QueryMeta {
 }
 
 const defaultQuery = `SELECT
-  $__time(time_column),
+  time_column,
   value1
 FROM
   metric_table
