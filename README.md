@@ -120,7 +120,7 @@ yarn run test
 
 ## Contributing
 
-See the [Contribution Guide](.https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/CONTRIBUTING.md).
+See the [Contribution Guide](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/CONTRIBUTING.md).
 
 ## License
 
