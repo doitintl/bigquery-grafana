@@ -34,6 +34,19 @@ export class BigQueryDatasource {
     };
   }
 
+  public static _getShiftPeriod(strInterval) {
+    const shift = strInterval.match(/\d+/)[0];
+    strInterval = strInterval.substr(shift.length, strInterval.length);
+    if (strInterval === "m") {
+      strInterval = "M";
+    }
+
+    if (strInterval === "min") {
+      strInterval = "m";
+    }
+    return [strInterval, shift];
+  }
+
   private static _handleError(error) {
     if (error.cancelled === true) {
       return [];
@@ -61,18 +74,6 @@ export class BigQueryDatasource {
     return copy;
   }
 
-  private static _getShiftPeriod(strInterval) {
-    const shift = strInterval.match(/\d+/)[0];
-    strInterval = strInterval.substr(shift.length, strInterval.length);
-    if (strInterval === "m") {
-      strInterval = "M";
-    }
-
-    if (strInterval === "min") {
-      strInterval = "m";
-    }
-    return [strInterval, shift];
-  }
   private static _setupTimeShiftQuery(query, options) {
     const index = query.format.indexOf("#");
     const copy = options.constructor();

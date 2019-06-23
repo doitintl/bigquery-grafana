@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { BigQueryDatasource } from './datasource';
 
 export default class BigQueryQuery {
   public static quoteLiteral(value) {
@@ -38,21 +39,25 @@ export default class BigQueryQuery {
     return res;
   }
   public static getUnixSecondsFromString(str) {
-    switch (str) {
-      case "1s":
-        return "1";
-      case "1min":
-        return "60";
-      case "1h":
-        return "3600";
-      case "1d":
-        return "86400";
-      case "1w":
-        return "604800";
-      case "1m":
-        return "2629743"
-      case "1y":
-        return "31536000";
+    const res = BigQueryDatasource._getShiftPeriod(str);
+    const groupPeriod = res[0];
+    const groupVal = res[1];
+    console.log(groupPeriod, groupVal )
+    switch (groupPeriod) {
+      case "s":
+        return 1 * groupVal;
+      case "m":
+        return 60 * groupVal;
+      case "h":
+        return 3600 * groupVal;
+      case "d":
+        return groupVal * 86400;
+      case "w":
+        return 604800 * groupVal;
+      case "M":
+        return 2629743 * groupVal;
+      case "y":
+        return 31536000 * groupVal;
     }
     return "0";
   }
