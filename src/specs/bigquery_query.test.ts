@@ -342,13 +342,13 @@ describe("BigQueryQuery", () => {
   });
 
   describe("getUnixSecondsFromString", () => {
-    expect(BigQueryQuery.getUnixSecondsFromString("1s")).toBe("1");
-    expect(BigQueryQuery.getUnixSecondsFromString("1min")).toBe("60");
-    expect(BigQueryQuery.getUnixSecondsFromString("1h")).toBe("3600");
-    expect(BigQueryQuery.getUnixSecondsFromString("1d")).toBe("86400");
-    expect(BigQueryQuery.getUnixSecondsFromString("1w")).toBe("604800");
-    expect(BigQueryQuery.getUnixSecondsFromString("1m")).toBe("2629743");
-    expect(BigQueryQuery.getUnixSecondsFromString("1y")).toBe("31536000");
+    expect(BigQueryQuery.getUnixSecondsFromString("5s")).toBe(5);
+    expect(BigQueryQuery.getUnixSecondsFromString("2min")).toBe(120);
+    expect(BigQueryQuery.getUnixSecondsFromString("1h")).toBe(3600);
+    expect(BigQueryQuery.getUnixSecondsFromString("1d")).toBe(86400);
+    expect(BigQueryQuery.getUnixSecondsFromString("1w")).toBe(604800);
+    expect(BigQueryQuery.getUnixSecondsFromString("1m")).toBe(2629743);
+    expect(BigQueryQuery.getUnixSecondsFromString("1y")).toBe(31536000);
     expect(BigQueryQuery.getUnixSecondsFromString("1z")).toBe("0");
   });
 

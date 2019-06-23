@@ -51223,6 +51223,8 @@ var _lodash = __webpack_require__(/*! lodash */ "lodash");
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _datasource = __webpack_require__(/*! ./datasource */ "./datasource.ts");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var BigQueryQuery =
@@ -51307,27 +51309,33 @@ function () {
   };
 
   BigQueryQuery.getUnixSecondsFromString = function (str) {
-    switch (str) {
-      case "1s":
-        return "1";
+    var res = _datasource.BigQueryDatasource._getShiftPeriod(str);
 
-      case "1min":
-        return "60";
+    var groupPeriod = res[0];
+    var groupVal = res[1];
+    console.log(groupPeriod, groupVal);
 
-      case "1h":
-        return "3600";
+    switch (groupPeriod) {
+      case "s":
+        return 1 * groupVal;
 
-      case "1d":
-        return "86400";
+      case "m":
+        return 60 * groupVal;
 
-      case "1w":
-        return "604800";
+      case "h":
+        return 3600 * groupVal;
 
-      case "1m":
-        return "2629743";
+      case "d":
+        return groupVal * 86400;
 
-      case "1y":
-        return "31536000";
+      case "w":
+        return 604800 * groupVal;
+
+      case "M":
+        return 2629743 * groupVal;
+
+      case "y":
+        return 31536000 * groupVal;
     }
 
     return "0";
@@ -51983,6 +51991,21 @@ function () {
     };
   };
 
+  BigQueryDatasource._getShiftPeriod = function (strInterval) {
+    var shift = strInterval.match(/\d+/)[0];
+    strInterval = strInterval.substr(shift.length, strInterval.length);
+
+    if (strInterval === "m") {
+      strInterval = "M";
+    }
+
+    if (strInterval === "min") {
+      strInterval = "m";
+    }
+
+    return [strInterval, shift];
+  };
+
   BigQueryDatasource._handleError = function (error) {
     if (error.cancelled === true) {
       return [];
@@ -52016,21 +52039,6 @@ function () {
     copy.format += "#" + res;
     copy.refId += Shifted + "_" + res;
     return copy;
-  };
-
-  BigQueryDatasource._getShiftPeriod = function (strInterval) {
-    var shift = strInterval.match(/\d+/)[0];
-    strInterval = strInterval.substr(shift.length, strInterval.length);
-
-    if (strInterval === "m") {
-      strInterval = "M";
-    }
-
-    if (strInterval === "min") {
-      strInterval = "m";
-    }
-
-    return [strInterval, shift];
   };
 
   BigQueryDatasource._setupTimeShiftQuery = function (query, options) {
