@@ -51313,7 +51313,6 @@ function () {
 
     var groupPeriod = res[0];
     var groupVal = res[1];
-    console.log(groupPeriod, groupVal);
 
     switch (groupPeriod) {
       case "s":

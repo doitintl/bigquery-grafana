@@ -42,7 +42,6 @@ export default class BigQueryQuery {
     const res = BigQueryDatasource._getShiftPeriod(str);
     const groupPeriod = res[0];
     const groupVal = res[1];
-    console.log(groupPeriod, groupVal )
     switch (groupPeriod) {
       case "s":
         return 1 * groupVal;
