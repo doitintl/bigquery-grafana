@@ -261,21 +261,19 @@ export class BigQueryDatasource {
     ) {
       refId = optionalOptions.variable.name;
     }
-
     const interpolatedQuery = {
       datasourceId: this.id,
       format: "table",
       rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
       refId
     };
-
     const range = this.timeSrv.timeRange();
     const data = {
       from: range.from.valueOf().toString(),
       queries: [interpolatedQuery],
       to: range.to.valueOf().toString()
     };
-    return this.doQuery(query, refId).then(metricData =>
+    return this.doQuery(interpolatedQuery.rawSql, refId).then(metricData =>
       ResponseParser.parseDataQuery(metricData, "var")
     );
   }
