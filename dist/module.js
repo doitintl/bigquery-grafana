@@ -52226,7 +52226,7 @@ function () {
       queries: [interpolatedQuery],
       to: range.to.valueOf().toString()
     };
-    return this.doQuery(query, refId).then(function (metricData) {
+    return this.doQuery(interpolatedQuery.rawSql, refId).then(function (metricData) {
       return _response_parser2.default.parseDataQuery(metricData, "var");
     });
   };
