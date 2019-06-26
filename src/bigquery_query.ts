@@ -60,31 +60,6 @@ export default class BigQueryQuery {
     }
     return "0";
   }
-  public static _getIntervalStr(interval: string, timeColumn: string) {
-    let IntervalStr =
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" +
-      BigQueryQuery.quoteFiledName(timeColumn) +
-      "), ";
-    const unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
-    if (interval === "1m") {
-      IntervalStr =
-        "TIMESTAMP(" +
-        "  (" +
-        'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' +
-        BigQueryQuery.quoteFiledName(timeColumn) +
-        ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " +
-        BigQueryQuery.quoteFiledName(timeColumn) +
-        ")) AS STRING)," +
-        "'-','01'" +
-        ")" +
-        ")" +
-        ")" +
-        ")";
-    } else {
-      IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
-    }
-    return IntervalStr;
-  }
 
   public static getTimeShift(q) {
     let res: string;
@@ -132,6 +107,30 @@ export default class BigQueryQuery {
     // give interpolateQueryStr access to this
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
+  public getIntervalStr(interval: string) {
+    let IntervalStr =
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this._dateToTimestamp() + "), ";
+    const unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
+    if (interval === "1m") {
+      IntervalStr =
+        "TIMESTAMP(" +
+        "  (" +
+        'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' +
+        BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+        ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " +
+        BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+        ")) AS STRING)," +
+        "'-','01'" +
+        ")" +
+        ")" +
+        ")" +
+        ")";
+    } else {
+      IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
+    }
+    return IntervalStr;
+  }
+
 
   public hasTimeGroup() {
     return _.find(this.target.group, (g: any) => g.type === "time");
@@ -318,9 +317,9 @@ export default class BigQueryQuery {
                 " WHEN " + prev + " IS NULL THEN NULL ELSE " + curr + " END)";
               query +=
                 "/(UNIX_SECONDS(" +
-                timeColumn +
+                this._dateToTimestamp() +
                 ") -UNIX_SECONDS(  lag(" +
-                timeColumn +
+                this._dateToTimestamp() +
                 ") OVER (" +
                 over +
                 ")))";
@@ -529,9 +528,8 @@ export default class BigQueryQuery {
       return q;
     }
 
-    const intervalStr = BigQueryQuery._getIntervalStr(
+    const intervalStr = this.getIntervalStr(
       interval,
-      this.target.timeColumn
     );
     if (alias) {
       return q.replace(
@@ -544,5 +542,17 @@ export default class BigQueryQuery {
         intervalStr
       );
     }
+  }
+
+  private _dateToTimestamp()
+   {
+    if (this.target.timeColumnType === "DATE"){
+      return (
+        "Timestamp(" +
+        BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+        ")"
+      );
+    }
+    return BigQueryQuery.quoteFiledName(this.target.timeColumn);
   }
 }

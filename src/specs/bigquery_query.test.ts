@@ -99,7 +99,7 @@ describe("BigQueryQuery", () => {
     ];
     query.target.timeColumn = "timC";
     expect(query.buildValueColumn(column)).toBe(
-      "`v` as tmpv, (CASE WHEN `v` >= lag(`v`) OVER (PARTITION BY timC ORDER BY `timC`) THEN `v` - lag(`v`) OVER (PARTITION BY timC ORDER BY `timC`) WHEN lag(`v`) OVER (PARTITION BY timC ORDER BY `timC`) IS NULL THEN NULL ELSE `v` END)/(UNIX_SECONDS(timC) -UNIX_SECONDS(  lag(timC) OVER (PARTITION BY timC ORDER BY `timC`))) AS a"
+      "`v` as tmpv, (CASE WHEN `v` >= lag(`v`) OVER (PARTITION BY timC ORDER BY `timC`) THEN `v` - lag(`v`) OVER (PARTITION BY timC ORDER BY `timC`) WHEN lag(`v`) OVER (PARTITION BY timC ORDER BY `timC`) IS NULL THEN NULL ELSE `v` END)/(UNIX_SECONDS(`timC`) -UNIX_SECONDS(  lag(`timC`) OVER (PARTITION BY timC ORDER BY `timC`))) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -109,7 +109,7 @@ describe("BigQueryQuery", () => {
     ];
     query.target.timeColumn = "timC";
     expect(query.buildValueColumn(column)).toBe(
-      "first(`v`,timC) as tmpv, (CASE WHEN first(`v`,timC) >= lag(first(`v`,timC)) OVER (PARTITION BY timC ORDER BY `timC`) THEN first(`v`,timC) - lag(first(`v`,timC)) OVER (PARTITION BY timC ORDER BY `timC`) WHEN lag(first(`v`,timC)) OVER (PARTITION BY timC ORDER BY `timC`) IS NULL THEN NULL ELSE first(`v`,timC) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (PARTITION BY timC ORDER BY `timC`))) AS a"
+      "first(`v`,timC) as tmpv, (CASE WHEN first(`v`,timC) >= lag(first(`v`,timC)) OVER (PARTITION BY timC ORDER BY `timC`) THEN first(`v`,timC) - lag(first(`v`,timC)) OVER (PARTITION BY timC ORDER BY `timC`) WHEN lag(first(`v`,timC)) OVER (PARTITION BY timC ORDER BY `timC`) IS NULL THEN NULL ELSE first(`v`,timC) END)/(UNIX_SECONDS(`timC`) -UNIX_SECONDS(  lag(`timC`) OVER (PARTITION BY timC ORDER BY `timC`))) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -119,7 +119,7 @@ describe("BigQueryQuery", () => {
     ];
     query.target.timeColumn = "timC";
     expect(query.buildValueColumn(column)).toBe(
-      "p1(p2) WITHIN GROUP (ORDER BY `v`) as tmpv, (CASE WHEN p1(p2) WITHIN GROUP (ORDER BY `v`) >= lag(p1(p2) WITHIN GROUP (ORDER BY `v`)) OVER (PARTITION BY timC ORDER BY `timC`) THEN p1(p2) WITHIN GROUP (ORDER BY `v`) - lag(p1(p2) WITHIN GROUP (ORDER BY `v`)) OVER (PARTITION BY timC ORDER BY `timC`) WHEN lag(p1(p2) WITHIN GROUP (ORDER BY `v`)) OVER (PARTITION BY timC ORDER BY `timC`) IS NULL THEN NULL ELSE p1(p2) WITHIN GROUP (ORDER BY `v`) END)/(UNIX_SECONDS(min(timC)) -UNIX_SECONDS(  lag(min(timC)) OVER (PARTITION BY timC ORDER BY `timC`))) AS a"
+      "p1(p2) WITHIN GROUP (ORDER BY `v`) as tmpv, (CASE WHEN p1(p2) WITHIN GROUP (ORDER BY `v`) >= lag(p1(p2) WITHIN GROUP (ORDER BY `v`)) OVER (PARTITION BY timC ORDER BY `timC`) THEN p1(p2) WITHIN GROUP (ORDER BY `v`) - lag(p1(p2) WITHIN GROUP (ORDER BY `v`)) OVER (PARTITION BY timC ORDER BY `timC`) WHEN lag(p1(p2) WITHIN GROUP (ORDER BY `v`)) OVER (PARTITION BY timC ORDER BY `timC`) IS NULL THEN NULL ELSE p1(p2) WITHIN GROUP (ORDER BY `v`) END)/(UNIX_SECONDS(`timC`) -UNIX_SECONDS(  lag(`timC`) OVER (PARTITION BY timC ORDER BY `timC`))) AS a"
     );
 
     column = [
@@ -317,26 +317,35 @@ describe("BigQueryQuery", () => {
     );
   });
 
-  describe("_getIntervalStr", () => {
-    expect(BigQueryQuery._getIntervalStr("1s", "my_data")).toBe(
+  describe("getIntervalStr", () => {
+    const target = {
+      rawSql:
+        "$__timeGroupAlias(start_date,1d), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)",
+      select: [[{ type: "column", params: ["value"] }]],
+      table: "table",
+      timeColumn: "my_data",
+      where: []
+    };
+    const query = new BigQueryQuery(target, templateSrv);
+    expect(query.getIntervalStr("1s")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 1) * 1)"
     );
-    expect(BigQueryQuery._getIntervalStr("1min", "my_data")).toBe(
+    expect(query.getIntervalStr("1min")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 60) * 60)"
     );
-    expect(BigQueryQuery._getIntervalStr("1h", "my_data")).toBe(
+    expect(query.getIntervalStr("1h")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 3600) * 3600)"
     );
-    expect(BigQueryQuery._getIntervalStr("1d", "my_data")).toBe(
+    expect(query.getIntervalStr("1d")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 86400) * 86400)"
     );
-    expect(BigQueryQuery._getIntervalStr("1w", "my_data")).toBe(
+    expect(query.getIntervalStr("1w")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800)"
     );
-    expect(BigQueryQuery._getIntervalStr("1m", "my_data")).toBe(
+    expect(query.getIntervalStr("1m")).toBe(
       "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01'))))"
     );
-    expect(BigQueryQuery._getIntervalStr("1y", "my_data")).toBe(
+    expect(query.getIntervalStr("1y")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 31536000) * 31536000)"
     );
   });
