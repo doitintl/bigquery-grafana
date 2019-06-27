@@ -108,10 +108,12 @@ export default class BigQueryQuery {
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
   public getIntervalStr(interval: string) {
+    const res = BigQueryDatasource._getShiftPeriod(interval);
+    const groupPeriod = res[0];
     let IntervalStr =
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this._dateToTimestamp() + "), ";
     const unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
-    if (interval === "1m") {
+    if (groupPeriod === "M") {
       IntervalStr =
         "TIMESTAMP(" +
         "  (" +

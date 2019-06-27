@@ -51356,10 +51356,13 @@ function () {
   };
 
   BigQueryQuery.prototype.getIntervalStr = function (interval) {
+    var res = _datasource.BigQueryDatasource._getShiftPeriod(interval);
+
+    var groupPeriod = res[0];
     var IntervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this._dateToTimestamp() + "), ";
     var unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
 
-    if (interval === "1m") {
+    if (groupPeriod === "M") {
       IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + BigQueryQuery.quoteFiledName(this.target.timeColumn) + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + BigQueryQuery.quoteFiledName(this.target.timeColumn) + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
     } else {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
