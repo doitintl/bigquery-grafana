@@ -53,9 +53,9 @@ describe("BigQueryQuery", () => {
     const query = new BigQueryQuery({}, templateSrv);
     expect(query.buildMetricColumn()).toBe("");
     query.target.metricColumn = "host";
-    expect(query.buildMetricColumn()).toBe("`host` AS metric");
+    expect(query.buildMetricColumn()).toBe("CAST (`host`AS String ) AS metric");
     query.target.metricColumn = '"host"';
-    expect(query.buildMetricColumn()).toBe( "`\"host\"` AS metric");
+    expect(query.buildMetricColumn()).toBe( "CAST (`\"host\"`AS String ) AS metric");
   });
 
   describe("When generating value column SQL", () => {
@@ -226,7 +226,7 @@ describe("BigQueryQuery", () => {
 
     query.target.metricColumn = "m";
     result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  `m` AS metric,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1,2";
+      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1,2";
     expect(query.buildQuery()).toBe(result);
   });
 
