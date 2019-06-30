@@ -11,7 +11,15 @@ export default class BigQueryQuery {
   }
 
   public static quoteFiledName(value) {
-    return "`" + String(value) + "`";
+    const vals = value.split(".");
+    let res = "";
+    for (let i = 0; i < vals.length; i++) {
+      res = res + "`" + String(vals[i]) + "`";
+      if (vals.length > 1 && i + 1 < vals.length) {
+        res = res + ".";
+      }
+    }
+    return res;
   }
   public static formatDateToString(date, separator = "", addtime = false) {
     // 01, 02, 03, ... 29, 30, 31
@@ -206,7 +214,9 @@ export default class BigQueryQuery {
   public buildMetricColumn() {
     if (this.hasMetricColumn()) {
       return (
-        BigQueryQuery.quoteFiledName(this.target.metricColumn) + " AS metric"
+        "CAST (" +
+        BigQueryQuery.quoteFiledName(this.target.metricColumn) +
+        "AS String ) AS metric"
       );
     }
 

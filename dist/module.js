@@ -51270,7 +51270,18 @@ function () {
   };
 
   BigQueryQuery.quoteFiledName = function (value) {
-    return "`" + String(value) + "`";
+    var vals = value.split(".");
+    var res = "";
+
+    for (var i = 0; i < vals.length; i++) {
+      res = res + "`" + String(vals[i]) + "`";
+
+      if (vals.length > 1 && i + 1 < vals.length) {
+        res = res + ".";
+      }
+    }
+
+    return res;
   };
 
   BigQueryQuery.formatDateToString = function (date, separator, addtime) {
@@ -51449,7 +51460,7 @@ function () {
 
   BigQueryQuery.prototype.buildMetricColumn = function () {
     if (this.hasMetricColumn()) {
-      return BigQueryQuery.quoteFiledName(this.target.metricColumn) + " AS metric";
+      return "CAST (" + BigQueryQuery.quoteFiledName(this.target.metricColumn) + "AS String ) AS metric";
     }
 
     return "";
