@@ -290,22 +290,22 @@ describe("BigQueryQuery", () => {
     };
     it("Check macros", () => {
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1min), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1w), $__timeGroup(start_date,1w) WHERE $__timeFilter(start_date)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1h), $__timeGroup(start_date,1h) WHERE $__timeFilter(start_date)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600)"
       );
     });
   });
@@ -327,25 +327,25 @@ describe("BigQueryQuery", () => {
       where: []
     };
     const query = new BigQueryQuery(target, templateSrv);
-    expect(query.getIntervalStr("1s")).toBe(
+    expect(query.getIntervalStr("1s", "0")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 1) * 1)"
     );
-    expect(query.getIntervalStr("1min")).toBe(
+    expect(query.getIntervalStr("1min", "0")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 60) * 60)"
     );
-    expect(query.getIntervalStr("1h")).toBe(
+    expect(query.getIntervalStr("1h", "1s")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 3600) * 3600)"
     );
-    expect(query.getIntervalStr("1d")).toBe(
+    expect(query.getIntervalStr("1d", "1s")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 86400) * 86400)"
     );
-    expect(query.getIntervalStr("1w")).toBe(
+    expect(query.getIntervalStr("1w", "1d")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800)"
     );
-    expect(query.getIntervalStr("1m")).toBe(
+    expect(query.getIntervalStr("1m", "1d")).toBe(
       "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01'))))"
     );
-    expect(query.getIntervalStr("1y")).toBe(
+    expect(query.getIntervalStr("1y", "2d")).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 31536000) * 31536000)"
     );
   });
@@ -358,7 +358,7 @@ describe("BigQueryQuery", () => {
     expect(BigQueryQuery.getUnixSecondsFromString("1w")).toBe(604800);
     expect(BigQueryQuery.getUnixSecondsFromString("1m")).toBe(2629743);
     expect(BigQueryQuery.getUnixSecondsFromString("1y")).toBe(31536000);
-    expect(BigQueryQuery.getUnixSecondsFromString("1z")).toBe("0");
+    expect(BigQueryQuery.getUnixSecondsFromString("1z")).toBe(0);
   });
 
   describe("replaceTimeShift", () => {
