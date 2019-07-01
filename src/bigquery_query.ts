@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { BigQueryDatasource } from './datasource';
+import { BigQueryDatasource } from "./datasource";
 
 export default class BigQueryQuery {
   public static quoteLiteral(value) {
@@ -38,15 +38,20 @@ export default class BigQueryQuery {
   }
 
   public static _getInterval(q, alias: boolean) {
-    let res = alias
+    const interval: string[] = [];
+    const res = alias
       ? q.match(/(.*\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g)
       : q.match(/(.*\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
     if (res) {
-      res = res[0].substr(1 + res[0].lastIndexOf(",")).trim();
+      interval[0] = res[0].split(",")[1];
+      interval[1] = res[0].split(",")[2];
     }
-    return res;
+    return interval;
   }
   public static getUnixSecondsFromString(str) {
+    if (str === undefined) {
+      return 0;
+    }
     const res = BigQueryDatasource._getShiftPeriod(str);
     const groupPeriod = res[0];
     const groupVal = res[1];
@@ -66,7 +71,7 @@ export default class BigQueryQuery {
       case "y":
         return 31536000 * groupVal;
     }
-    return "0";
+    return 0;
   }
 
   public static getTimeShift(q) {
@@ -115,12 +120,17 @@ export default class BigQueryQuery {
     // give interpolateQueryStr access to this
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
-  public getIntervalStr(interval: string) {
+  public getIntervalStr(interval: string, mininterval: string) {
     const res = BigQueryDatasource._getShiftPeriod(interval);
     const groupPeriod = res[0];
     let IntervalStr =
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this._dateToTimestamp() + "), ";
-    const unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
+    let unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
+    let minUnixSeconds;
+    minUnixSeconds = !(mininterval !== undefined || mininterval !== "0")
+      ? 0
+      : BigQueryQuery.getUnixSecondsFromString(mininterval);
+    unixSeconds = Math.max(unixSeconds, minUnixSeconds);
     if (groupPeriod === "M") {
       IntervalStr =
         "TIMESTAMP(" +
@@ -140,7 +150,6 @@ export default class BigQueryQuery {
     }
     return IntervalStr;
   }
-
 
   public hasTimeGroup() {
     return _.find(this.target.group, (g: any) => g.type === "time");
@@ -267,10 +276,7 @@ export default class BigQueryQuery {
       column,
       (g: any) => g.type === "window" || g.type === "moving_window"
     );
-    const timeshift = _.find(
-      column,
-      (g: any) => g.type === "timeshift"
-    );
+    const timeshift = _.find(column, (g: any) => g.type === "timeshift");
     query = this._buildAggregate(aggregate, query);
     if (windows) {
       this.isWindow = true;
@@ -530,35 +536,39 @@ export default class BigQueryQuery {
       const myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
       this.target.timeColumn = myRegexp.exec(q)[1];
     }
-    const range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " BETWEEN " + from + " AND " + to;
+    const range =
+      BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+      " BETWEEN " +
+      from +
+      " AND " +
+      to;
     return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
   }
 
   public replacetimeGroupAlias(q, alias: boolean) {
-    const interval = BigQueryQuery._getInterval(q, alias);
+    const res = BigQueryQuery._getInterval(q, alias);
+    const interval = res[0];
+    const mininterval = res[1];
     if (!interval) {
       return q;
     }
 
-    const intervalStr = this.getIntervalStr(
-      interval,
-    );
+    const intervalStr = this.getIntervalStr(interval, mininterval);
     if (alias) {
       return q.replace(
-        /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g,
+        /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
         intervalStr
       );
     } else {
       return q.replace(
-        /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g,
+        /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
         intervalStr
       );
     }
   }
 
-  private _dateToTimestamp()
-   {
-    if (this.target.timeColumnType === "DATE"){
+  private _dateToTimestamp() {
+    if (this.target.timeColumnType === "DATE") {
       return (
         "Timestamp(" +
         BigQueryQuery.quoteFiledName(this.target.timeColumn) +

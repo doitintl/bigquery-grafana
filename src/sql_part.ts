@@ -159,12 +159,12 @@ register({
       type: "interval"
     },
     {
-      name: 'fill',
-      type: 'string',
-      options: ['none', 'NULL', 'previous', '0'],
+      name: 'mininterval',
+      type: 'interval',
+      options: ["$__mininterval", "1s", "1min", "1h", "1d", "1w", "1m", "1y"],
     },
   ],
-  defaultParams: ['$__interval', 'none'],
+  defaultParams: ['$__interval', '0'],
 });
 
 register({

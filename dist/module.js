@@ -51310,16 +51310,22 @@ function () {
   };
 
   BigQueryQuery._getInterval = function (q, alias) {
+    var interval = [];
     var res = alias ? q.match(/(.*\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g) : q.match(/(.*\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
 
     if (res) {
-      res = res[0].substr(1 + res[0].lastIndexOf(",")).trim();
+      interval[0] = res[0].split(",")[1];
+      interval[1] = res[0].split(",")[2];
     }
 
-    return res;
+    return interval;
   };
 
   BigQueryQuery.getUnixSecondsFromString = function (str) {
+    if (str === undefined) {
+      return 0;
+    }
+
     var res = _datasource.BigQueryDatasource._getShiftPeriod(str);
 
     var groupPeriod = res[0];
@@ -51348,7 +51354,7 @@ function () {
         return 31536000 * groupVal;
     }
 
-    return "0";
+    return 0;
   };
 
   BigQueryQuery.getTimeShift = function (q) {
@@ -51366,12 +51372,15 @@ function () {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   };
 
-  BigQueryQuery.prototype.getIntervalStr = function (interval) {
+  BigQueryQuery.prototype.getIntervalStr = function (interval, mininterval) {
     var res = _datasource.BigQueryDatasource._getShiftPeriod(interval);
 
     var groupPeriod = res[0];
     var IntervalStr = "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(" + this._dateToTimestamp() + "), ";
     var unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
+    var minUnixSeconds;
+    minUnixSeconds = !(mininterval !== undefined || mininterval !== "0") ? 0 : BigQueryQuery.getUnixSecondsFromString(mininterval);
+    unixSeconds = Math.max(unixSeconds, minUnixSeconds);
 
     if (groupPeriod === "M") {
       IntervalStr = "TIMESTAMP(" + "  (" + 'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' + BigQueryQuery.quoteFiledName(this.target.timeColumn) + ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " + BigQueryQuery.quoteFiledName(this.target.timeColumn) + ")) AS STRING)," + "'-','01'" + ")" + ")" + ")" + ")";
@@ -51733,18 +51742,21 @@ function () {
   };
 
   BigQueryQuery.prototype.replacetimeGroupAlias = function (q, alias) {
-    var interval = BigQueryQuery._getInterval(q, alias);
+    var res = BigQueryQuery._getInterval(q, alias);
+
+    var interval = res[0];
+    var mininterval = res[1];
 
     if (!interval) {
       return q;
     }
 
-    var intervalStr = this.getIntervalStr(interval);
+    var intervalStr = this.getIntervalStr(interval, mininterval);
 
     if (alias) {
-      return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g, intervalStr);
+      return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
     } else {
-      return q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g, intervalStr);
+      return q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
     }
   };
 
@@ -53701,7 +53713,7 @@ function (_super) {
       if (!_this.queryModel.hasTimeGroup()) {
         options.push(_this.uiSegmentSrv.newSegment({
           type: "time",
-          value: "time($__interval,none)"
+          value: "time($__interval,0)"
         }));
       }
 
@@ -54356,11 +54368,11 @@ register({
     options: ["$__interval", "1s", "1min", "1h", "1d", "1w", "1m", "1y"],
     type: "interval"
   }, {
-    name: 'fill',
-    type: 'string',
-    options: ['none', 'NULL', 'previous', '0']
+    name: 'mininterval',
+    type: 'interval',
+    options: ["$__mininterval", "1s", "1min", "1h", "1d", "1w", "1m", "1y"]
   }],
-  defaultParams: ['$__interval', 'none']
+  defaultParams: ['$__interval', '0']
 });
 register({
   type: 'window',

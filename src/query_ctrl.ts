@@ -736,7 +736,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
           options.push(
             this.uiSegmentSrv.newSegment({
               type: "time",
-              value: "time($__interval,none)"
+              value: "time($__interval,0)"
             })
           );
         }
