@@ -51734,7 +51734,11 @@ function () {
 
     if (this.target.timeColumn === "-- time --") {
       var myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
-      this.target.timeColumn = myRegexp.exec(q)[1];
+      var tf = myRegexp.exec(q);
+
+      if (tf !== null) {
+        this.target.timeColumn = tf[1];
+      }
     }
 
     var range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " BETWEEN " + from + " AND " + to;
