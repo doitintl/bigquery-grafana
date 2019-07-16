@@ -534,7 +534,10 @@ export default class BigQueryQuery {
     }
     if (this.target.timeColumn === "-- time --") {
       const myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
-      this.target.timeColumn = myRegexp.exec(q)[1];
+      const tf = myRegexp.exec(q);
+      if (tf !== null) {
+        this.target.timeColumn = tf[1];
+      }
     }
     const range =
       BigQueryQuery.quoteFiledName(this.target.timeColumn) +
