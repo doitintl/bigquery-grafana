@@ -371,12 +371,69 @@ describe("BigQueryDatasource", () => {
         to: moment(1432288401)
       }
     };
-
     const response = {
+      kind: "bigquery#queryResponse",
+      schema: {
+        fields: [
+          {
+            name: "time",
+            type: "TIMESTAMP",
+            mode: "NULLABLE"
+          },
+          {
+            name: "text",
+            type: "text",
+            mode: "NULLABLE"
+          }
+        ]
+      },
+      jobReference: {
+        projectId: "aviv-playground",
+        jobId: "job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5",
+        location: "US"
+      },
+      totalRows: "3",
+      rows: [
+        {
+          f: [
+            {
+              v: "1.521578851E9"
+            },
+            {
+              v: "some text"
+            }
+          ]
+        },
+        {
+          f: [
+            {
+              v: "1.521578916E9"
+            },
+            {
+              v: "some text2"
+            }
+          ]
+        },
+        {
+          f: [
+            {
+              v: "1.521578927E9"
+            },
+            {
+              v: "some text3"
+            }
+          ]
+        }
+      ],
+      totalBytesProcessed: "23289520",
+      jobComplete: true,
+      cacheHit: false
+    };
+/*    const response = {
       results: {
         MyAnno: {
           refId: annotationName,
-          tables: [
+          data: [
             {
               columns: [{ text: "time" }, { text: "text" }, { text: "tags" }],
               rows: [
@@ -388,7 +445,7 @@ describe("BigQueryDatasource", () => {
           ]
         }
       }
-    };
+    };*/
 
     beforeEach(() => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
@@ -398,18 +455,11 @@ describe("BigQueryDatasource", () => {
         results = data;
       });
     });
-
+    console.log(response)
     it("should return annotation list", () => {
       expect(results.length).toBe(3);
 
-      expect(results[0].text).toBe("some text");
-      expect(results[0].tags[0]).toBe("TagA");
-      expect(results[0].tags[1]).toBe("TagB");
-
-      expect(results[1].tags[0]).toBe("TagB");
-      expect(results[1].tags[1]).toBe("TagC");
-
-      expect(results[2].tags.length).toBe(0);
+      expect(results[0].text.v).toBe("some text");
     });
   });
 

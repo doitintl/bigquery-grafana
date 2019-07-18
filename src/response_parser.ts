@@ -255,18 +255,18 @@ export default class ResponseParser {
   }
 
   public transformAnnotationResponse(options, data) {
-    const table = data.data.results[options.annotation.name].tables[0];
+    const table = data.data;
     let timeColumnIndex = -1;
     const titleColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
 
-    for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === "time") {
+    for (let i = 0; i < data.data.schema.fields.length; i++) {
+      if (data.data.schema.fields[i].name === "time") {
         timeColumnIndex = i;
-      } else if (table.columns[i].text === "text") {
+      } else if (data.data.schema.fields[i].name === "text") {
         textColumnIndex = i;
-      } else if (table.columns[i].text === "tags") {
+      } else if (data.data.schema.fields[i].name === "tags") {
         tagsColumnIndex = i;
       }
     }
@@ -282,9 +282,11 @@ export default class ResponseParser {
         tags: row[tagsColumnIndex]
           ? row[tagsColumnIndex].trim().split(/\s*,\s*/)
           : [],
-        text: row[textColumnIndex],
-        time: Math.floor(row[timeColumnIndex]),
-        title: row[titleColumnIndex]
+        text: row.f[textColumnIndex],
+        time: new Date(
+          Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
+        ).toString(),
+        title: row.f[titleColumnIndex]
       });
     }
     return list;

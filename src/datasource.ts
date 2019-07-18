@@ -361,6 +361,8 @@ export class BigQueryDatasource {
   }
 
   public annotationQuery(options) {
+    const path = `v2/projects/${this.projectName}/queries`;
+    const url = this.url + `${this.baseUrl}${path}`;
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
         message: "Query missing in annotation definition"
@@ -380,12 +382,15 @@ export class BigQueryDatasource {
     return this.backendSrv
       .datasourceRequest({
         data: {
+          query: query.rawSql,
           from: options.range.from.valueOf().toString(),
-          queries: [query],
-          to: options.range.to.valueOf().toString()
+          to: options.range.to.valueOf().toString(),
+          useLegacySql: false,
+          useQueryCache: true
         },
         method: "POST",
-        url: "/api/tsdb/query"
+        requestId: options.annotation.name,
+        url: url
       })
       .then(data =>
         this.responseParser.transformAnnotationResponse(options, data)
