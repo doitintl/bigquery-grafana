@@ -52477,6 +52477,9 @@ function () {
   BigQueryDatasource.prototype.annotationQuery = function (options) {
     var _this = this;
 
+    var path = "v2/projects/" + this.projectName + "/queries";
+    var url = this.url + ("" + this.baseUrl + path);
+
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
         message: "Query missing in annotation definition"
@@ -52491,12 +52494,15 @@ function () {
     };
     return this.backendSrv.datasourceRequest({
       data: {
+        query: query.rawSql,
         from: options.range.from.valueOf().toString(),
-        queries: [query],
-        to: options.range.to.valueOf().toString()
+        to: options.range.to.valueOf().toString(),
+        useLegacySql: false,
+        useQueryCache: true
       },
       method: "POST",
-      url: "/api/tsdb/query"
+      requestId: options.annotation.name,
+      url: url
     }).then(function (data) {
       return _this.responseParser.transformAnnotationResponse(options, data);
     });
@@ -54113,18 +54119,18 @@ function () {
   };
 
   ResponseParser.prototype.transformAnnotationResponse = function (options, data) {
-    var table = data.data.results[options.annotation.name].tables[0];
+    var table = data.data;
     var timeColumnIndex = -1;
     var titleColumnIndex = -1;
     var textColumnIndex = -1;
     var tagsColumnIndex = -1;
 
-    for (var i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === "time") {
+    for (var i = 0; i < data.data.schema.fields.length; i++) {
+      if (data.data.schema.fields[i].name === "time") {
         timeColumnIndex = i;
-      } else if (table.columns[i].text === "text") {
+      } else if (data.data.schema.fields[i].name === "text") {
         textColumnIndex = i;
-      } else if (table.columns[i].text === "tags") {
+      } else if (data.data.schema.fields[i].name === "tags") {
         tagsColumnIndex = i;
       }
     }
@@ -54142,9 +54148,9 @@ function () {
       list.push({
         annotation: options.annotation,
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
-        text: row[textColumnIndex],
-        time: Math.floor(row[timeColumnIndex]),
-        title: row[titleColumnIndex]
+        text: row.f[textColumnIndex],
+        time: new Date(Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000).toString(),
+        title: row.f[titleColumnIndex]
       });
     }
 
