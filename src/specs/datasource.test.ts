@@ -455,7 +455,6 @@ describe("BigQueryDatasource", () => {
         results = data;
       });
     });
-    console.log(response)
     it("should return annotation list", () => {
       expect(results.length).toBe(3);
 
