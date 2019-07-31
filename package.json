@@ -38,8 +38,8 @@
         "googleapis": "^37.2.0",
         "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
         "jest": "^24.5.0",
+        "lodash": "^4.17.11",
         "ng-annotate-webpack-plugin": "^0.3.0",
-        "plugin-typescript": "^8.0.0",
         "plugin-typescript": "^8.0.0",
         "prettier": "^1.16.4",
         "sinon": "^3.3.0",
@@ -54,7 +54,6 @@
         "typescript": "^3.3.4000",
         "uglifyjs-webpack-plugin": "^2.1.1",
         "webpack": "^4.29.5",
-        "webpack-cli": "^3.2.3",
-        "lodash": "^4.17.11"
+        "webpack-cli": "^3.2.3"
     }
 }

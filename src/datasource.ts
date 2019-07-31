@@ -185,8 +185,15 @@ export class BigQueryDatasource {
         format: target.format,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
+        metricColumn: target.metricColumn,
+        partitioned: target.partitioned,
+        partitionedField: target.partitionedField,
         rawSql: queryModel.render(this.interpolateVariable),
-        refId: target.refId
+        refId: target.refId,
+        sharded: target.sharded,
+        table: target.table,
+        timeColumn: target.timeColumn,
+        timeColumnType: target.timeColumnType
       };
     });
 
@@ -201,7 +208,14 @@ export class BigQueryDatasource {
     });
     const allQueryPromise = _.map(queries, query => {
       const tmpQ = this.queryModel.target.rawSql;
+      this.queryModel.target.metricColumn = query.metricColumn;
+      this.queryModel.target.partitioned = query.partitioned;
+      this.queryModel.target.partitionedField = query.partitionedField;
       this.queryModel.target.rawSql = query.rawSql;
+      this.queryModel.target.sharded = query.sharded;
+      this.queryModel.target.table = query.table;
+      this.queryModel.target.timeColumn = query.timeColumn;
+      this.queryModel.target.timeColumnType = query.timeColumnType;
       const modOptions = BigQueryDatasource._setupTimeShiftQuery(
         query,
         options
