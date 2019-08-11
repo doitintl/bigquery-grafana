@@ -1,4 +1,5 @@
 import { IJwt } from "./types";
+import {isCombinedModifierFlagSet} from "tslint";
 
 export class BigQueryConfigCtrl {
   private static templateUrl = "partials/config.html";
@@ -9,16 +10,21 @@ export class BigQueryConfigCtrl {
   private datasourceSrv: any;
   private current: any;
   private readonly defaultAuthenticationType: string;
+  private readonly defaultSendUsageData: boolean;
 
   /** @ngInject */
   constructor(datasourceSrv) {
     this.defaultAuthenticationType = "jwt";
+    this.defaultSendUsageData = true;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.authenticationType = this.current.jsonData
       .authenticationType
       ? this.current.jsonData.authenticationType
       : this.defaultAuthenticationType;
+    if (this.current.jsonData.sendUsageData === undefined) {
+      this.current.jsonData.sendUsageData = this.defaultSendUsageData;
+    }
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [
