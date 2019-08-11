@@ -89,7 +89,9 @@
 		<input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
 	</div>
 
-	<div class="gf-form width-18">
+
+
+  <div class="gf-form width-18">
 		<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()">Reset Service
 			Account Key </a>
 		<info-popover mode="right-normal">
@@ -100,6 +102,13 @@
 
 <p class="gf-form-label" ng-hide="ctrl.current.secureJsonFields.privateKey || ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType"><i
 		class="fa fa-save"></i> Do not forget to save your changes after uploading a file.</p>
+
+
+<gf-form-switch class="gf-form" label="Send anonymous usage data" label-class="width-9" checked="ctrl.current.jsonData.sendUsageData" switch-class="max-width-6"></gf-form-switch>
+<label class="gf-form-label query-keyword pointer">
+</label>
+
+
 
 <p class="gf-form-label" ng-show="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType"><i class="fa fa-save"></i>
 	Verify GCE default service account by clicking Save & Test</p>

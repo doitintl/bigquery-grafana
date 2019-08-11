@@ -144,6 +144,7 @@ export class BigQueryDatasource {
   private interval: string;
   private readonly baseUrl: string;
   private readonly url: string;
+  private mixpanel;
 
   /** @ngInject */
   constructor(
@@ -168,6 +169,11 @@ export class BigQueryDatasource {
         instanceSettings.jsonData.defaultProject ||
         (await this.getDefaultProject());
     })();
+    this.mixpanel = require("mixpanel-browser");
+    this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
+    if (this.jsonData.sendUsageData !== false) {
+      this.mixpanel.track("datasource.create");
+    }
   }
 
   public async query(options) {
@@ -234,7 +240,7 @@ export class BigQueryDatasource {
     });
     return this.$q.all(allQueryPromise).then(
       (responses): any => {
-        const data = [];
+      const data = [];
         for (const response of responses) {
           if (response.type && response.type === "table") {
             data.push(response);
@@ -320,6 +326,9 @@ export class BigQueryDatasource {
       if (error.status !== 404) {
         message = error.statusText ? error.statusText : defaultErrorMessage;
       }
+    }
+    if (this.jsonData.sendUsageData !== false) {
+      this.mixpanel.track("datasource.save");
     }
     return {
       message,

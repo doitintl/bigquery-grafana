@@ -156,12 +156,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       value: "aggregate"
     };
 
-    // first and last aggregate are timescaledb specific
-    if (this.datasource.jsonData.timescaledb === true) {
-      aggregates.submenu.push({ text: "First", value: "first" });
-      aggregates.submenu.push({ text: "Last", value: "last" });
-    }
-
     this.selectMenu.push(aggregates);
 
     const windows = {
