@@ -545,7 +545,20 @@ export default class BigQueryQuery {
       from +
       " AND " +
       to;
-    return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
+    const fromRange =
+      BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+      " > " +
+      from +
+      " ";
+    const toRange =
+      BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+      " < " +
+      to +
+      " ";
+    q = q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
+    q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
+    q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
+    return q;
   }
 
   public replacetimeGroupAlias(q, alias: boolean) {
