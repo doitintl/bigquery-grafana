@@ -107,7 +107,7 @@ export default class BigQueryQuery {
     target.metricColumn = target.metricColumn || "none";
     target.group = target.group || [];
     target.where = target.where || [
-      { type: "macro", name: "$__timeFilter", params: [] }
+      { type: "macro", name: "$__timeFilter", params: [] },
     ];
     target.select = target.select || [
       [{ type: "column", params: ["-- value --"] }]
