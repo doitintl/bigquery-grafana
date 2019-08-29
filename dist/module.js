@@ -58979,7 +58979,12 @@ function () {
     }
 
     var range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " BETWEEN " + from + " AND " + to;
-    return q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
+    var fromRange = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " > " + from + " ";
+    var toRange = BigQueryQuery.quoteFiledName(this.target.timeColumn) + " < " + to + " ";
+    q = q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
+    q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
+    q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
+    return q;
   };
 
   BigQueryQuery.prototype.replacetimeGroupAlias = function (q, alias) {
