@@ -679,6 +679,12 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       this.uiSegmentSrv.newSegment({ type: "macro", value: "$__timeFilter" })
     );
     options.push(
+      this.uiSegmentSrv.newSegment({ type: "macro", value: "$__timeFrom" })
+    );
+    options.push(
+      this.uiSegmentSrv.newSegment({ type: "macro", value: "$__timeTo" })
+    );
+    options.push(
       this.uiSegmentSrv.newSegment({ type: "expression", value: "Expression" })
     );
     return this.$q.when(options);
