@@ -9,7 +9,7 @@ Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasou
 Use the [grafana-cli](http://docs.grafana.org/plugins/installation/#installing-plugins-manually)
 
 ```bash
-grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/1.0.1.zip plugins install doitintl-bigquery-datasource
+grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/1.0.2.zip plugins install doitintl-bigquery-datasource
 ```
 
 ## Copy files
