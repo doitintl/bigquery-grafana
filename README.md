@@ -47,6 +47,31 @@ There are multiple ways to install bigquery-grafana go to [INSTALL](https://raw.
 | _Default_             | Default datasource means that it will be pre-selected for new panels.               |
 | _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it. |
 
+### Example of provisioning file
+
+It's possible to manage datasource via [provisioning system](https://grafana.com/docs/administration/provisioning/#datasources). See below example of configuration file.
+```
+apiVersion: 1
+
+datasources:
+- name: <Datasource Name>
+    type: doitintl-bigquery-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+    authenticationType: jwt
+    clientEmail: <Service Account Email>
+    defaultProject: <Default Project Name>
+    tokenUri: https://oauth2.googleapis.com/token
+    secureJsonData:
+    privateKey: |
+        -----BEGIN PRIVATE KEY-----
+        <Content of the Private Key>
+        -----END PRIVATE KEY-----
+    version: 2
+    readOnly: false
+```
+
 ## Authentication
 
 There are two ways to authenticate the BigQuery plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google metadata server. The latter option is only available when running Grafana on GCE virtual machine.
