@@ -40,8 +40,8 @@ export default class BigQueryQuery {
   public static _getInterval(q, alias: boolean) {
     const interval: string[] = [];
     const res = alias
-      ? q.match(/(.*\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g)
-      : q.match(/(.*\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
+      ? q.match(/(\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g)
+      : q.match(/(\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
     if (res) {
       interval[0] = res[0].split(",")[1];
       interval[1] = res[0].split(",")[2];
@@ -237,7 +237,6 @@ export default class BigQueryQuery {
     for (const column of this.target.select) {
       query += ",\n  " + this.buildValueColumn(column);
     }
-
     return query;
   }
 
@@ -283,10 +282,11 @@ export default class BigQueryQuery {
       const overParts = [];
       const partBy = "PARTITION BY " + this.target.timeColumn;
       if (this.hasMetricColumn()) {
-        overParts.push(partBy + " " + this.target.metricColumn);
+        overParts.push(partBy + "," + this.target.metricColumn);
+      } else {
+        overParts.push(partBy);
       }
-      overParts.push(partBy);
-      overParts.push("ORDER BY " + this.buildTimeColumn(false));
+      overParts.push("ORDER BY " + this.buildTimeColumn(false) );
       const over = overParts.join(" ");
       let curr: string;
       let prev: string;
@@ -371,6 +371,7 @@ export default class BigQueryQuery {
     if (timeshift) {
       query += " $__timeShifting(" + timeshift.params[0] + ")";
     }
+
     return query;
   }
   public buildWhereClause() {
@@ -453,7 +454,6 @@ export default class BigQueryQuery {
       query += ",\n  " + this.buildMetricColumn();
     }
     query += this.buildValueColumns();
-
     query +=
       "\nFROM " +
       "`" +
@@ -568,16 +568,15 @@ export default class BigQueryQuery {
     if (!interval) {
       return q;
     }
-
     const intervalStr = this.getIntervalStr(interval, mininterval);
     if (alias) {
       return q.replace(
-        /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
+        /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g,
         intervalStr
       );
     } else {
       return q.replace(
-        /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
+        /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g,
         intervalStr
       );
     }

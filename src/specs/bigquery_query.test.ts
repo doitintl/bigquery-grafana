@@ -164,7 +164,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "`v` as tmpv, (CASE WHEN `v` >= lag(`v`) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) THEN `v` - lag(`v`) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) WHEN lag(`v`) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) IS NULL THEN NULL ELSE `v` END) AS a"
+      "`v` as tmpv, (CASE WHEN `v` >= lag(`v`) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) THEN `v` - lag(`v`) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) WHEN lag(`v`) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) IS NULL THEN NULL ELSE `v` END) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -173,7 +173,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "max(`v`) as tmpv, (CASE WHEN max(`v`) >= lag(max(`v`)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) THEN max(`v`) - lag(max(`v`)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) WHEN lag(max(`v`)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) IS NULL THEN NULL ELSE max(`v`) END) AS a"
+      "max(`v`) as tmpv, (CASE WHEN max(`v`) >= lag(max(`v`)) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) THEN max(`v`) - lag(max(`v`)) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) WHEN lag(max(`v`)) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) IS NULL THEN NULL ELSE max(`v`) END) AS a"
     );
   });
 
@@ -290,22 +290,22 @@ describe("BigQueryQuery", () => {
     };
     it("Check macros", () => {
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1min), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1w), $__timeGroup(start_date,1w) WHERE $__timeFilter(start_date)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1h), $__timeGroup(start_date,1h) WHERE $__timeFilter(start_date)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
       );
     });
   });
