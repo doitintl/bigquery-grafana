@@ -164,7 +164,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "`v` as tmpv, (CASE WHEN `v` >= lag(`v`) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) THEN `v` - lag(`v`) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) WHEN lag(`v`) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) IS NULL THEN NULL ELSE `v` END) AS a"
+      "`v` as tmpv, (CASE WHEN `v` >= lag(`v`) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) THEN `v` - lag(`v`) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) WHEN lag(`v`) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) IS NULL THEN NULL ELSE `v` END) AS a"
     );
     column = [
       { type: "column", params: ["v"] },
@@ -173,7 +173,7 @@ describe("BigQueryQuery", () => {
       { type: "window", params: ["increase"] }
     ];
     expect(query.buildValueColumn(column)).toBe(
-      "max(`v`) as tmpv, (CASE WHEN max(`v`) >= lag(max(`v`)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) THEN max(`v`) - lag(max(`v`)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) WHEN lag(max(`v`)) OVER (PARTITION BY -- time -- host PARTITION BY -- time -- ORDER BY `-- time --`) IS NULL THEN NULL ELSE max(`v`) END) AS a"
+      "max(`v`) as tmpv, (CASE WHEN max(`v`) >= lag(max(`v`)) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) THEN max(`v`) - lag(max(`v`)) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) WHEN lag(max(`v`)) OVER (PARTITION BY -- time --,host ORDER BY `-- time --`) IS NULL THEN NULL ELSE max(`v`) END) AS a"
     );
   });
 
@@ -204,10 +204,11 @@ describe("BigQueryQuery", () => {
       templateSrv
     );
 
-    expect(query.buildGroupClause()).toBe("");
+    expect(query.buildGroupClause()).toBe(",2");
     query.target.group = [{ type: "time", params: ["5m"] }];
-    expect(query.buildGroupClause()).toBe("\nGROUP BY 1");
+    expect(query.buildGroupClause()).toBe("\nGROUP BY 1,2");
     query.target.metricColumn = "m";
+    query.isAggregate = true;
     expect(query.buildGroupClause()).toBe("\nGROUP BY 1,2");
   });
 
@@ -216,17 +217,17 @@ describe("BigQueryQuery", () => {
       select: [[{ type: "column", params: ["value"] }]],
       table: "table",
       timeColumn: "t",
-      where: []
+      where: [],
     };
     let result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1";
+      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`,2\nORDER BY 1";
     const query = new BigQueryQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = "m";
     result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1,2";
+      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`,2\nORDER BY 1,2";
     expect(query.buildQuery()).toBe(result);
   });
 
@@ -293,17 +294,17 @@ describe("BigQueryQuery", () => {
         "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400)"
       );
       target.rawSql =
-        "$__timeGroupAlias(start_date,1min), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)";
+        "$__timeGroupAlias(start_date,1min)";
       expect(query.expend_macros(options)).toBe(
         "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60)"
       );
       target.rawSql =
-        "$__timeGroupAlias(start_date,1w), $__timeGroup(start_date,1w) WHERE $__timeFilter(start_date)";
+        "$__timeGroup(start_date,1w)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800))"
       );
       target.rawSql =
-        "$__timeGroupAlias(start_date,1h), $__timeGroup(start_date,1h) WHERE $__timeFilter(start_date)";
+        "$__timeGroupAlias(start_date,1h)";
       expect(query.expend_macros(options)).toBe(
         "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600)"
       );
