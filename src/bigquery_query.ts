@@ -89,6 +89,7 @@ export default class BigQueryQuery {
   public templateSrv: any;
   public scopedVars: any;
   public isWindow: boolean;
+  public isAggregate: boolean;
   public groupBy: string;
   public tmpValue: string;
 
@@ -98,6 +99,7 @@ export default class BigQueryQuery {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
     this.isWindow = false;
+    this.isAggregate = false;
     this.groupBy = "";
     this.tmpValue = "";
 
@@ -275,6 +277,11 @@ export default class BigQueryQuery {
       column,
       (g: any) => g.type === "window" || g.type === "moving_window"
     );
+    if (aggregate === undefined) {
+      this.isAggregate = false;
+    } else {
+      this.isAggregate = true;
+    }
     const timeshift = _.find(column, (g: any) => g.type === "timeshift");
     query = this._buildAggregate(aggregate, query);
     if (windows) {
@@ -443,6 +450,9 @@ export default class BigQueryQuery {
         }
       }
     }
+    if (this.isAggregate === false) {
+      query += ",2";
+    }
     return query;
   }
 
@@ -454,6 +464,7 @@ export default class BigQueryQuery {
       query += ",\n  " + this.buildMetricColumn();
     }
     query += this.buildValueColumns();
+    console.log(query)
     query +=
       "\nFROM " +
       "`" +
@@ -571,13 +582,13 @@ export default class BigQueryQuery {
     const intervalStr = this.getIntervalStr(interval, mininterval);
     if (alias) {
       return q.replace(
-        /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g,
+        /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
         intervalStr
       );
     } else {
       return q.replace(
-        /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+\))/g,
-        intervalStr
+        /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
+        intervalStr + ")"
       );
     }
   }

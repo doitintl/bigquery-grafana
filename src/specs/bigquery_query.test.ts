@@ -204,10 +204,11 @@ describe("BigQueryQuery", () => {
       templateSrv
     );
 
-    expect(query.buildGroupClause()).toBe("");
+    expect(query.buildGroupClause()).toBe(",2");
     query.target.group = [{ type: "time", params: ["5m"] }];
-    expect(query.buildGroupClause()).toBe("\nGROUP BY 1");
+    expect(query.buildGroupClause()).toBe("\nGROUP BY 1,2");
     query.target.metricColumn = "m";
+    query.isAggregate = true;
     expect(query.buildGroupClause()).toBe("\nGROUP BY 1,2");
   });
 
@@ -216,17 +217,17 @@ describe("BigQueryQuery", () => {
       select: [[{ type: "column", params: ["value"] }]],
       table: "table",
       timeColumn: "t",
-      where: []
+      where: [],
     };
     let result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1";
+      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`,2\nORDER BY 1";
     const query = new BigQueryQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = "m";
     result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1,2";
+      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`,2\nORDER BY 1,2";
     expect(query.buildQuery()).toBe(result);
   });
 
@@ -290,22 +291,22 @@ describe("BigQueryQuery", () => {
     };
     it("Check macros", () => {
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400)"
       );
       target.rawSql =
-        "$__timeGroupAlias(start_date,1min), $__timeGroup(start_date,1min) WHERE $__timeFilter(start_date)";
+        "$__timeGroupAlias(start_date,1min)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60)"
       );
       target.rawSql =
-        "$__timeGroupAlias(start_date,1w), $__timeGroup(start_date,1w) WHERE $__timeFilter(start_date)";
+        "$__timeGroup(start_date,1w)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800))"
       );
       target.rawSql =
-        "$__timeGroupAlias(start_date,1h), $__timeGroup(start_date,1h) WHERE $__timeFilter(start_date)";
+        "$__timeGroupAlias(start_date,1h)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600), TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) WHERE `t` BETWEEN TIMESTAMP_MILLIS (2017-03-24T07:20:12.788Z) AND TIMESTAMP_MILLIS (2019-03-24T08:20:12.788Z)"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600)"
       );
     });
   });
