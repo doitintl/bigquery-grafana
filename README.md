@@ -28,7 +28,7 @@ There are multiple ways to install bigquery-grafana go to [INSTALL](https://raw.
  
 ### Limitations:
 
- * Alerts are not supported yet due to (#6841)[https://github.com/grafana/grafana/issues/6841]
+ * Alerts are not supported yet due to [#6841](https://github.com/grafana/grafana/issues/6841)
  
  **Plugin Demo:**
  
