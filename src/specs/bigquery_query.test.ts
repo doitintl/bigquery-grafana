@@ -204,7 +204,7 @@ describe("BigQueryQuery", () => {
       templateSrv
     );
 
-    expect(query.buildGroupClause()).toBe(",2");
+    expect(query.buildGroupClause()).toBe("");
     query.target.group = [{ type: "time", params: ["5m"] }];
     expect(query.buildGroupClause()).toBe("\nGROUP BY 1,2");
     query.target.metricColumn = "m";
@@ -220,14 +220,14 @@ describe("BigQueryQuery", () => {
       where: [],
     };
     let result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`,2\nORDER BY 1";
+      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1";
     const query = new BigQueryQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = "m";
     result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`,2\nORDER BY 1,2";
+      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`\nORDER BY 1,2";
     expect(query.buildQuery()).toBe(result);
   });
 

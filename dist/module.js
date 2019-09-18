@@ -58914,10 +58914,10 @@ function () {
           this.groupBy += ",3";
         }
       }
-    }
 
-    if (this.isAggregate === false) {
-      query += ",2";
+      if (this.isAggregate === false) {
+        query += ",2";
+      }
     }
 
     return query;
