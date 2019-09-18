@@ -58933,7 +58933,6 @@ function () {
     }
 
     query += this.buildValueColumns();
-    console.log(query);
     query += "\nFROM " + "`" + this.target.project + "." + this.target.dataset + "." + this.target.table + "`";
     query += this.buildWhereClause();
     query += this.buildGroupClause();
@@ -58997,6 +58996,8 @@ function () {
     q = q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
     q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
     q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
+    q = q.replace(/\$__millisTimeTo\(([\w_.]+)\)/g, to);
+    q = q.replace(/\$__millisTimeFrom\(([\w_.]+)\)/g, from);
     return q;
   };
 
