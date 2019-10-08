@@ -59270,9 +59270,9 @@ function () {
     })();
 
     this.mixpanel = __webpack_require__(/*! mixpanel-browser */ "../node_modules/mixpanel-browser/build/mixpanel.cjs.js");
-    this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
 
     if (this.jsonData.sendUsageData !== false) {
+      this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
       this.mixpanel.track("datasource.create");
     }
   }
@@ -59881,6 +59881,10 @@ function () {
         })["catch"](function (error) {
           if (maxRetries > 0) {
             return _this.doQueryRequest(query, requestId, maxRetries - 1);
+          }
+
+          if (error.cancelled === true) {
+            return [];
           }
 
           return BigQueryDatasource._handleError(error);
