@@ -231,7 +231,8 @@ export class BigQueryDatasource {
       if (query.refId.search(Shifted) > -1) {
         q = this._updateAlias(q, modOptions, query.refId);
       }
-      const limit = q.match(/.(\blimit\b)/gi);
+      console.log(q)
+      const limit = q.match(/[^]+(\bLIMIT\b)/gi);
       if (limit == null) {
         q += " LIMIT " + options.maxDataPoints;
       }
