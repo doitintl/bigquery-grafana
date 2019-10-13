@@ -170,8 +170,8 @@ export class BigQueryDatasource {
         (await this.getDefaultProject());
     })();
     this.mixpanel = require("mixpanel-browser");
-    this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
     if (this.jsonData.sendUsageData !== false) {
+      this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
       this.mixpanel.track("datasource.create");
     }
   }
@@ -477,6 +477,9 @@ export class BigQueryDatasource {
       .catch(error => {
         if (maxRetries > 0) {
           return this.doQueryRequest(query, requestId, maxRetries - 1);
+        }
+        if (error.cancelled === true) {
+          return [];
         }
         return BigQueryDatasource._handleError(error);
       });
