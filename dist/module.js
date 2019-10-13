@@ -59472,7 +59472,8 @@ function () {
             q = _this._updateAlias(q, modOptions, query.refId);
           }
 
-          var limit = q.match(/.(\blimit\b)/gi);
+          console.log(q);
+          var limit = q.match(/[^]+(\bLIMIT\b)/gi);
 
           if (limit == null) {
             q += " LIMIT " + options.maxDataPoints;
