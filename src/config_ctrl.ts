@@ -11,11 +11,13 @@ export class BigQueryConfigCtrl {
   private current: any;
   private readonly defaultAuthenticationType: string;
   private readonly defaultSendUsageData: boolean;
+  private readonly defaultFlatRateProject: string;
 
   /** @ngInject */
   constructor(datasourceSrv) {
     this.defaultAuthenticationType = "jwt";
     this.defaultSendUsageData = true;
+    this.defaultFlatRateProject = undefined;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.authenticationType = this.current.jsonData
@@ -25,6 +27,10 @@ export class BigQueryConfigCtrl {
     if (this.current.jsonData.sendUsageData === undefined) {
       this.current.jsonData.sendUsageData = this.defaultSendUsageData;
     }
+    if (this.current.jsonData.flatRateProject === undefined) {
+      this.current.jsonData.flatRateProject = this.defaultFlatRateProject;
+    }
+
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [
