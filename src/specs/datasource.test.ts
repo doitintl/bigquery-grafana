@@ -6,7 +6,10 @@ import ResponseParser, { IResultFormat } from "../response_parser";
 describe("BigQueryDatasource", () => {
   const instanceSettings = {
     name: "bigquery",
-    jsonData: { authenticationType: "jwt", sendUsageData: false }
+    jsonData: {
+      authenticationType: "jwt",
+      sendUsageData: false,
+    }
   };
   const backendSrv = {};
   const templateSrv = {

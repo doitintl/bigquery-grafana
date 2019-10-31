@@ -145,6 +145,7 @@ export class BigQueryDatasource {
   private readonly baseUrl: string;
   private readonly url: string;
   private mixpanel;
+  private runInProject: string;
 
   /** @ngInject */
   constructor(
@@ -174,6 +175,10 @@ export class BigQueryDatasource {
       this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
       this.mixpanel.track("datasource.create");
     }
+    this.runInProject =
+      this.jsonData.flatRateProject && this.jsonData.flatRateProject.length
+        ? this.jsonData.flatRateProject
+        : this.projectName;
   }
 
   public async query(options) {
@@ -242,23 +247,19 @@ export class BigQueryDatasource {
         return ResponseParser.parseDataQuery(response, query.format);
       });
     });
-    return this.$q.all(allQueryPromise).then(
-      (responses): any => {
+    return this.$q.all(allQueryPromise).then((responses): any => {
       const data = [];
-        for (const response of responses) {
-          if (response.type && response.type === "table") {
-            data.push(response);
+      for (const response of responses) {
+        if (response.type && response.type === "table") {
+          data.push(response);
           } else {
             for (const dp of response) {
               data.push(dp);
             }
-          }
         }
+      }
         for (const d of data) {
-          if (
-            typeof d.target !== "undefined" &&
-            d.target.search(Shifted) > -1
-          ) {
+        if (typeof d.target !== "undefined" && d.target.search(Shifted) > -1) {
             const res = BigQueryDatasource._getShiftPeriod(
               d.target.substring(d.target.lastIndexOf("_") + 1, d.target.length)
             );
@@ -266,7 +267,7 @@ export class BigQueryDatasource {
             const shiftVal = res[1];
             for(let i = 0; i < d.datapoints.length; i++){
               d.datapoints[i][1] = moment(d.datapoints[i][1])
-                .subtract(shiftVal, shiftPeriod)
+              .subtract(shiftVal, shiftPeriod)
                 .valueOf();
             }
           }
@@ -388,7 +389,7 @@ export class BigQueryDatasource {
   }
 
   public annotationQuery(options) {
-    const path = `v2/projects/${this.projectName}/queries`;
+    const path = `v2/projects/${this.runInProject}/queries`;
     const url = this.url + `${this.baseUrl}${path}`;
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
@@ -452,7 +453,7 @@ export class BigQueryDatasource {
   }
 
   private async doQueryRequest(query, requestId, maxRetries = 3) {
-    const path = `v2/projects/${this.projectName}/queries`;
+    const path = `v2/projects/${this.runInProject}/queries`;
     const url = this.url + `${this.baseUrl}${path}`;
     return this.backendSrv
       .datasourceRequest({
@@ -488,7 +489,7 @@ export class BigQueryDatasource {
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;
     console.log("New job id: ", jobId);
-    const path = `v2/projects/${this.projectName}/queries/` + jobId;
+    const path = `v2/projects/${this.runInProject}/queries/` + jobId;
     while (!queryResults.data.jobComplete) {
       await sleep(sleepTimeMs);
       sleepTimeMs *= 2;
@@ -502,7 +503,7 @@ export class BigQueryDatasource {
   private async _getQueryResults(queryResults, rows, requestId, jobId) {
     while (queryResults.data.pageToken) {
       const path =
-        `v2/projects/${this.projectName}/queries/` +
+        `v2/projects/${this.runInProject}/queries/` +
         jobId +
         "?pageToken=" +
         queryResults.data.pageToken;

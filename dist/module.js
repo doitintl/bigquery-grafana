@@ -59057,12 +59057,17 @@ function () {
     this.validationErrors = [];
     this.defaultAuthenticationType = "jwt";
     this.defaultSendUsageData = true;
+    this.defaultFlatRateProject = undefined;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.authenticationType = this.current.jsonData.authenticationType ? this.current.jsonData.authenticationType : this.defaultAuthenticationType;
 
     if (this.current.jsonData.sendUsageData === undefined) {
       this.current.jsonData.sendUsageData = this.defaultSendUsageData;
+    }
+
+    if (this.current.jsonData.flatRateProject === undefined) {
+      this.current.jsonData.flatRateProject = this.defaultFlatRateProject;
     }
 
     this.current.secureJsonData = this.current.secureJsonData || {};
@@ -59270,11 +59275,13 @@ function () {
     })();
 
     this.mixpanel = __webpack_require__(/*! mixpanel-browser */ "../node_modules/mixpanel-browser/build/mixpanel.cjs.js");
-    this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
 
     if (this.jsonData.sendUsageData !== false) {
+      this.mixpanel.init("86fa5c838013959cc6867dc884958f7e");
       this.mixpanel.track("datasource.create");
     }
+
+    this.runInProject = this.jsonData.flatRateProject && this.jsonData.flatRateProject.length ? this.jsonData.flatRateProject : this.projectName;
   }
 
   BigQueryDatasource.formatBigqueryError = function (error) {
@@ -59770,7 +59777,7 @@ function () {
   BigQueryDatasource.prototype.annotationQuery = function (options) {
     var _this = this;
 
-    var path = "v2/projects/" + this.projectName + "/queries";
+    var path = "v2/projects/" + this.runInProject + "/queries";
     var url = this.url + ("" + this.baseUrl + path);
 
     if (!options.annotation.rawQuery) {
@@ -59856,7 +59863,7 @@ function () {
       var _this = this;
 
       return tslib_1.__generator(this, function (_a) {
-        path = "v2/projects/" + this.projectName + "/queries";
+        path = "v2/projects/" + this.runInProject + "/queries";
         url = this.url + ("" + this.baseUrl + path);
         return [2
         /*return*/
@@ -59884,6 +59891,10 @@ function () {
             return _this.doQueryRequest(query, requestId, maxRetries - 1);
           }
 
+          if (error.cancelled === true) {
+            return [];
+          }
+
           return BigQueryDatasource._handleError(error);
         })];
       });
@@ -59898,7 +59909,7 @@ function () {
           case 0:
             sleepTimeMs = 100;
             console.log("New job id: ", jobId);
-            path = "v2/projects/" + this.projectName + "/queries/" + jobId;
+            path = "v2/projects/" + this.runInProject + "/queries/" + jobId;
             _a.label = 1;
 
           case 1:
@@ -59943,7 +59954,7 @@ function () {
             if (!queryResults.data.pageToken) return [3
             /*break*/
             , 2];
-            path = "v2/projects/" + this.projectName + "/queries/" + jobId + "?pageToken=" + queryResults.data.pageToken;
+            path = "v2/projects/" + this.runInProject + "/queries/" + jobId + "?pageToken=" + queryResults.data.pageToken;
             return [4
             /*yield*/
             , this.doRequest("" + this.baseUrl + path, requestId)];
