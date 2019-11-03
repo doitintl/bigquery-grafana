@@ -260,7 +260,6 @@ export default class ResponseParser {
     const titleColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
-
     for (let i = 0; i < data.data.schema.fields.length; i++) {
       if (data.data.schema.fields[i].name === "time") {
         timeColumnIndex = i;
@@ -279,19 +278,16 @@ export default class ResponseParser {
     for (const row of table.rows) {
       list.push({
         annotation: options.annotation,
-        tags: row[tagsColumnIndex]
-          ? row[tagsColumnIndex].trim().split(/\s*,\s*/)
+        tags: row.f[tagsColumnIndex].v
+          ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/)
           : [],
         text: row.f[textColumnIndex],
-        time: new Date(
-          Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
-        ).toString(),
+        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000,
         title: row.f[titleColumnIndex]
       });
     }
     return list;
   }
-
   private _handelWildCardTables(tables) {
     let sorted = new Map();
     let newTables = [];

@@ -236,7 +236,6 @@ export class BigQueryDatasource {
       if (query.refId.search(Shifted) > -1) {
         q = this._updateAlias(q, modOptions, query.refId);
       }
-      console.log(q)
       const limit = q.match(/[^]+(\bLIMIT\b)/gi);
       if (limit == null) {
         q += " LIMIT " + options.maxDataPoints;
@@ -396,17 +395,20 @@ export class BigQueryDatasource {
         message: "Query missing in annotation definition"
       });
     }
+    const rawSql = this.templateSrv.replace(
+      options.annotation.rawQuery,
+      options.scopedVars,
+      this.interpolateVariable
+    );
 
     const query = {
       datasourceId: this.id,
       format: "table",
-      rawSql: this.templateSrv.replace(
-        options.annotation.rawQuery,
-        options.scopedVars,
-        this.interpolateVariable
-      ),
+      rawSql,
       refId: options.annotation.name
     };
+    this.queryModel.target.rawSql = query.rawSql;
+    query.rawSql = this.queryModel.expend_macros(options);
     return this.backendSrv
       .datasourceRequest({
         data: {
@@ -418,7 +420,7 @@ export class BigQueryDatasource {
         },
         method: "POST",
         requestId: options.annotation.name,
-        url: url
+        url
       })
       .then(data =>
         this.responseParser.transformAnnotationResponse(options, data)
