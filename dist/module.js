@@ -59479,7 +59479,6 @@ function () {
             q = _this._updateAlias(q, modOptions, query.refId);
           }
 
-          console.log(q);
           var limit = q.match(/[^]+(\bLIMIT\b)/gi);
 
           if (limit == null) {
@@ -59786,12 +59785,15 @@ function () {
       });
     }
 
+    var rawSql = this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable);
     var query = {
       datasourceId: this.id,
       format: "table",
-      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
+      rawSql: rawSql,
       refId: options.annotation.name
     };
+    this.queryModel.target.rawSql = query.rawSql;
+    query.rawSql = this.queryModel.expend_macros(options);
     return this.backendSrv.datasourceRequest({
       data: {
         query: query.rawSql,
@@ -61447,9 +61449,9 @@ function () {
       var row = _a[_i];
       list.push({
         annotation: options.annotation,
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
+        tags: row.f[tagsColumnIndex].v ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/) : [],
         text: row.f[textColumnIndex],
-        time: new Date(Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000).toString(),
+        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000,
         title: row.f[titleColumnIndex]
       });
     }
