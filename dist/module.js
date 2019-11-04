@@ -58477,6 +58477,8 @@ function () {
     this.groupBy = "";
     this.tmpValue = "";
     target.format = target.format || "time_series";
+    target.orderByCol = target.orderByCol || "1";
+    target.orderBySort = target.orderBySort || "1";
     target.timeColumn = target.timeColumn || "-- time --";
     target.timeColumnType = target.timeColumnType || "TIMESTAMP";
     target.metricColumn = target.metricColumn || "none";
@@ -58938,10 +58940,16 @@ function () {
     query += this.buildGroupClause();
 
     if (!this.isWindow) {
-      query += "\nORDER BY 1";
+      var orderBy = "\nORDER BY 1";
 
       if (this.hasMetricColumn()) {
-        query += ",2";
+        orderBy = this.target.orderByCol === "1" ? "\nORDER BY 1,2" : "\nORDER BY 2,1";
+      }
+
+      query += orderBy;
+
+      if (this.target.orderBySort === "2") {
+        query += " DESC";
       }
     } // query += '\nLIMIT 2';
 
@@ -60259,6 +60267,20 @@ function (_super) {
     }, {
       text: "Table",
       value: "table"
+    }];
+    _this.orderByCols = [{
+      text: "Time",
+      value: "1"
+    }, {
+      text: "Metric",
+      value: "2"
+    }];
+    _this.orderBySorts = [{
+      text: "ASC",
+      value: "1"
+    }, {
+      text: "DESC",
+      value: "2"
     }];
 
     if (!_this.target.rawSql) {

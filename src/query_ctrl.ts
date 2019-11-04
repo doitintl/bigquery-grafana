@@ -21,6 +21,8 @@ WHERE
 export class BigQueryQueryCtrl extends QueryCtrl {
   public static templateUrl = "partials/query.editor.html";
   public formats: any[];
+  public orderByCols: any[];
+  public orderBySorts: any[];
   public queryModel: BigQueryQuery;
   public lastQueryMeta: QueryMeta;
   public lastQueryError: string;
@@ -36,6 +38,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   public selectParts: SqlPart[][];
   public groupParts: SqlPart[];
   public whereParts: SqlPart[];
+  public orderParts: SqlPart[];
   public groupAdd: any;
 
   /** @ngInject */
@@ -57,6 +60,15 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       { text: "Time series", value: "time_series" },
       { text: "Table", value: "table" }
     ];
+    this.orderByCols = [
+      { text: "Time", value: "1" },
+      { text: "Metric", value: "2" }
+    ];
+    this.orderBySorts = [
+      { text: "ASC", value: "1" },
+      { text: "DESC", value: "2" }
+    ];
+
     if (!this.target.rawSql) {
       // special handling when in table panel
       if (this.panelCtrl.panel.type === "table") {

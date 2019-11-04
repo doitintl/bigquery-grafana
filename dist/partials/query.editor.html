@@ -114,6 +114,24 @@
         </div>
     </div>
 
+  <!-- Start Order BY -->
+
+  <div class="gf-form">
+    <label class="gf-form-label query-keyword width-8">ORDER BY</label>
+    <div class="gf-form-select-wrapper">
+      <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.orderByCol" ng-options="f.value as f.text for f in ctrl.orderByCols"
+              ng-change="ctrl.refresh()"></select>
+    </div>
+    <div class="gf-form-select-wrapper">
+      <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.orderBySort" ng-options="f.value as f.text for f in ctrl.orderBySorts"
+              ng-change="ctrl.refresh()"></select>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+    </div>
+    <!-- End Order BY. -->
+
     <div class="gf-form-inline">
         <div class="gf-form">
             <label class="gf-form-label query-keyword">Format as</label>
