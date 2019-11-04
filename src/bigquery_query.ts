@@ -104,6 +104,8 @@ export default class BigQueryQuery {
     this.tmpValue = "";
 
     target.format = target.format || "time_series";
+    target.orderByCol = target.orderByCol || "1";
+    target.orderBySort = target.orderBySort || "1";
     target.timeColumn = target.timeColumn || "-- time --";
     target.timeColumnType = target.timeColumnType || "TIMESTAMP";
     target.metricColumn = target.metricColumn || "none";
@@ -477,9 +479,14 @@ export default class BigQueryQuery {
     query += this.buildWhereClause();
     query += this.buildGroupClause();
     if (!this.isWindow) {
-      query += "\nORDER BY 1";
+      let orderBy = "\nORDER BY 1";
       if (this.hasMetricColumn()) {
-        query += ",2";
+        orderBy =
+          this.target.orderByCol === "1" ? "\nORDER BY 1,2" : "\nORDER BY 2,1";
+      }
+      query += orderBy;
+      if (this.target.orderBySort === "2") {
+        query += " DESC";
       }
     }
     // query += '\nLIMIT 2';
