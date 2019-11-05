@@ -191,7 +191,8 @@ Macros:
 - $__timeTo(column) -&gt; column < '2017-04-21T05:01:17Z'
 - $__timeGroup(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300 AS "time"
 - $__timeShifting(1m) -&gt; compare data from the current range to the previous range
-
+- $__millisTimeFrom(time) -> Translate time ito millis
+- __millisTimeTo(time) -> Translate time ito millis
 
 Example of group by and order by with $__timeGroup:
 SELECT
