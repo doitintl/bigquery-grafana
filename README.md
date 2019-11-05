@@ -18,13 +18,14 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://raw.g
  * Query setup
  * Raw SQL editor
  * Query formatting
- * Macros support
+ * Macros support 
  * Additional functions
  * Table view
  * Annotations
  * BQ queries in variables
  * Sharded tables (`tablename_YYYYMMDD`)
  * Partitioned Tables
+ * Granular slot allocation (Running queries in a project with flat-rate pricing)
  
 ### Limitations:
 
