@@ -510,44 +510,29 @@ export default class BigQueryQuery {
   }
 
   public replaceTimeFilters(q, options) {
+    let fromD = this.templateSrv.timeRange.from._d;
+    let toD = this.templateSrv.timeRange.to._d;
+    if (this.target.convertToUTC === true) {
+      fromD = new Date(
+        this.templateSrv.timeRange.from._d.getTime() +
+          this.templateSrv.timeRange.from._d.getTimezoneOffset() * 60000
+      );
+      toD = new Date(
+        this.templateSrv.timeRange.to._d.getTime() +
+          this.templateSrv.timeRange.to._d.getTimezoneOffset() * 60000
+      );
+    }
     let to = "";
     let from = "";
     if (this.target.timeColumnType === "DATE") {
-      from =
-        "'" +
-        BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.from._d,
-          "-"
-        ) +
-        "'";
-      to =
-        "'" +
-        BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.to._d,
-          "-"
-        ) +
-        "'";
+      from = "'" + BigQueryQuery.formatDateToString(fromD, "-") + "'";
+      to = "'" + BigQueryQuery.formatDateToString(toD, "-") + "'";
     } else if (this.target.timeColumnType === "DATETIME") {
-      from =
-        "'" +
-        BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.from._d,
-          "-",
-          true
-        ) +
-        "'";
-      to =
-        "'" +
-        BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.to._d,
-          "-",
-          true
-        ) +
-        "'";
+      from = "'" + BigQueryQuery.formatDateToString(fromD, "-", true) + "'";
+      to = "'" + BigQueryQuery.formatDateToString(toD, "-", true) + "'";
     } else {
-      from =
-        "TIMESTAMP_MILLIS (" + options.range.from.valueOf().toString() + ")";
-      to = "TIMESTAMP_MILLIS (" + options.range.to.valueOf().toString() + ")";
+      from = "TIMESTAMP_MILLIS (" + fromD.valueOf().toString() + ")";
+      to = "TIMESTAMP_MILLIS (" + toD.valueOf().toString() + ")";
     }
     if (this.target.timeColumn === "-- time --") {
       const myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;

@@ -1,5 +1,4 @@
 import BigQueryQuery from "../bigquery_query";
-
 describe("BigQueryQuery", () => {
   const templateSrv = {
     replace: jest.fn(text => text)
@@ -289,6 +288,11 @@ describe("BigQueryQuery", () => {
         __interval_ms: { text: 43200000, value: 43200000 }
       }
     };
+    const time = {
+      from: { _d: "Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)" },
+      to: { _d: "Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)" }
+    };
+    query.templateSrv.timeRange = time
     it("Check macros", () => {
       expect(query.expend_macros(options)).toBe(
         "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400)"
