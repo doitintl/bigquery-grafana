@@ -25,7 +25,7 @@ Add the below to your values.yaml
 ## Pass the plugins you want installed as a list.
 ##
 plugins: 
-  - https://github.com/doitintl/bigquery-grafana/archive/0.2.0.tar.gz;doit-bigquery-datasource
+  - https://github.com/doitintl/bigquery-grafana/archive/1.0.2.zip;doit-bigquery-datasource
 ...
 ```
 
