@@ -151,12 +151,22 @@
                 ng-change="ctrl.refresh()"></select>
       </div>
     </div>
-
+    <div>
     <gf-form-switch class="gf-form"
                     label="Convert time filters to UTC"
                     label-class="query-keyword"
                     checked="ctrl.target.convertToUTC"
     </gf-form-switch>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword">Processing Location</label>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.location"
+                ng-options="f.value as f.text for f in ctrl.locations"
+                ng-change="ctrl.refresh()"></select>
+      </div>
+    </div>
+
     <div class="gf-form">
       <label class="gf-form-label query-keyword pointer"
              ng-click="ctrl.toggleEditorMode()"

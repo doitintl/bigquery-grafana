@@ -475,6 +475,7 @@ export class BigQueryDatasource {
     return this.backendSrv
       .datasourceRequest({
         data: {
+          location: this.queryModel.target.location,
           query,
           useLegacySql: false,
           useQueryCache: true
@@ -506,7 +507,11 @@ export class BigQueryDatasource {
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;
     console.log("New job id: ", jobId);
-    const path = `v2/projects/${this.runInProject}/queries/` + jobId;
+    const path =
+      `v2/projects/${this.runInProject}/queries/` +
+      jobId +
+      "?location=" +
+      this.queryModel.target.location;
     while (!queryResults.data.jobComplete) {
       await sleep(sleepTimeMs);
       sleepTimeMs *= 2;
@@ -523,7 +528,9 @@ export class BigQueryDatasource {
         `v2/projects/${this.runInProject}/queries/` +
         jobId +
         "?pageToken=" +
-        queryResults.data.pageToken;
+        queryResults.data.pageToken +
+        "&location=" +
+        this.queryModel.target.location;
       queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
       if (queryResults.length === 0) {
         return rows;

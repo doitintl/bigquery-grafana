@@ -58479,6 +58479,7 @@ function () {
     target.format = target.format || "time_series";
     target.orderByCol = target.orderByCol || "1";
     target.orderBySort = target.orderBySort || "1";
+    target.location = target.location || "US";
     target.timeColumn = target.timeColumn || "-- time --";
     target.timeColumnType = target.timeColumnType || "TIMESTAMP";
     target.metricColumn = target.metricColumn || "none";
@@ -59908,6 +59909,7 @@ function () {
         /*return*/
         , this.backendSrv.datasourceRequest({
           data: {
+            location: this.queryModel.target.location,
             query: query,
             useLegacySql: false,
             useQueryCache: true
@@ -59948,7 +59950,7 @@ function () {
           case 0:
             sleepTimeMs = 100;
             console.log("New job id: ", jobId);
-            path = "v2/projects/" + this.runInProject + "/queries/" + jobId;
+            path = "v2/projects/" + this.runInProject + "/queries/" + jobId + "?location=" + this.queryModel.target.location;
             _a.label = 1;
 
           case 1:
@@ -59993,7 +59995,7 @@ function () {
             if (!queryResults.data.pageToken) return [3
             /*break*/
             , 2];
-            path = "v2/projects/" + this.runInProject + "/queries/" + jobId + "?pageToken=" + queryResults.data.pageToken;
+            path = "v2/projects/" + this.runInProject + "/queries/" + jobId + "?pageToken=" + queryResults.data.pageToken + "&location=" + this.queryModel.target.location;
             return [4
             /*yield*/
             , this.doRequest("" + this.baseUrl + path, requestId)];
@@ -60310,6 +60312,58 @@ function (_super) {
     }, {
       text: "DESC",
       value: "2"
+    }];
+    _this.locations = [{
+      text: "United States (US)",
+      value: "US"
+    }, {
+      text: "European Union (EU)",
+      value: "EU"
+    }, {
+      text: "Los Angeles (us-west2)",
+      value: "us-west2"
+    }, {
+      text: "Montréal (northamerica-northeast1)",
+      value: "northamerica-northeast1"
+    }, {
+      text: "Northern Virginia (us-east4)",
+      value: "us-east4"
+    }, {
+      text: "São Paulo (southamerica-east1)",
+      value: "southamerica-east1"
+    }, {
+      text: "Finland (europe-north1)",
+      value: "europe-north1"
+    }, {
+      text: "London (europe-west2)",
+      value: "europe-west2"
+    }, {
+      text: "Frankfurt (europe-west3)",
+      value: "europe-west3"
+    }, {
+      text: "Zürich (europe-west6)",
+      value: "europe-west6"
+    }, {
+      text: "Hong Kong (asia-east2)",
+      value: "asia-east2"
+    }, {
+      text: "Mumbai (asia-south1)",
+      value: "asia-south1"
+    }, {
+      text: "Osaka (asia-northeast2)",
+      value: "asia-northeast2"
+    }, {
+      text: "Taiwan (asia-east1)",
+      value: "asia-east1"
+    }, {
+      text: "Tokyo (asia-northeast1)",
+      value: "asia-northeast1"
+    }, {
+      text: "Singapore (asia-southeast1)",
+      value: "asia-southeast1"
+    }, {
+      text: "Sydney (australia-southeast1)",
+      value: "australia-southeast1"
     }];
 
     if (!_this.target.rawSql) {
