@@ -1,10 +1,10 @@
+import { validate } from "@babel/types";
+import { sheets } from "googleapis/build/src/apis/sheets";
 import _ from "lodash";
+import { countBy, size } from "lodash-es";
 import moment from "moment";
 import BigQueryQuery from "./bigquery_query";
 import ResponseParser, { IResultFormat } from "./response_parser";
-import {countBy, size} from "lodash-es";
-import {sheets} from "googleapis/build/src/apis/sheets";
-import {validate} from "@babel/types";
 
 const Shifted = "_shifted";
 function sleep(ms) {
@@ -134,6 +134,21 @@ export class BigQueryDatasource {
     q = q.replace(to, newTo) + "\n ";
     return q;
   }
+
+  private static _updateTableSuffix(q, options) {
+    const ind = q.indexOf("AND  _TABLE_SUFFIX BETWEEN ");
+    if (ind < 1) {
+      return q;
+    }
+    const from = q.substr(ind + 28, 8);
+
+    const newFrom = BigQueryQuery.formatDateToString(options.range.from._d);
+    q = q.replace(from, newFrom);
+    const to = q.substr(ind + 43, 8);
+    const newTo = BigQueryQuery.formatDateToString(options.range.to._d);
+    q = q.replace(to, newTo) + "\n ";
+    return q;
+  }
   public authenticationType: string;
   public projectName: string;
   private readonly id: any;
@@ -233,6 +248,7 @@ export class BigQueryDatasource {
       );
       let q = this.queryModel.expend_macros(modOptions);
       q = BigQueryDatasource._updatePartition(q, modOptions);
+      q = BigQueryDatasource._updateTableSuffix(q, modOptions);
       if (query.refId.search(Shifted) > -1) {
         q = this._updateAlias(q, modOptions, query.refId);
       }
@@ -251,29 +267,28 @@ export class BigQueryDatasource {
       for (const response of responses) {
         if (response.type && response.type === "table") {
           data.push(response);
-          } else {
-            for (const dp of response) {
-              data.push(dp);
-            }
-        }
-      }
-        for (const d of data) {
-        if (typeof d.target !== "undefined" && d.target.search(Shifted) > -1) {
-            const res = BigQueryDatasource._getShiftPeriod(
-              d.target.substring(d.target.lastIndexOf("_") + 1, d.target.length)
-            );
-            const shiftPeriod = res[0];
-            const shiftVal = res[1];
-            for(let i = 0; i < d.datapoints.length; i++){
-              d.datapoints[i][1] = moment(d.datapoints[i][1])
-              .subtract(shiftVal, shiftPeriod)
-                .valueOf();
-            }
+        } else {
+          for (const dp of response) {
+            data.push(dp);
           }
         }
-        return { data };
       }
-    );
+      for (const d of data) {
+        if (typeof d.target !== "undefined" && d.target.search(Shifted) > -1) {
+          const res = BigQueryDatasource._getShiftPeriod(
+            d.target.substring(d.target.lastIndexOf("_") + 1, d.target.length)
+          );
+          const shiftPeriod = res[0];
+          const shiftVal = res[1];
+          for (let i = 0; i < d.datapoints.length; i++) {
+            d.datapoints[i][1] = moment(d.datapoints[i][1])
+              .subtract(shiftVal, shiftPeriod)
+              .valueOf();
+          }
+        }
+      }
+      return { data };
+    });
   }
 
   public metricFindQuery(query, optionalOptions) {

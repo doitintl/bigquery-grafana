@@ -510,16 +510,16 @@ export default class BigQueryQuery {
   }
 
   public replaceTimeFilters(q, options) {
-    let fromD = this.templateSrv.timeRange.from._d;
-    let toD = this.templateSrv.timeRange.to._d;
+    let fromD = options.range.from;
+    let toD = options.range.to;
     if (this.target.convertToUTC === true) {
       fromD = new Date(
-        this.templateSrv.timeRange.from._d.getTime() +
-          this.templateSrv.timeRange.from._d.getTimezoneOffset() * 60000
+        options.range.from._d.getTime() +
+          options.range.from._d.getTimezoneOffset() * 60000
       );
       toD = new Date(
-        this.templateSrv.timeRange.to._d.getTime() +
-          this.templateSrv.timeRange.to._d.getTimezoneOffset() * 60000
+        options.range.to._d.getTime() +
+          options.range.to._d.getTimezoneOffset() * 60000
       );
     }
     let to = "";
