@@ -30,7 +30,6 @@ export class BigQueryConfigCtrl {
     if (this.current.jsonData.flatRateProject === undefined) {
       this.current.jsonData.flatRateProject = this.defaultFlatRateProject;
     }
-
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [
