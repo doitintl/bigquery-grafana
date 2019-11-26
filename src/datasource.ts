@@ -161,6 +161,7 @@ export class BigQueryDatasource {
   private readonly url: string;
   private mixpanel;
   private runInProject: string;
+  private processingLocation: string;
 
   /** @ngInject */
   constructor(
@@ -194,6 +195,11 @@ export class BigQueryDatasource {
       this.jsonData.flatRateProject && this.jsonData.flatRateProject.length
         ? this.jsonData.flatRateProject
         : this.projectName;
+    this.processingLocation =
+      this.jsonData.processingLocation &&
+      this.jsonData.processingLocation.length
+        ? this.jsonData.processingLocation
+        : undefined;
   }
 
   public async query(options) {
@@ -472,10 +478,12 @@ export class BigQueryDatasource {
   private async doQueryRequest(query, requestId, maxRetries = 3) {
     const path = `v2/projects/${this.runInProject}/queries`;
     const url = this.url + `${this.baseUrl}${path}`;
+    const location =
+      this.queryModel.target.location || this.processingLocation || "US";
     return this.backendSrv
       .datasourceRequest({
         data: {
-          location: this.queryModel.target.location,
+          location,
           query,
           useLegacySql: false,
           useQueryCache: true
@@ -507,11 +515,13 @@ export class BigQueryDatasource {
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;
     console.log("New job id: ", jobId);
+    const location =
+      this.queryModel.target.location || this.processingLocation || "US";
     const path =
       `v2/projects/${this.runInProject}/queries/` +
       jobId +
       "?location=" +
-      this.queryModel.target.location;
+      location;
     while (!queryResults.data.jobComplete) {
       await sleep(sleepTimeMs);
       sleepTimeMs *= 2;
@@ -524,13 +534,15 @@ export class BigQueryDatasource {
 
   private async _getQueryResults(queryResults, rows, requestId, jobId) {
     while (queryResults.data.pageToken) {
+      const location =
+        this.queryModel.target.location || this.processingLocation || "US";
       const path =
         `v2/projects/${this.runInProject}/queries/` +
         jobId +
         "?pageToken=" +
         queryResults.data.pageToken +
         "&location=" +
-        this.queryModel.target.location;
+        location;
       queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
       if (queryResults.length === 0) {
         return rows;
