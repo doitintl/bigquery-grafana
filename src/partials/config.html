@@ -110,6 +110,14 @@
     The project that the Queries will be run in if you are using a flat-rate pricing model.
   </info-popover>
 </div>
+<div class="gf-form">
+  <label class="gf-form-label">Processing Location</label>
+  <div class="gf-form-select-wrapper">
+    <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.processingLocation"
+            ng-options="f.value as f.text for f in ctrl.locations"
+            ng-change="ctrl.refresh()"></select>
+  </div>
+</div>
 <gf-form-switch class="gf-form" label="Send anonymous usage data" label-class="width-13" checked="ctrl.current.jsonData.sendUsageData" switch-class="max-width-6"></gf-form-switch>
 <label class="gf-form-label query-keyword pointer">
 </label>

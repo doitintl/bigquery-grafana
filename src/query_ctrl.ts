@@ -26,7 +26,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   public queryModel: BigQueryQuery;
   public lastQueryMeta: QueryMeta;
   public lastQueryError: string;
-  public locations:any[];
+  public locations: any[];
   public showHelp: boolean;
   public projectSegment: any;
   public datasetSegment: any;

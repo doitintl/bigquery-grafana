@@ -4,6 +4,7 @@ import {isCombinedModifierFlagSet} from "tslint";
 export class BigQueryConfigCtrl {
   private static templateUrl = "partials/config.html";
   public authenticationTypes: any[];
+  public locations: any[];
   public inputDataValid: boolean;
   public jsonText: string;
   public validationErrors: string[] = [];
@@ -12,12 +13,14 @@ export class BigQueryConfigCtrl {
   private readonly defaultAuthenticationType: string;
   private readonly defaultSendUsageData: boolean;
   private readonly defaultFlatRateProject: string;
+  private readonly defaultProcessingLocation: string;
 
   /** @ngInject */
   constructor(datasourceSrv) {
     this.defaultAuthenticationType = "jwt";
     this.defaultSendUsageData = true;
     this.defaultFlatRateProject = undefined;
+    this.defaultProcessingLocation = undefined;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.authenticationType = this.current.jsonData
@@ -30,11 +33,36 @@ export class BigQueryConfigCtrl {
     if (this.current.jsonData.flatRateProject === undefined) {
       this.current.jsonData.flatRateProject = this.defaultFlatRateProject;
     }
+    if (this.current.jsonData.processingLocations === undefined) {
+      this.current.jsonData.processingLocations = this.defaultProcessingLocation;
+    }
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [
       { key: this.defaultAuthenticationType, value: "Google JWT File" },
       { key: "gce", value: "GCE Default Service Account" }
+    ];
+    this.locations = [
+      { text: "United States (US)", value: "US" },
+      { text: "European Union (EU)", value: "EU" },
+      { text: "Los Angeles (us-west2)", value: "us-west2" },
+      {
+        text: "Montréal (northamerica-northeast1)",
+        value: "northamerica-northeast1"
+      },
+      { text: "Northern Virginia (us-east4)", value: "us-east4" },
+      { text: "São Paulo (southamerica-east1)", value: "southamerica-east1" },
+      { text: "Finland (europe-north1)", value: "europe-north1" },
+      { text: "London (europe-west2)", value: "europe-west2" },
+      { text: "Frankfurt (europe-west3)", value: "europe-west3" },
+      { text: "Zürich (europe-west6)", value: "europe-west6" },
+      { text: "Hong Kong (asia-east2)", value: "asia-east2" },
+      { text: "Mumbai (asia-south1)", value: "asia-south1" },
+      { text: "Osaka (asia-northeast2)", value: "asia-northeast2" },
+      { text: "Taiwan (asia-east1)", value: "asia-east1" },
+      { text: "Tokyo (asia-northeast1)", value: "asia-northeast1" },
+      { text: "Singapore (asia-southeast1)", value: "asia-southeast1" },
+      { text: "Sydney (australia-southeast1)", value: "australia-southeast1" }
     ];
   }
 
