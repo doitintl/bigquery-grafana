@@ -305,7 +305,7 @@ describe("BigQueryQuery", () => {
       target.rawSql =
         "$__timeGroup(start_date,1w)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800))"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800)"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1h)";

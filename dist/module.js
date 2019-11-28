@@ -59033,7 +59033,7 @@ function () {
     if (alias) {
       return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
     } else {
-      return q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr + ")");
+      return q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
     }
   };
 
