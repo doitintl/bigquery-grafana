@@ -582,7 +582,7 @@ export default class BigQueryQuery {
     } else {
       return q.replace(
         /\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
-        intervalStr + ")"
+        intervalStr
       );
     }
   }
