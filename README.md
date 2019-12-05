@@ -8,17 +8,17 @@
 ## Status: Production Ready
 # BigQuery DataSource for Grafana
 
-A BigQuery DataSource plugin provides support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.  
+A BigQuery DataSource plugin provides support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.
 
 ### Quick Start
-There are multiple ways to install bigquery-grafana. See [INSTALL](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/INSTALL.md) for more information. 
+There are multiple ways to install bigquery-grafana. See [INSTALL](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/INSTALL.md) for more information.
 
 ### Features:
 
  * Query setup
  * Raw SQL editor
  * Query formatting
- * Macros support 
+ * Macros support
  * Additional functions
  * Table view
  * Annotations
@@ -26,16 +26,16 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://raw.g
  * Sharded tables (`tablename_YYYYMMDD`)
  * Partitioned Tables
  * Granular slot allocation (Running queries in a project with flat-rate pricing)
- 
+
 ### Limitations:
 
  * Alerts are not yet supported due to [#6841](https://github.com/grafana/grafana/issues/6841)
- 
+
  **Plugin Demo:**
- 
+
  ![plugin demo](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/grafana-bigquery-demo.gif)
- 
- 
+
+
 ## Adding the DataSource to Grafana
 
 1. Open the side menu by clicking the Grafana icon in the top header.
@@ -64,15 +64,15 @@ datasources:
     access: proxy
     isDefault: true
     jsonData:
-    authenticationType: jwt
-    clientEmail: <Service Account Email>
-    defaultProject: <Default Project Name>
-    tokenUri: https://oauth2.googleapis.com/token
+       authenticationType: jwt
+       clientEmail: <Service Account Email>
+       defaultProject: <Default Project Name>
+       tokenUri: https://oauth2.googleapis.com/token
     secureJsonData:
-    privateKey: |
-        -----BEGIN PRIVATE KEY-----
-        <Content of the Private Key>
-        -----END PRIVATE KEY-----
+       privateKey: |
+          -----BEGIN PRIVATE KEY-----
+           <Content of the Private Key>
+          -----END PRIVATE KEY-----
     version: 2
     readOnly: false
 ```
@@ -108,7 +108,7 @@ Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery-json
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq__grafana_upload_key.png)
-   
+
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
     ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_grafana_key_uploaded.png)
