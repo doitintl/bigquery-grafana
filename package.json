@@ -17,10 +17,10 @@
         "codecov": "^3.2.0",
         "lodash": "^4.17.11",
         "lodash-es": "^4.17.11",
+        "mixpanel-browser": "^2.29.0",
         "moment": "^2.18.1",
         "q": "^1.5.1",
-        "systemjs": "^2.1.1",
-        "mixpanel-browser": "^2.29.0"
+        "systemjs": "^2.1.1"
     },
     "devDependencies": {
         "@babel/core": "^7.4.0",
