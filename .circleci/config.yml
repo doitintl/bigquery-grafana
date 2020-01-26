@@ -18,7 +18,7 @@ jobs:
       - checkout
       - run:
           name: install yarn
-          command: 'sudo npm install -g yarn --quiet'
+          command: 'sudo npm install -g yarn --quiet --force'
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
