@@ -50,6 +50,7 @@ export class BigQueryConfigCtrl {
         text: "Montréal (northamerica-northeast1)",
         value: "northamerica-northeast1"
       },
+      { text: "South Carolina (us-east1)", value: "us-east1" },
       { text: "Northern Virginia (us-east4)", value: "us-east4" },
       { text: "São Paulo (southamerica-east1)", value: "southamerica-east1" },
       { text: "Finland (europe-north1)", value: "europe-north1" },
