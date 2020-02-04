@@ -59213,6 +59213,9 @@ function () {
       text: "Montréal (northamerica-northeast1)",
       value: "northamerica-northeast1"
     }, {
+      text: "South Carolina (us-east1)",
+      value: "us-east1"
+    }, {
       text: "Northern Virginia (us-east4)",
       value: "us-east4"
     }, {
@@ -60476,6 +60479,9 @@ function (_super) {
     }, {
       text: "Montréal (northamerica-northeast1)",
       value: "northamerica-northeast1"
+    }, {
+      text: "South Carolina (us-east1)",
+      value: "us-east1"
     }, {
       text: "Northern Virginia (us-east4)",
       value: "us-east4"
