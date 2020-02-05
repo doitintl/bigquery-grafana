@@ -43,8 +43,8 @@ export default class BigQueryQuery {
       ? q.match(/(\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g)
       : q.match(/(\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
     if (res) {
-      interval[0] = res[0].split(",")[1];
-      interval[1] = res[0].split(",")[2];
+      interval[0] = res[0].split(",")[1] ? res[0].split(",")[1].trim() : res[0].split(",")[1];
+      interval[1] = res[0].split(",")[2] ? res[0].split(",")[2].trim() : res[0].split(",")[2];
     }
     return interval;
   }
