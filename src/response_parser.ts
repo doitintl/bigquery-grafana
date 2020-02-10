@@ -143,7 +143,7 @@ export default class ResponseParser {
   private static _toTimeSeries(results) {
     let timeIndex = -1;
     let metricIndex = -1;
-    let valueIndex = -1;
+    const valueIndexes = [];
     for (let i = 0; i < results.schema.fields.length; i++) {
       if (
         timeIndex === -1 &&
@@ -157,12 +157,11 @@ export default class ResponseParser {
         metricIndex = i;
       }
       if (
-        valueIndex === -1 &&
         ["INT64", "NUMERIC", "FLOAT64", "FLOAT", "INT", "INTEGER"].includes(
           results.schema.fields[i].type
         )
       ) {
-        valueIndex = i;
+        valueIndexes.push(i);
       }
     }
     if (timeIndex === -1) {
@@ -174,22 +173,25 @@ export default class ResponseParser {
       results,
       timeIndex,
       metricIndex,
-      valueIndex
+      valueIndexes
     );
   }
 
-  private static _buildDataPoints(results, timeIndex, metricIndex, valueIndex) {
+  private static _buildDataPoints(results, timeIndex, metricIndex, valueIndexes) {
     const data = [];
     let metricName = "";
+    let i;
     for (const row of results.rows) {
       if (row) {
-        const epoch = Number(row.f[timeIndex].v) * 1000;
-        metricName =
-          metricIndex > -1
-            ? row.f[metricIndex].v
-            : results.schema.fields[valueIndex].name;
-        const bucket = ResponseParser.findOrCreateBucket(data, metricName);
-        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
+        for (i = 0; i < valueIndexes.length; i++) {
+          const epoch = Number(row.f[timeIndex].v) * 1000;
+          metricName =
+            metricIndex > -1
+              ? row.f[metricIndex].v
+              : results.schema.fields[valueIndexes[i]].name;
+          const bucket = ResponseParser.findOrCreateBucket(data, metricName);
+          bucket.datapoints.push([Number(row.f[valueIndexes[i]].v), epoch]);
+        }
       }
     }
     return data;
