@@ -61576,7 +61576,7 @@ function () {
   ResponseParser._toTimeSeries = function (results) {
     var timeIndex = -1;
     var metricIndex = -1;
-    var valueIndex = -1;
+    var valueIndexes = [];
 
     for (var i = 0; i < results.schema.fields.length; i++) {
       if (timeIndex === -1 && ["DATE", "TIMESTAMP", "DATETIME"].includes(results.schema.fields[i].type)) {
@@ -61587,8 +61587,8 @@ function () {
         metricIndex = i;
       }
 
-      if (valueIndex === -1 && ["INT64", "NUMERIC", "FLOAT64", "FLOAT", "INT", "INTEGER"].includes(results.schema.fields[i].type)) {
-        valueIndex = i;
+      if (["INT64", "NUMERIC", "FLOAT64", "FLOAT", "INT", "INTEGER"].includes(results.schema.fields[i].type)) {
+        valueIndexes.push(i);
       }
     }
 
@@ -61596,21 +61596,24 @@ function () {
       throw new Error("No datetime column found in the result. The Time Series format requires a time column.");
     }
 
-    return ResponseParser._buildDataPoints(results, timeIndex, metricIndex, valueIndex);
+    return ResponseParser._buildDataPoints(results, timeIndex, metricIndex, valueIndexes);
   };
 
-  ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndex) {
+  ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndexes) {
     var data = [];
     var metricName = "";
+    var i;
 
     for (var _i = 0, _a = results.rows; _i < _a.length; _i++) {
       var row = _a[_i];
 
       if (row) {
-        var epoch = Number(row.f[timeIndex].v) * 1000;
-        metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndex].name;
-        var bucket = ResponseParser.findOrCreateBucket(data, metricName);
-        bucket.datapoints.push([Number(row.f[valueIndex].v), epoch]);
+        for (i = 0; i < valueIndexes.length; i++) {
+          var epoch = Number(row.f[timeIndex].v) * 1000;
+          metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndexes[i]].name;
+          var bucket = ResponseParser.findOrCreateBucket(data, metricName);
+          bucket.datapoints.push([Number(row.f[valueIndexes[i]].v), epoch]);
+        }
       }
     }
 

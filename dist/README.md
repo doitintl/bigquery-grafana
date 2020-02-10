@@ -60,21 +60,21 @@ apiVersion: 1
 
 datasources:
 - name: <Datasource Name>
-    type: doitintl-bigquery-datasource
-    access: proxy
-    isDefault: true
-    jsonData:
+  type: doitintl-bigquery-datasource
+  access: proxy
+  isDefault: true
+  jsonData:
        authenticationType: jwt
        clientEmail: <Service Account Email>
        defaultProject: <Default Project Name>
        tokenUri: https://oauth2.googleapis.com/token
-    secureJsonData:
+  secureJsonData:
        privateKey: |
           -----BEGIN PRIVATE KEY-----
            <Content of the Private Key>
           -----END PRIVATE KEY-----
-    version: 2
-    readOnly: false
+  version: 2
+  readOnly: false
 ```
 
 ## Authentication
