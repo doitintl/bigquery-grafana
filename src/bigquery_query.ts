@@ -90,6 +90,7 @@ export default class BigQueryQuery {
   public scopedVars: any;
   public isWindow: boolean;
   public isAggregate: boolean;
+  public isHll: boolean;
   public groupBy: string;
   public tmpValue: string;
 
@@ -246,6 +247,7 @@ export default class BigQueryQuery {
   }
 
   public _buildAggregate(aggregate, query) {
+    console.log(aggregate)
     if (aggregate) {
       const func = aggregate.params[0];
       switch (aggregate.type) {
@@ -266,9 +268,28 @@ export default class BigQueryQuery {
           break;
       }
     }
+    console.log(query);
     return query;
   }
 
+  public _buildHll(hll, query) {
+    if (hll) {
+      query = "hll_count.init(cast(`cost` as int64)) "
+      return query
+      const func = hll.params[0];
+      switch (hll.type) {
+        case "hyperloglog":
+          query =
+            func === "first" || func === "last"
+              ? func + "(" + query + "," + this.target.timeColumn + ")"
+              : func + "(" + query + ")";
+          break;
+
+        case "hll_count.init":
+      }
+    }
+    return query;
+  }
   public buildValueColumn(column) {
     const columnName = _.find(column, (g: any) => g.type === "column");
     let query = BigQueryQuery.quoteFiledName(columnName.params[0]);
@@ -280,13 +301,15 @@ export default class BigQueryQuery {
       column,
       (g: any) => g.type === "window" || g.type === "moving_window"
     );
-    if (aggregate === undefined) {
-      this.isAggregate = false;
-    } else {
-      this.isAggregate = true;
-    }
+    const hll = _.find(
+      column,
+      (g: any) => g.type === "hyperloglog" || g.type === "hll_count.init"
+    );
+    this.isHll = hll !== undefined;
+    this.isAggregate = aggregate !== undefined;
     const timeshift = _.find(column, (g: any) => g.type === "timeshift");
     query = this._buildAggregate(aggregate, query);
+    query = this._buildHll(hll, query);
     if (windows) {
       this.isWindow = true;
       const overParts = [];

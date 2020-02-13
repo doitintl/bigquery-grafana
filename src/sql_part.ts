@@ -199,6 +199,37 @@ register({
   defaultParams: ['avg', '5'],
 });
 
+register({
+  type: 'hyperloglog',
+  style: 'label',
+  params: [
+    {
+      name: 'function',
+      type: 'string',
+      options: ['hll_count.merge', 'hll_count.merge_partial', 'hll_count.extract'],
+    }
+  ],
+  defaultParams: ['hll_count.merge'],
+});
+
+register({
+  type: 'hll_count.init',
+  style: 'label',
+  label: 'Hll_count.init:',
+  params: [
+    {
+      name: 'function',
+      type: 'string',
+      options: ['precision'],
+    },
+    {
+      name: 'precision',
+      type: 'number',
+      options: ['10', '11', '12', '13', '14','15','16','17','18','19','20','21','22','23','24'],
+    }
+  ],
+  defaultParams: ['precision','15'],
+});
 
 export default {
   create: createPart,

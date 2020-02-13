@@ -206,6 +206,19 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     };
     this.selectMenu.push(windows);
 
+    const hyperloglog = {
+      text: "HyperLogLog++ Functions",
+      value: "hyperloglog",
+      submenu: [
+        { text: "Hll_count.init", value: "precision", type: "hll_count.init" },
+        { text: "Hll_count.merge", value: "hll_count.merge" },
+        { text: "Hll_count.merge_partial", value: "hll_count.merge_partial" },
+        { text: "Hll_count.extract", value: "hll_count.extract" }
+      ]
+    };
+    this.selectMenu.push(hyperloglog);
+
+
     this.selectMenu.push({ text: "Alias", value: "alias" });
     this.selectMenu.push({ text: "Column", value: "column" });
     this.selectMenu.push({ text: "Time Shift", value: "timeshift" });
@@ -450,6 +463,13 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     );
   }
 
+  public findHllIndex(selectParts) {
+    return _.findIndex(
+      selectParts,
+      (p: any) => p.def.type === "hyperloglog" || p.def.type === "hll_count.init"
+    );
+  }
+
   public findTimeShiftIndex(selectParts) {
     return _.findIndex(
       selectParts,
@@ -520,6 +540,21 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             selectParts.splice(1, 0, partModel);
           }
         }
+      case "hyperloglog":
+      case "hll_count.init":
+        const hllIndex = this.findHllIndex(selectParts);
+        if (hllIndex !== -1) {
+          // replace current window function
+          selectParts[windowIndex] = partModel;
+        } else {
+          const aggIndex = this.findAggregateIndex(selectParts);
+          if (aggIndex !== -1) {
+            selectParts.splice(aggIndex + 1, 0, partModel);
+          } else {
+            selectParts.splice(1, 0, partModel);
+          }
+        }
+
         if (_addAlias()) {
           addAlias = true;
         }

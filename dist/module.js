@@ -58827,6 +58827,8 @@ function () {
   };
 
   BigQueryQuery.prototype._buildAggregate = function (aggregate, query) {
+    console.log(aggregate);
+
     if (aggregate) {
       var func = aggregate.params[0];
 
@@ -58838,6 +58840,25 @@ function () {
         case "percentile":
           query = func + "(" + aggregate.params[1] + ") WITHIN GROUP (ORDER BY " + query + ")";
           break;
+      }
+    }
+
+    console.log(query);
+    return query;
+  };
+
+  BigQueryQuery.prototype._buildHll = function (hll, query) {
+    if (hll) {
+      query = "hll_count.init(cast(`cost` as int64)) ";
+      return query;
+      var func = hll.params[0];
+
+      switch (hll.type) {
+        case "hyperloglog":
+          query = func === "first" || func === "last" ? func + "(" + query + "," + this.target.timeColumn + ")" : func + "(" + query + ")";
+          break;
+
+        case "hll_count.init":
       }
     }
 
@@ -58859,17 +58880,19 @@ function () {
       return g.type === "window" || g.type === "moving_window";
     });
 
-    if (aggregate === undefined) {
-      this.isAggregate = false;
-    } else {
-      this.isAggregate = true;
-    }
+    var hll = _lodash2["default"].find(column, function (g) {
+      return g.type === "hyperloglog" || g.type === "hll_count.init";
+    });
+
+    this.isHll = hll !== undefined;
+    this.isAggregate = aggregate !== undefined;
 
     var timeshift = _lodash2["default"].find(column, function (g) {
       return g.type === "timeshift";
     });
 
     query = this._buildAggregate(aggregate, query);
+    query = this._buildHll(hll, query);
 
     if (windows) {
       this.isWindow = true;
@@ -60653,6 +60676,25 @@ function (_super) {
       }]
     };
     this.selectMenu.push(windows);
+    var hyperloglog = {
+      text: "HyperLogLog++ Functions",
+      value: "hyperloglog",
+      submenu: [{
+        text: "Hll_count.init",
+        value: "precision",
+        type: "hll_count.init"
+      }, {
+        text: "Hll_count.merge",
+        value: "hll_count.merge"
+      }, {
+        text: "Hll_count.merge_partial",
+        value: "hll_count.merge_partial"
+      }, {
+        text: "Hll_count.extract",
+        value: "hll_count.extract"
+      }]
+    };
+    this.selectMenu.push(hyperloglog);
     this.selectMenu.push({
       text: "Alias",
       value: "alias"
@@ -60906,6 +60948,12 @@ function (_super) {
     });
   };
 
+  BigQueryQueryCtrl.prototype.findHllIndex = function (selectParts) {
+    return _lodash2["default"].findIndex(selectParts, function (p) {
+      return p.def.type === "hyperloglog" || p.def.type === "hll_count.init";
+    });
+  };
+
   BigQueryQueryCtrl.prototype.findTimeShiftIndex = function (selectParts) {
     return _lodash2["default"].findIndex(selectParts, function (p) {
       return p.def.type === "timeshift";
@@ -60994,6 +61042,23 @@ function (_super) {
 
           if (aggIndex_1 !== -1) {
             selectParts.splice(aggIndex_1 + 1, 0, partModel);
+          } else {
+            selectParts.splice(1, 0, partModel);
+          }
+        }
+
+      case "hyperloglog":
+      case "hll_count.init":
+        var hllIndex = this.findHllIndex(selectParts);
+
+        if (hllIndex !== -1) {
+          // replace current window function
+          selectParts[windowIndex] = partModel;
+        } else {
+          var aggIndex_2 = this.findAggregateIndex(selectParts);
+
+          if (aggIndex_2 !== -1) {
+            selectParts.splice(aggIndex_2 + 1, 0, partModel);
           } else {
             selectParts.splice(1, 0, partModel);
           }
@@ -61978,6 +62043,31 @@ register({
     options: ['3', '5', '7', '10', '20']
   }],
   defaultParams: ['avg', '5']
+});
+register({
+  type: 'hyperloglog',
+  style: 'label',
+  params: [{
+    name: 'function',
+    type: 'string',
+    options: ['hll_count.merge', 'hll_count.merge_partial', 'hll_count.extract']
+  }],
+  defaultParams: ['hll_count.merge']
+});
+register({
+  type: 'hll_count.init',
+  style: 'label',
+  label: 'Hll_count.init:',
+  params: [{
+    name: 'function',
+    type: 'string',
+    options: ['precision']
+  }, {
+    name: 'precision',
+    type: 'number',
+    options: ['10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
+  }],
+  defaultParams: ['precision', '15']
 });
 exports["default"] = {
   create: createPart
