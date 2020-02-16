@@ -179,17 +179,23 @@ export default class ResponseParser {
 
   private static _buildDataPoints(results, timeIndex, metricIndex, valueIndexes) {
     const data = [];
+    let targetName = "";
     let metricName = "";
     let i;
     for (const row of results.rows) {
       if (row) {
         for (i = 0; i < valueIndexes.length; i++) {
           const epoch = Number(row.f[timeIndex].v) * 1000;
+          const valueIndexName = results.schema.fields[valueIndexes[i]].name;
+          targetName =
+            metricIndex > -1
+              ? (row.f[metricIndex].v).concat(" ", valueIndexName)
+              : valueIndexName;
           metricName =
             metricIndex > -1
               ? row.f[metricIndex].v
-              : results.schema.fields[valueIndexes[i]].name;
-          const bucket = ResponseParser.findOrCreateBucket(data, metricName);
+              : valueIndexName;
+          const bucket = ResponseParser.findOrCreateBucket(data, targetName, metricName);
           bucket.datapoints.push([Number(row.f[valueIndexes[i]].v), epoch]);
         }
       }
@@ -197,10 +203,10 @@ export default class ResponseParser {
     return data;
   }
 
-  private static findOrCreateBucket(data, target): IDataTarget {
+  private static findOrCreateBucket(data, target, metric): IDataTarget {
     let dataTarget = _.find(data, ["target", target]);
     if (!dataTarget) {
-      dataTarget = { target, datapoints: [], refId: "", query: "" };
+      dataTarget = { target, datapoints: [], refId: metric, query: "" };
       data.push(dataTarget);
     }
 
