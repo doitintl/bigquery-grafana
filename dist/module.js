@@ -61601,6 +61601,7 @@ function () {
 
   ResponseParser._buildDataPoints = function (results, timeIndex, metricIndex, valueIndexes) {
     var data = [];
+    var targetName = "";
     var metricName = "";
     var i;
 
@@ -61610,8 +61611,10 @@ function () {
       if (row) {
         for (i = 0; i < valueIndexes.length; i++) {
           var epoch = Number(row.f[timeIndex].v) * 1000;
-          metricName = metricIndex > -1 ? row.f[metricIndex].v : results.schema.fields[valueIndexes[i]].name;
-          var bucket = ResponseParser.findOrCreateBucket(data, metricName);
+          var valueIndexName = results.schema.fields[valueIndexes[i]].name;
+          targetName = metricIndex > -1 ? row.f[metricIndex].v.concat(" ", valueIndexName) : valueIndexName;
+          metricName = metricIndex > -1 ? row.f[metricIndex].v : valueIndexName;
+          var bucket = ResponseParser.findOrCreateBucket(data, targetName, metricName);
           bucket.datapoints.push([Number(row.f[valueIndexes[i]].v), epoch]);
         }
       }
@@ -61620,14 +61623,14 @@ function () {
     return data;
   };
 
-  ResponseParser.findOrCreateBucket = function (data, target) {
+  ResponseParser.findOrCreateBucket = function (data, target, metric) {
     var dataTarget = _lodash2["default"].find(data, ["target", target]);
 
     if (!dataTarget) {
       dataTarget = {
         target: target,
         datapoints: [],
-        refId: "",
+        refId: metric,
         query: ""
       };
       data.push(dataTarget);
