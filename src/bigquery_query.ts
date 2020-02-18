@@ -159,7 +159,7 @@ export default class BigQueryQuery {
     } else {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
-    return IntervalStr + " AS time_column";
+    return IntervalStr + " AS time";
   }
 
   public hasTimeGroup() {
@@ -255,7 +255,7 @@ export default class BigQueryQuery {
   }
 
   public buildHllOuterQuery() {
-    let query = "time_column";
+    let query = "time";
     let numOfColumns = 1;
     let hllInd = 0;
     if (this.hasMetricColumn()) {
@@ -272,7 +272,9 @@ export default class BigQueryQuery {
       const alias = _.find(column, (g: any) => g.type === "alias");
       if (hll) {
         numOfColumns += 1;
-        hllInd = numOfColumns;
+        if (hll.type === "hll_count.merge") {
+          hllInd = numOfColumns;
+        }
         query += ",\n" + hll.type + "(respondents_hll)";
         if (alias) {
           query += " AS " + alias.params[0];
