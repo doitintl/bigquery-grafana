@@ -58728,7 +58728,7 @@ function () {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
 
-    return IntervalStr + " AS time_column";
+    return IntervalStr + " AS time";
   };
 
   BigQueryQuery.prototype.hasTimeGroup = function () {
@@ -58831,7 +58831,7 @@ function () {
   };
 
   BigQueryQuery.prototype.buildHllOuterQuery = function () {
-    var query = "time_column";
+    var query = "time";
     var numOfColumns = 1;
     var hllInd = 0;
 
@@ -58855,7 +58855,11 @@ function () {
 
       if (hll) {
         numOfColumns += 1;
-        hllInd = numOfColumns;
+
+        if (hll.type === "hll_count.merge") {
+          hllInd = numOfColumns;
+        }
+
         query += ",\n" + hll.type + "(respondents_hll)";
 
         if (alias) {

@@ -294,22 +294,22 @@ describe("BigQueryQuery", () => {
     query.templateSrv.timeRange = time;
     it("Check macros", () => {
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400) AS time_column"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400) AS time"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1min)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) AS time_column"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) AS time"
       );
       target.rawSql =
         "$__timeGroup(start_date,1w)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) AS time_column"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) AS time"
       );
       target.rawSql =
         "$__timeGroupAlias(start_date,1h)";
       expect(query.expend_macros(options)).toBe(
-        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) AS time_column"
+        "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) AS time"
       );
     });
   });
@@ -332,25 +332,25 @@ describe("BigQueryQuery", () => {
     };
     const query = new BigQueryQuery(target, templateSrv);
     expect(query.getIntervalStr("1s", "0")).toBe(
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 1) * 1) AS time_column"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 1) * 1) AS time"
     );
     expect(query.getIntervalStr("1min", "0")).toBe(
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 60) * 60) AS time_column"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 60) * 60) AS time"
     );
     expect(query.getIntervalStr("1h", "1s")).toBe(
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 3600) * 3600) AS time_column"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 3600) * 3600) AS time"
     );
     expect(query.getIntervalStr("1d", "1s")).toBe(
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 86400) * 86400) AS time_column"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 86400) * 86400) AS time"
     );
     expect(query.getIntervalStr("1w", "1d")).toBe(
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800) AS time_column"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800) AS time"
     );
     expect(query.getIntervalStr("1m", "1d")).toBe(
-      "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01')))) AS time_column"
+      "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01')))) AS time"
     );
     expect(query.getIntervalStr("1y", "2d")).toBe(
-      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 31536000) * 31536000) AS time_column"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 31536000) * 31536000) AS time"
     );
   });
 
