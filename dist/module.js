@@ -58728,7 +58728,7 @@ function () {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
 
-    return IntervalStr;
+    return IntervalStr + " AS time_column";
   };
 
   BigQueryQuery.prototype.hasTimeGroup = function () {
@@ -58820,15 +58820,67 @@ function () {
 
     for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
       var column = _a[_i];
-      query += ",\n  " + this.buildValueColumn(column);
+      var c = this.buildValueColumn(column);
+
+      if (c.length > 0) {
+        query += ",\n  " + c;
+      }
     }
 
     return query;
   };
 
-  BigQueryQuery.prototype._buildAggregate = function (aggregate, query) {
-    console.log(aggregate);
+  BigQueryQuery.prototype.buildHllOuterQuery = function () {
+    var query = "time_column";
+    var numOfColumns = 1;
+    var hllInd = 0;
 
+    if (this.hasMetricColumn()) {
+      query += ",\nmetric";
+      numOfColumns += 1;
+    }
+
+    var colId = 0;
+
+    for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
+      var column = _a[_i];
+
+      var hll = _lodash2["default"].find(column, function (g) {
+        return g.type === "hll_count.merge" || g.type === "hll_count.extract";
+      });
+
+      var alias = _lodash2["default"].find(column, function (g) {
+        return g.type === "alias";
+      });
+
+      if (hll) {
+        numOfColumns += 1;
+        hllInd = numOfColumns;
+        query += ",\n" + hll.type + "(respondents_hll)";
+
+        if (alias) {
+          query += " AS " + alias.params[0];
+        }
+      } else {
+        numOfColumns += 1;
+
+        if (alias) {
+          query += ",\n" + alias.params[0];
+        } else {
+          query += ",\n" + "f" + colId;
+          colId += 1;
+        }
+      }
+    }
+
+    return {
+      query: query,
+      numOfColumns: numOfColumns,
+      hllInd: hllInd
+    };
+  };
+
+  BigQueryQuery.prototype._buildAggregate = function (aggregate, query) {
     if (aggregate) {
       var func = aggregate.params[0];
 
@@ -58840,25 +58892,6 @@ function () {
         case "percentile":
           query = func + "(" + aggregate.params[1] + ") WITHIN GROUP (ORDER BY " + query + ")";
           break;
-      }
-    }
-
-    console.log(query);
-    return query;
-  };
-
-  BigQueryQuery.prototype._buildHll = function (hll, query) {
-    if (hll) {
-      query = "hll_count.init(cast(`cost` as int64)) ";
-      return query;
-      var func = hll.params[0];
-
-      switch (hll.type) {
-        case "hyperloglog":
-          query = func === "first" || func === "last" ? func + "(" + query + "," + this.target.timeColumn + ")" : func + "(" + query + ")";
-          break;
-
-        case "hll_count.init":
       }
     }
 
@@ -58881,10 +58914,17 @@ function () {
     });
 
     var hll = _lodash2["default"].find(column, function (g) {
-      return g.type === "hyperloglog" || g.type === "hll_count.init";
+      return g.type === "hll_count.merge" || g.type === "hll_count.extract";
     });
 
-    this.isHll = hll !== undefined;
+    if (hll !== undefined) {
+      this.hll = hll;
+    }
+
+    if (hll !== undefined) {
+      return "HLL_COUNT.INIT (CAST(" + columnName.params[0] + " as NUMERIC)) as respondents_hll";
+    }
+
     this.isAggregate = aggregate !== undefined;
 
     var timeshift = _lodash2["default"].find(column, function (g) {
@@ -58892,7 +58932,6 @@ function () {
     });
 
     query = this._buildAggregate(aggregate, query);
-    query = this._buildHll(hll, query);
 
     if (windows) {
       this.isWindow = true;
@@ -59023,8 +59062,10 @@ function () {
       }
     }
 
+    query = "\nGROUP BY ";
+
     if (groupSection.length) {
-      query = "\nGROUP BY " + groupSection;
+      query += groupSection;
       this.groupBy = query;
 
       if (this.isWindow) {
@@ -59039,10 +59080,39 @@ function () {
           this.groupBy += ",3";
         }
       }
+    } else {
+      query = "\nGROUP BY 1";
+    }
 
-      if (this.isAggregate === false) {
-        query += ",2";
+    var ind = 1;
+
+    if (this.hasMetricColumn()) {
+      query += ",2";
+      ind += 1;
+    }
+
+    for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
+      var column = _a[_i];
+
+      var hll = _lodash2["default"].find(column, function (g) {
+        return g.type === "hll_count.merge" || g.type === "hll_count.extract";
+      });
+
+      var aggregate = _lodash2["default"].find(column, function (g) {
+        return g.type === "aggregate" || g.type === "percentile";
+      });
+
+      if (hll || aggregate) {
+        ind++;
+        continue;
       }
+
+      ind++;
+      query += "," + ind;
+    }
+
+    if (this.isWindow) {
+      query = ")" + query;
     }
 
     return query;
@@ -59050,6 +59120,7 @@ function () {
 
   BigQueryQuery.prototype.buildQuery = function () {
     var query = "";
+    var outerQuery = "";
     query += "\n" + "SELECT";
     query += "\n " + this.buildTimeColumn();
 
@@ -59058,28 +59129,47 @@ function () {
     }
 
     query += this.buildValueColumns();
+    var outerGroupBy = " GROUP BY 1";
+
+    if (this.hll !== undefined) {
+      var values = this.buildHllOuterQuery();
+      outerQuery = values.query;
+      var numOfColumns = values.numOfColumns;
+      var hllInd = values.hllInd;
+
+      for (var i = 2; i <= numOfColumns; i++) {
+        if (i === hllInd) {
+          continue;
+        }
+
+        outerGroupBy = outerGroupBy + "," + i;
+      }
+    }
+
     query += "\nFROM " + "`" + this.target.project + "." + this.target.dataset + "." + this.target.table + "`";
     query += this.buildWhereClause();
     query += this.buildGroupClause();
+    var orderBy = "";
 
     if (!this.isWindow) {
-      var orderBy = "\nORDER BY 1";
+      orderBy = "\nORDER BY 1";
 
       if (this.hasMetricColumn()) {
         orderBy = this.target.orderByCol === "1" ? "\nORDER BY 1,2" : "\nORDER BY 2,1";
       }
 
-      query += orderBy;
-
       if (this.target.orderBySort === "2") {
-        query += " DESC";
+        orderBy += " DESC";
       }
-    } // query += '\nLIMIT 2';
-
+    }
 
     if (this.isWindow) {
       query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;
-      query = query + ")" + this.groupBy;
+      query = query + " " + this.groupBy;
+    }
+
+    if (this.hll !== undefined) {
+      query = "\nSELECT \n" + outerQuery + " from \n(" + query + ") " + outerGroupBy + orderBy;
     }
 
     query = "#standardSQL" + query;
@@ -60680,18 +60770,13 @@ function (_super) {
       text: "HyperLogLog++ Functions",
       value: "hyperloglog",
       submenu: [{
-        text: "Hll_count.init",
-        value: "precision",
-        type: "hll_count.init"
-      }, {
         text: "Hll_count.merge",
-        value: "hll_count.merge"
-      }, {
-        text: "Hll_count.merge_partial",
-        value: "hll_count.merge_partial"
+        type: "hll_count.merge",
+        value: "precision"
       }, {
         text: "Hll_count.extract",
-        value: "hll_count.extract"
+        type: "hll_count.extract",
+        value: "precision"
       }]
     };
     this.selectMenu.push(hyperloglog);
@@ -61047,8 +61132,8 @@ function (_super) {
           }
         }
 
-      case "hyperloglog":
-      case "hll_count.init":
+      case "hll_count.merge":
+      case "hll_count.extract":
         var hllIndex = this.findHllIndex(selectParts);
 
         if (hllIndex !== -1) {
@@ -62045,19 +62130,24 @@ register({
   defaultParams: ['avg', '5']
 });
 register({
-  type: 'hyperloglog',
+  type: 'hll_count.merge',
   style: 'label',
+  label: 'Hll_count.merge:',
   params: [{
     name: 'function',
     type: 'string',
-    options: ['hll_count.merge', 'hll_count.merge_partial', 'hll_count.extract']
+    options: ['precision']
+  }, {
+    name: 'precision',
+    type: 'number',
+    options: ['10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
   }],
-  defaultParams: ['hll_count.merge']
+  defaultParams: ['precision', '15']
 });
 register({
-  type: 'hll_count.init',
+  type: 'hll_count.extract',
   style: 'label',
-  label: 'Hll_count.init:',
+  label: 'Hll_count.extract:',
   params: [{
     name: 'function',
     type: 'string',

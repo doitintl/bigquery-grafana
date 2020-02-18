@@ -199,23 +199,30 @@ register({
   defaultParams: ['avg', '5'],
 });
 
+
 register({
-  type: 'hyperloglog',
+  type: 'hll_count.merge',
   style: 'label',
+  label: 'Hll_count.merge:',
   params: [
     {
       name: 'function',
       type: 'string',
-      options: ['hll_count.merge', 'hll_count.merge_partial', 'hll_count.extract'],
+      options: ['precision'],
+    },
+    {
+      name: 'precision',
+      type: 'number',
+      options: ['10', '11', '12', '13', '14','15','16','17','18','19','20','21','22','23','24'],
     }
   ],
-  defaultParams: ['hll_count.merge'],
+  defaultParams: ['precision','15'],
 });
 
 register({
-  type: 'hll_count.init',
+  type: 'hll_count.extract',
   style: 'label',
-  label: 'Hll_count.init:',
+  label: 'Hll_count.extract:',
   params: [
     {
       name: 'function',
