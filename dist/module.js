@@ -58728,7 +58728,7 @@ function () {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
 
-    return IntervalStr;
+    return IntervalStr + " AS time_column";
   };
 
   BigQueryQuery.prototype.hasTimeGroup = function () {
@@ -58820,10 +58820,64 @@ function () {
 
     for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
       var column = _a[_i];
-      query += ",\n  " + this.buildValueColumn(column);
+      var c = this.buildValueColumn(column);
+
+      if (c.length > 0) {
+        query += ",\n  " + c;
+      }
     }
 
     return query;
+  };
+
+  BigQueryQuery.prototype.buildHllOuterQuery = function () {
+    var query = "time_column";
+    var numOfColumns = 1;
+    var hllInd = 0;
+
+    if (this.hasMetricColumn()) {
+      query += ",\nmetric";
+      numOfColumns += 1;
+    }
+
+    var colId = 0;
+
+    for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
+      var column = _a[_i];
+
+      var hll = _lodash2["default"].find(column, function (g) {
+        return g.type === "hll_count.merge" || g.type === "hll_count.extract";
+      });
+
+      var alias = _lodash2["default"].find(column, function (g) {
+        return g.type === "alias";
+      });
+
+      if (hll) {
+        numOfColumns += 1;
+        hllInd = numOfColumns;
+        query += ",\n" + hll.type + "(respondents_hll)";
+
+        if (alias) {
+          query += " AS " + alias.params[0];
+        }
+      } else {
+        numOfColumns += 1;
+
+        if (alias) {
+          query += ",\n" + alias.params[0];
+        } else {
+          query += ",\n" + "f" + colId;
+          colId += 1;
+        }
+      }
+    }
+
+    return {
+      query: query,
+      numOfColumns: numOfColumns,
+      hllInd: hllInd
+    };
   };
 
   BigQueryQuery.prototype._buildAggregate = function (aggregate, query) {
@@ -58859,11 +58913,19 @@ function () {
       return g.type === "window" || g.type === "moving_window";
     });
 
-    if (aggregate === undefined) {
-      this.isAggregate = false;
-    } else {
-      this.isAggregate = true;
+    var hll = _lodash2["default"].find(column, function (g) {
+      return g.type === "hll_count.merge" || g.type === "hll_count.extract";
+    });
+
+    if (hll !== undefined) {
+      this.hll = hll;
     }
+
+    if (hll !== undefined) {
+      return "HLL_COUNT.INIT (CAST(" + columnName.params[0] + " as NUMERIC)) as respondents_hll";
+    }
+
+    this.isAggregate = aggregate !== undefined;
 
     var timeshift = _lodash2["default"].find(column, function (g) {
       return g.type === "timeshift";
@@ -59000,8 +59062,10 @@ function () {
       }
     }
 
+    query = "\nGROUP BY ";
+
     if (groupSection.length) {
-      query = "\nGROUP BY " + groupSection;
+      query += groupSection;
       this.groupBy = query;
 
       if (this.isWindow) {
@@ -59016,10 +59080,39 @@ function () {
           this.groupBy += ",3";
         }
       }
+    } else {
+      query = "\nGROUP BY 1";
+    }
 
-      if (this.isAggregate === false) {
-        query += ",2";
+    var ind = 1;
+
+    if (this.hasMetricColumn()) {
+      query += ",2";
+      ind += 1;
+    }
+
+    for (var _i = 0, _a = this.target.select; _i < _a.length; _i++) {
+      var column = _a[_i];
+
+      var hll = _lodash2["default"].find(column, function (g) {
+        return g.type === "hll_count.merge" || g.type === "hll_count.extract";
+      });
+
+      var aggregate = _lodash2["default"].find(column, function (g) {
+        return g.type === "aggregate" || g.type === "percentile";
+      });
+
+      if (hll || aggregate) {
+        ind++;
+        continue;
       }
+
+      ind++;
+      query += "," + ind;
+    }
+
+    if (this.isWindow) {
+      query = ")" + query;
     }
 
     return query;
@@ -59027,6 +59120,7 @@ function () {
 
   BigQueryQuery.prototype.buildQuery = function () {
     var query = "";
+    var outerQuery = "";
     query += "\n" + "SELECT";
     query += "\n " + this.buildTimeColumn();
 
@@ -59035,28 +59129,47 @@ function () {
     }
 
     query += this.buildValueColumns();
+    var outerGroupBy = " GROUP BY 1";
+
+    if (this.hll !== undefined) {
+      var values = this.buildHllOuterQuery();
+      outerQuery = values.query;
+      var numOfColumns = values.numOfColumns;
+      var hllInd = values.hllInd;
+
+      for (var i = 2; i <= numOfColumns; i++) {
+        if (i === hllInd) {
+          continue;
+        }
+
+        outerGroupBy = outerGroupBy + "," + i;
+      }
+    }
+
     query += "\nFROM " + "`" + this.target.project + "." + this.target.dataset + "." + this.target.table + "`";
     query += this.buildWhereClause();
     query += this.buildGroupClause();
+    var orderBy = "";
 
     if (!this.isWindow) {
-      var orderBy = "\nORDER BY 1";
+      orderBy = "\nORDER BY 1";
 
       if (this.hasMetricColumn()) {
         orderBy = this.target.orderByCol === "1" ? "\nORDER BY 1,2" : "\nORDER BY 2,1";
       }
 
-      query += orderBy;
-
       if (this.target.orderBySort === "2") {
-        query += " DESC";
+        orderBy += " DESC";
       }
-    } // query += '\nLIMIT 2';
-
+    }
 
     if (this.isWindow) {
       query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;
-      query = query + ")" + this.groupBy;
+      query = query + " " + this.groupBy;
+    }
+
+    if (this.hll !== undefined) {
+      query = "\nSELECT \n" + outerQuery + " from \n(" + query + ") " + outerGroupBy + orderBy;
     }
 
     query = "#standardSQL" + query;
@@ -60653,6 +60766,20 @@ function (_super) {
       }]
     };
     this.selectMenu.push(windows);
+    var hyperloglog = {
+      text: "HyperLogLog++ Functions",
+      value: "hyperloglog",
+      submenu: [{
+        text: "Hll_count.merge",
+        type: "hll_count.merge",
+        value: "precision"
+      }, {
+        text: "Hll_count.extract",
+        type: "hll_count.extract",
+        value: "precision"
+      }]
+    };
+    this.selectMenu.push(hyperloglog);
     this.selectMenu.push({
       text: "Alias",
       value: "alias"
@@ -60906,6 +61033,12 @@ function (_super) {
     });
   };
 
+  BigQueryQueryCtrl.prototype.findHllIndex = function (selectParts) {
+    return _lodash2["default"].findIndex(selectParts, function (p) {
+      return p.def.type === "hyperloglog" || p.def.type === "hll_count.init";
+    });
+  };
+
   BigQueryQueryCtrl.prototype.findTimeShiftIndex = function (selectParts) {
     return _lodash2["default"].findIndex(selectParts, function (p) {
       return p.def.type === "timeshift";
@@ -60994,6 +61127,23 @@ function (_super) {
 
           if (aggIndex_1 !== -1) {
             selectParts.splice(aggIndex_1 + 1, 0, partModel);
+          } else {
+            selectParts.splice(1, 0, partModel);
+          }
+        }
+
+      case "hll_count.merge":
+      case "hll_count.extract":
+        var hllIndex = this.findHllIndex(selectParts);
+
+        if (hllIndex !== -1) {
+          // replace current window function
+          selectParts[windowIndex] = partModel;
+        } else {
+          var aggIndex_2 = this.findAggregateIndex(selectParts);
+
+          if (aggIndex_2 !== -1) {
+            selectParts.splice(aggIndex_2 + 1, 0, partModel);
           } else {
             selectParts.splice(1, 0, partModel);
           }
@@ -61978,6 +62128,36 @@ register({
     options: ['3', '5', '7', '10', '20']
   }],
   defaultParams: ['avg', '5']
+});
+register({
+  type: 'hll_count.merge',
+  style: 'label',
+  label: 'Hll_count.merge:',
+  params: [{
+    name: 'function',
+    type: 'string',
+    options: ['precision']
+  }, {
+    name: 'precision',
+    type: 'number',
+    options: ['10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
+  }],
+  defaultParams: ['precision', '15']
+});
+register({
+  type: 'hll_count.extract',
+  style: 'label',
+  label: 'Hll_count.extract:',
+  params: [{
+    name: 'function',
+    type: 'string',
+    options: ['precision']
+  }, {
+    name: 'precision',
+    type: 'number',
+    options: ['10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
+  }],
+  defaultParams: ['precision', '15']
 });
 exports["default"] = {
   create: createPart

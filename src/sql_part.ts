@@ -200,6 +200,44 @@ register({
 });
 
 
+register({
+  type: 'hll_count.merge',
+  style: 'label',
+  label: 'Hll_count.merge:',
+  params: [
+    {
+      name: 'function',
+      type: 'string',
+      options: ['precision'],
+    },
+    {
+      name: 'precision',
+      type: 'number',
+      options: ['10', '11', '12', '13', '14','15','16','17','18','19','20','21','22','23','24'],
+    }
+  ],
+  defaultParams: ['precision','15'],
+});
+
+register({
+  type: 'hll_count.extract',
+  style: 'label',
+  label: 'Hll_count.extract:',
+  params: [
+    {
+      name: 'function',
+      type: 'string',
+      options: ['precision'],
+    },
+    {
+      name: 'precision',
+      type: 'number',
+      options: ['10', '11', '12', '13', '14','15','16','17','18','19','20','21','22','23','24'],
+    }
+  ],
+  defaultParams: ['precision','15'],
+});
+
 export default {
   create: createPart,
 };

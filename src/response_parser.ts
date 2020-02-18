@@ -177,7 +177,12 @@ export default class ResponseParser {
     );
   }
 
-  private static _buildDataPoints(results, timeIndex, metricIndex, valueIndexes) {
+  private static _buildDataPoints(
+    results,
+    timeIndex,
+    metricIndex,
+    valueIndexes
+  ) {
     const data = [];
     let targetName = "";
     let metricName = "";
@@ -189,13 +194,14 @@ export default class ResponseParser {
           const valueIndexName = results.schema.fields[valueIndexes[i]].name;
           targetName =
             metricIndex > -1
-              ? (row.f[metricIndex].v).concat(" ", valueIndexName)
+              ? row.f[metricIndex].v.concat(" ", valueIndexName)
               : valueIndexName;
-          metricName =
-            metricIndex > -1
-              ? row.f[metricIndex].v
-              : valueIndexName;
-          const bucket = ResponseParser.findOrCreateBucket(data, targetName, metricName);
+          metricName = metricIndex > -1 ? row.f[metricIndex].v : valueIndexName;
+          const bucket = ResponseParser.findOrCreateBucket(
+            data,
+            targetName,
+            metricName
+          );
           bucket.datapoints.push([Number(row.f[valueIndexes[i]].v), epoch]);
         }
       }

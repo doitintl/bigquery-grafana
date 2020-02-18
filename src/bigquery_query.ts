@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { BigQueryDatasource } from "./datasource";
+import {BigQueryDatasource} from "./datasource";
 
 export default class BigQueryQuery {
   public static quoteLiteral(value) {
@@ -21,6 +21,7 @@ export default class BigQueryQuery {
     }
     return res;
   }
+
   public static formatDateToString(date, separator = "", addtime = false) {
     // 01, 02, 03, ... 29, 30, 31
     const DD = (date.getDate() < 10 ? "0" : "") + date.getDate();
@@ -48,6 +49,7 @@ export default class BigQueryQuery {
     }
     return interval;
   }
+
   public static getUnixSecondsFromString(str) {
     if (str === undefined) {
       return 0;
@@ -82,14 +84,17 @@ export default class BigQueryQuery {
     }
     return res;
   }
+
   public static replaceTimeShift(q) {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   }
+
   public target: any;
   public templateSrv: any;
   public scopedVars: any;
   public isWindow: boolean;
   public isAggregate: boolean;
+  public hll: any;
   public groupBy: string;
   public tmpValue: string;
 
@@ -125,6 +130,7 @@ export default class BigQueryQuery {
     // give interpolateQueryStr access to this
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
+
   public getIntervalStr(interval: string, mininterval: string) {
     const res = BigQueryDatasource._getShiftPeriod(interval);
     const groupPeriod = res[0];
@@ -153,7 +159,7 @@ export default class BigQueryQuery {
     } else {
       IntervalStr += unixSeconds + ") * " + unixSeconds + ")";
     }
-    return IntervalStr;
+    return IntervalStr + " AS time_column";
   }
 
   public hasTimeGroup() {
@@ -240,9 +246,48 @@ export default class BigQueryQuery {
   public buildValueColumns() {
     let query = "";
     for (const column of this.target.select) {
-      query += ",\n  " + this.buildValueColumn(column);
+      const c = this.buildValueColumn(column);
+      if (c.length > 0) {
+        query += ",\n  " + c;
+      }
     }
     return query;
+  }
+
+  public buildHllOuterQuery() {
+    let query = "time_column";
+    let numOfColumns = 1;
+    let hllInd = 0;
+    if (this.hasMetricColumn()) {
+      query += ",\nmetric";
+      numOfColumns += 1;
+    }
+    let colId = 0;
+    for (const column of this.target.select) {
+      const hll = _.find(
+        column,
+        (g: any) =>
+          g.type === "hll_count.merge" || g.type === "hll_count.extract"
+      );
+      const alias = _.find(column, (g: any) => g.type === "alias");
+      if (hll) {
+        numOfColumns += 1;
+        hllInd = numOfColumns;
+        query += ",\n" + hll.type + "(respondents_hll)";
+        if (alias) {
+          query += " AS " + alias.params[0];
+        }
+      } else {
+        numOfColumns += 1;
+        if (alias) {
+          query += ",\n" + alias.params[0];
+        } else {
+          query += ",\n" + "f" + colId;
+          colId += 1;
+        }
+      }
+    }
+    return { query, numOfColumns, hllInd };
   }
 
   public _buildAggregate(aggregate, query) {
@@ -269,6 +314,7 @@ export default class BigQueryQuery {
     return query;
   }
 
+
   public buildValueColumn(column) {
     const columnName = _.find(column, (g: any) => g.type === "column");
     let query = BigQueryQuery.quoteFiledName(columnName.params[0]);
@@ -280,11 +326,21 @@ export default class BigQueryQuery {
       column,
       (g: any) => g.type === "window" || g.type === "moving_window"
     );
-    if (aggregate === undefined) {
-      this.isAggregate = false;
-    } else {
-      this.isAggregate = true;
+    const hll = _.find(
+      column,
+      (g: any) => g.type === "hll_count.merge" || g.type === "hll_count.extract"
+    );
+    if (hll !== undefined) {
+      this.hll = hll;
     }
+    if (hll !== undefined) {
+      return (
+        "HLL_COUNT.INIT (CAST(" +
+        columnName.params[0] +
+        " as NUMERIC)) as respondents_hll"
+      );
+    }
+    this.isAggregate = aggregate !== undefined;
     const timeshift = _.find(column, (g: any) => g.type === "timeshift");
     query = this._buildAggregate(aggregate, query);
     if (windows) {
@@ -296,7 +352,7 @@ export default class BigQueryQuery {
       } else {
         overParts.push(partBy);
       }
-      overParts.push("ORDER BY " + this.buildTimeColumn(false) );
+      overParts.push("ORDER BY " + this.buildTimeColumn(false));
       const over = overParts.join(" ");
       let curr: string;
       let prev: string;
@@ -373,7 +429,6 @@ export default class BigQueryQuery {
       this.tmpValue = "tmp" + columnName.params[0];
       query = tmpval + " as " + this.tmpValue + ", " + query;
     }
-
     const alias = _.find(column, (g: any) => g.type === "alias");
     if (alias) {
       query += " AS " + alias.params[0];
@@ -381,9 +436,9 @@ export default class BigQueryQuery {
     if (timeshift) {
       query += " $__timeShifting(" + timeshift.params[0] + ")";
     }
-
     return query;
   }
+
   public buildWhereClause() {
     let query = "";
     const conditions = _.map(this.target.where, (tag, index) => {
@@ -439,8 +494,9 @@ export default class BigQueryQuery {
         groupSection += part.params[0];
       }
     }
+    query = "\nGROUP BY ";
     if (groupSection.length) {
-      query = "\nGROUP BY " + groupSection;
+      query += groupSection;
       this.groupBy = query;
       if (this.isWindow) {
         query += "," + this.target.timeColumn + "," + this.tmpValue;
@@ -452,21 +508,61 @@ export default class BigQueryQuery {
           this.groupBy += ",3";
         }
       }
-      if (this.isAggregate === false) {
-        query += ",2";
+    } else {
+      query = "\nGROUP BY 1";
+    }
+    let ind = 1;
+    if (this.hasMetricColumn()) {
+      query += ",2";
+      ind += 1;
+    }
+
+    for (const column of this.target.select) {
+      const hll = _.find(
+        column,
+        (g: any) =>
+          g.type === "hll_count.merge" || g.type === "hll_count.extract"
+      );
+      const aggregate = _.find(
+        column,
+        (g: any) => g.type === "aggregate" || g.type === "percentile"
+      );
+
+      if (hll || aggregate) {
+        ind++;
+        continue;
       }
+      ind++;
+      query += "," + ind;
+    }
+    if (this.isWindow) {
+      query = ")" + query;
     }
     return query;
   }
 
   public buildQuery() {
     let query = "";
+    let outerQuery = "";
     query += "\n" + "SELECT";
     query += "\n " + this.buildTimeColumn();
     if (this.hasMetricColumn()) {
       query += ",\n  " + this.buildMetricColumn();
     }
     query += this.buildValueColumns();
+    let outerGroupBy = " GROUP BY 1";
+    if (this.hll !== undefined) {
+      const values = this.buildHllOuterQuery();
+      outerQuery = values.query;
+      const numOfColumns = values.numOfColumns;
+      const hllInd = values.hllInd;
+      for (let i = 2; i <= numOfColumns; i++) {
+        if (i === hllInd) {
+          continue;
+        }
+        outerGroupBy = outerGroupBy + "," + i;
+      }
+    }
     query +=
       "\nFROM " +
       "`" +
@@ -479,21 +575,31 @@ export default class BigQueryQuery {
 
     query += this.buildWhereClause();
     query += this.buildGroupClause();
+    let orderBy = "";
     if (!this.isWindow) {
-      let orderBy = "\nORDER BY 1";
+      orderBy = "\nORDER BY 1";
       if (this.hasMetricColumn()) {
         orderBy =
           this.target.orderByCol === "1" ? "\nORDER BY 1,2" : "\nORDER BY 2,1";
       }
-      query += orderBy;
       if (this.target.orderBySort === "2") {
-        query += " DESC";
+        orderBy += " DESC";
       }
     }
-    // query += '\nLIMIT 2';
     if (this.isWindow) {
       query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;
-      query = query + ")" + this.groupBy;
+      query = query + " " + this.groupBy;
+    }
+
+    if (this.hll !== undefined) {
+      query =
+        "\nSELECT \n" +
+        outerQuery +
+        " from \n(" +
+        query +
+        ") " +
+        outerGroupBy +
+        orderBy;
     }
     query = "#standardSQL" + query;
     return query;
@@ -516,11 +622,11 @@ export default class BigQueryQuery {
     if (this.target.convertToUTC === true) {
       fromD = new Date(
         options.range.from._d.getTime() +
-          options.range.from._d.getTimezoneOffset() * 60000
+        options.range.from._d.getTimezoneOffset() * 60000
       );
       toD = new Date(
         options.range.to._d.getTime() +
-          options.range.to._d.getTimezoneOffset() * 60000
+        options.range.to._d.getTimezoneOffset() * 60000
       );
     }
     let to = "";
