@@ -60111,8 +60111,8 @@ function () {
     query.rawSql = this.queryModel.expend_macros(options);
     return this.backendSrv.datasourceRequest({
       data: {
-        query: query.rawSql,
         from: options.range.from.valueOf().toString(),
+        query: query.rawSql,
         to: options.range.to.valueOf().toString(),
         useLegacySql: false,
         useQueryCache: true
@@ -61876,9 +61876,8 @@ function () {
       list.push({
         annotation: options.annotation,
         tags: row.f[tagsColumnIndex].v ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/) : [],
-        text: row.f[textColumnIndex],
-        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000,
-        title: row.f[titleColumnIndex]
+        text: row.f[textColumnIndex].v ? row.f[textColumnIndex].v.toString() : "",
+        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
       });
     }
 

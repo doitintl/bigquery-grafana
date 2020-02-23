@@ -15,7 +15,7 @@ WHERE
 class BigQueryAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 
-  annotation: any;
+  public annotation: any;
 
   /** @ngInject */
   constructor() {
