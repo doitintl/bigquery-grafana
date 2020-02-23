@@ -218,14 +218,14 @@ describe("BigQueryQuery", () => {
       where: [],
     };
     let result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2";
+      "#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2 \nORDER BY 1";
     const query = new BigQueryQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = "m";
     result =
-      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2,3";
+      "#standardSQL\nSELECT\n `t` AS time,\n  CAST (`m`AS String ) AS metric,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2,3 \nORDER BY 1,2";
     expect(query.buildQuery()).toBe(result);
   });
 

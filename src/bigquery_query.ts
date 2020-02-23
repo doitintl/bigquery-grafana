@@ -587,6 +587,9 @@ export default class BigQueryQuery {
       if (this.target.orderBySort === "2") {
         orderBy += " DESC";
       }
+      if (this.hll === undefined) {
+        query = query + " " + orderBy;
+      }
     }
     if (this.isWindow) {
       query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;

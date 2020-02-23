@@ -59165,6 +59165,10 @@ function () {
       if (this.target.orderBySort === "2") {
         orderBy += " DESC";
       }
+
+      if (this.hll === undefined) {
+        query = query + " " + orderBy;
+      }
     }
 
     if (this.isWindow) {
