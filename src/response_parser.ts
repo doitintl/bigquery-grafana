@@ -295,9 +295,8 @@ export default class ResponseParser {
         tags: row.f[tagsColumnIndex].v
           ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/)
           : [],
-        text: row.f[textColumnIndex],
-        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000,
-        title: row.f[titleColumnIndex]
+        text: row.f[textColumnIndex].v ? row.f[textColumnIndex].v.toString() : "",
+        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
       });
     }
     return list;

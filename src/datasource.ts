@@ -433,8 +433,8 @@ export class BigQueryDatasource {
     return this.backendSrv
       .datasourceRequest({
         data: {
-          query: query.rawSql,
           from: options.range.from.valueOf().toString(),
+          query: query.rawSql,
           to: options.range.to.valueOf().toString(),
           useLegacySql: false,
           useQueryCache: true
