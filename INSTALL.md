@@ -4,19 +4,19 @@ There are multiple ways to install bigquery-grafana datasource plugin, please **
 ## From grafana.net
 Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)
 
-## Grafana-cli 
+## Grafana-cli
 
 Use the [grafana-cli](http://docs.grafana.org/plugins/installation/#installing-plugins-manually)
 
 ```bash
-grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/1.0.5.zip plugins install doitintl-bigquery-datasource
+grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/1.0.6.zip plugins install doitintl-bigquery-datasource
 ```
 
 ## Copy files
 
 Copy files to your [Grafana plugin directory](http://docs.grafana.org/plugins/installation/#grafana-plugin-directory). Restart Grafana, check datasources list at http://your.grafana.instance/datasources/new, and choose BigQuery option.
 
-## Helm Chart 
+## Helm Chart
 
 Add the below to your values.yaml
 
@@ -24,8 +24,8 @@ Add the below to your values.yaml
 ...
 ## Pass the plugins you want installed as a list.
 ##
-plugins: 
-  - https://github.com/doitintl/bigquery-grafana/archive/1.0.5.zip;doit-bigquery-datasource
+plugins:
+  - https://github.com/doitintl/bigquery-grafana/archive/1.0.6.zip;doit-bigquery-datasource
 ...
 ```
 
