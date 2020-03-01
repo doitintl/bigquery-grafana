@@ -197,6 +197,9 @@ export default class ResponseParser {
               ? row.f[metricIndex].v.concat(" ", valueIndexName)
               : valueIndexName;
           metricName = metricIndex > -1 ? row.f[metricIndex].v : valueIndexName;
+          if (metricIndex > -1 && valueIndexes.length === 1) {
+            targetName = metricName;
+          }
           const bucket = ResponseParser.findOrCreateBucket(
             data,
             targetName,
