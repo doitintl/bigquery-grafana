@@ -87,7 +87,7 @@ To authenticate with the BigQuery API, you need to create a Google Cloud Platfor
 
 #### Enable APIs
 
-Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery-json.googleapis.com) and `Enable` the API:
+Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.googleapis.com) and `Enable` the API:
 
 ![Enable GCP APIs](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bigquery_enable_api.png)
 
