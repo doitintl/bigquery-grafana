@@ -224,7 +224,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     };
     this.selectMenu.push(hyperloglog);
 
-
     this.selectMenu.push({ text: "Alias", value: "alias" });
     this.selectMenu.push({ text: "Column", value: "column" });
     this.selectMenu.push({ text: "Time Shift", value: "timeshift" });
@@ -478,10 +477,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   }
 
   public findTimeShiftIndex(selectParts) {
-    return _.findIndex(
-      selectParts,
-      (p: any) => p.def.type === "timeshift"
-    );
+    return _.findIndex(selectParts, (p: any) => p.def.type === "timeshift");
   }
   public applySegment(dst, src) {
     dst.value = src.value;
