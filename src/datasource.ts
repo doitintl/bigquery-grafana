@@ -71,6 +71,19 @@ export class BigQueryDatasource {
         .trim()
         .replace("`", "")
         .replace("`", "");
+      col = col.replace(
+        /\$__timeGroupAlias\(/g,
+        ""
+      );
+      col = col.replace(
+        /\$__timeGroup\(/g,
+        ""
+      );
+      col = col.replace(/\$__timeFilter\(/g, "");
+      col = col.replace(/\$__timeFrom\(/g, "");
+      col = col.replace(/\$__timeTo\(/g, "");
+      col = col.replace(/\$__millisTimeTo\(/g, "");
+      col = col.replace(/\$__millisTimeFrom\(/g, "");
       for (const fl of timeFields) {
         if (fl.text === col) {
           return fl;
