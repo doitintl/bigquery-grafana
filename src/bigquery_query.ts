@@ -620,18 +620,17 @@ export default class BigQueryQuery {
       return q;
     }
   }
-
   public replaceTimeFilters(q, options) {
     let fromD = options.range.from;
     let toD = options.range.to;
     if (this.target.convertToUTC === true) {
       fromD = new Date(
         options.range.from._d.getTime() +
-        options.range.from._d.getTimezoneOffset() * 60000
+          options.range.from._d.getTimezoneOffset() * 60000
       );
       toD = new Date(
         options.range.to._d.getTime() +
-        options.range.to._d.getTimezoneOffset() * 60000
+          options.range.to._d.getTimezoneOffset() * 60000
       );
     }
     let to = "";

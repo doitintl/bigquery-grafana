@@ -47,6 +47,38 @@ export class BigQueryDatasource {
     return [strInterval, shift];
   }
 
+  public static _extractFromClause(sql) {
+    let str = sql.replace(/\n/g, " ");
+    const from = str.search(/from/i);
+    str = str.substring(from + 4).trim();
+    const last = str.search(" ");
+    return str.substring(1, last - 1);
+  }
+
+  public static _FindTimeField(sql, timeFields) {
+    const select = sql.search(/select/i);
+    const from = sql.search(/from/i);
+    const fields = sql.substring(select + 6, from);
+    const splitFrom = fields.split(",");
+    let col;
+    for (let i = 0; i < splitFrom.length; i++) {
+      let field = splitFrom[i].search(/ AS /i);
+      if (field === -1) {
+        field = splitFrom[i].length;
+      }
+      col = splitFrom[i]
+        .substring(0, field)
+        .trim()
+        .replace("`", "")
+        .replace("`", "");
+      for (const fl of timeFields) {
+        if (fl.text === col) {
+          return fl;
+        }
+      }
+    }
+    return null;
+  }
   private static _handleError(error) {
     if (error.cancelled === true) {
       return [];
@@ -238,35 +270,54 @@ export class BigQueryDatasource {
         queries.push(newQuery);
       }
     });
+    let modOptions;
     const allQueryPromise = _.map(queries, query => {
       const tmpQ = this.queryModel.target.rawSql;
-      this.queryModel.target.metricColumn = query.metricColumn;
-      this.queryModel.target.partitioned = query.partitioned;
-      this.queryModel.target.partitionedField = query.partitionedField;
-      this.queryModel.target.rawSql = query.rawSql;
-      this.queryModel.target.sharded = query.sharded;
-      this.queryModel.target.table = query.table;
-      this.queryModel.target.timeColumn = query.timeColumn;
-      this.queryModel.target.timeColumnType = query.timeColumnType;
-      const modOptions = BigQueryDatasource._setupTimeShiftQuery(
-        query,
-        options
-      );
-      let q = this.queryModel.expend_macros(modOptions);
-      q = BigQueryDatasource._updatePartition(q, modOptions);
-      q = BigQueryDatasource._updateTableSuffix(q, modOptions);
-      if (query.refId.search(Shifted) > -1) {
-        q = this._updateAlias(q, modOptions, query.refId);
+      if (this.queryModel.target.rawQuery === false) {
+        this.queryModel.target.metricColumn = query.metricColumn;
+        this.queryModel.target.partitioned = query.partitioned;
+        this.queryModel.target.partitionedField = query.partitionedField;
+        this.queryModel.target.rawSql = query.rawSql;
+        this.queryModel.target.sharded = query.sharded;
+        this.queryModel.target.table = query.table;
+        this.queryModel.target.timeColumn = query.timeColumn;
+        this.queryModel.target.timeColumnType = query.timeColumnType;
+        modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
+        const q = this.setUpQ(modOptions, options, query);
+        console.log(q);
+        this.queryModel.target.rawSql = tmpQ;
+        return this.doQuery(q, options.panelId + query.refId).then(response => {
+          return ResponseParser.parseDataQuery(response, query.format);
+        });
+      } else {
+        // Fix raw sql
+        const from = BigQueryDatasource._extractFromClause(tmpQ);
+        const splitFrom = from.split(".");
+        const project = splitFrom[0];
+        const dataset = splitFrom[1];
+        const table = splitFrom[2];
+        this.getDateFields(project, dataset, table)
+          .then(dateFields => {
+            const tm = BigQueryDatasource._FindTimeField(tmpQ, dateFields);
+            this.queryModel.target.rawSql = query.rawSql;
+            this.queryModel.target.timeColumn = tm.text;
+            this.queryModel.target.timeColumnType = tm.value;
+            this.queryModel.target.table = table;
+          })
+          .catch(err => {
+            console.log(err);
+          });
+        modOptions = BigQueryDatasource._setupTimeShiftQuery(
+          query,
+          options
+        );
+        const q = this.setUpQ(modOptions, options, query);
+        console.log(q);
+        return this.doQuery(q, options.panelId + query.refId).then(
+          response => {
+          return ResponseParser.parseDataQuery(response, query.format);
+        });
       }
-      const limit = q.match(/[^]+(\bLIMIT\b)/gi);
-      if (limit == null) {
-        q += " LIMIT " + options.maxDataPoints;
-      }
-      console.log(q);
-      this.queryModel.target.rawSql = tmpQ;
-      return this.doQuery(q, options.panelId + query.refId).then(response => {
-        return ResponseParser.parseDataQuery(response, query.format);
-      });
     });
     return this.$q.all(allQueryPromise).then((responses): any => {
       const data = [];
@@ -393,6 +444,17 @@ export class BigQueryDatasource {
     return ResponseParser.parseTableFields(data, filter);
   }
 
+  public async getDateFields(
+    projectName: string,
+    datasetName: string,
+    tableName: string
+  ) {
+    return this.getTableFields(projectName, datasetName, tableName, [
+      "DATE",
+      "TIMESTAMP",
+      "DATETIME"
+    ]);
+  }
   public async getDefaultProject() {
     try {
       if (this.authenticationType === "gce" || !this.projectName) {
@@ -447,7 +509,19 @@ export class BigQueryDatasource {
         this.responseParser.transformAnnotationResponse(options, data)
       );
   }
-
+  private setUpQ(modOptions, options, query) {
+    let q = this.queryModel.expend_macros(modOptions);
+    q = BigQueryDatasource._updatePartition(q, modOptions);
+    q = BigQueryDatasource._updateTableSuffix(q, modOptions);
+    if (query.refId.search(Shifted) > -1) {
+      q = this._updateAlias(q, modOptions, query.refId);
+    }
+    const limit = q.match(/[^]+(\bLIMIT\b)/gi);
+    if (limit == null) {
+      q += " LIMIT " + options.maxDataPoints;
+    }
+    return q;
+  }
   private async doRequest(url, requestId = "requestId", maxRetries = 3) {
     return this.backendSrv
       .datasourceRequest({
@@ -511,7 +585,6 @@ export class BigQueryDatasource {
         return BigQueryDatasource._handleError(error);
       });
   }
-
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;
     console.log("New job id: ", jobId);
