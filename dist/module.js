@@ -59880,7 +59880,6 @@ function () {
             _this.getDateFields(project, dataset, table_1).then(function (dateFields) {
               var tm = BigQueryDatasource._FindTimeField(tmpQ, dateFields);
 
-              _this.queryModel.target.rawSql = query.rawSql;
               _this.queryModel.target.timeColumn = tm.text;
               _this.queryModel.target.timeColumnType = tm.value;
               _this.queryModel.target.table = table_1;
@@ -59888,6 +59887,7 @@ function () {
               console.log(err);
             });
 
+            _this.queryModel.target.rawSql = query.rawSql;
             modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
 
             var q = _this.setUpQ(modOptions, options, query);
@@ -60228,6 +60228,7 @@ function () {
   };
 
   BigQueryDatasource.prototype.setUpQ = function (modOptions, options, query) {
+    console.log("setUpQ  this.queryModel.target.rawSql", this.queryModel.target.rawSql);
     var q = this.queryModel.expend_macros(modOptions);
     q = BigQueryDatasource._updatePartition(q, modOptions);
     q = BigQueryDatasource._updateTableSuffix(q, modOptions);

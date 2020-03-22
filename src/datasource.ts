@@ -312,7 +312,6 @@ export class BigQueryDatasource {
         this.getDateFields(project, dataset, table)
           .then(dateFields => {
             const tm = BigQueryDatasource._FindTimeField(tmpQ, dateFields);
-            this.queryModel.target.rawSql = query.rawSql;
             this.queryModel.target.timeColumn = tm.text;
             this.queryModel.target.timeColumnType = tm.value;
             this.queryModel.target.table = table;
@@ -320,10 +319,8 @@ export class BigQueryDatasource {
           .catch(err => {
             console.log(err);
           });
-        modOptions = BigQueryDatasource._setupTimeShiftQuery(
-          query,
-          options
-        );
+        this.queryModel.target.rawSql = query.rawSql;
+        modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
         const q = this.setUpQ(modOptions, options, query);
         console.log(q);
         return this.doQuery(q, options.panelId + query.refId).then(
@@ -523,6 +520,7 @@ export class BigQueryDatasource {
       );
   }
   private setUpQ(modOptions, options, query) {
+    console.log("setUpQ  this.queryModel.target.rawSql", this.queryModel.target.rawSql)
     let q = this.queryModel.expend_macros(modOptions);
     q = BigQueryDatasource._updatePartition(q, modOptions);
     q = BigQueryDatasource._updateTableSuffix(q, modOptions);
