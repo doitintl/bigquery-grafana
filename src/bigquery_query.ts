@@ -1,5 +1,5 @@
 import _ from "lodash";
-import {BigQueryDatasource} from "./datasource";
+import { BigQueryDatasource } from "./datasource";
 
 export default class BigQueryQuery {
   public static quoteLiteral(value) {
@@ -44,8 +44,12 @@ export default class BigQueryQuery {
       ? q.match(/(\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g)
       : q.match(/(\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
     if (res) {
-      interval[0] = res[0].split(",")[1] ? res[0].split(",")[1].trim() : res[0].split(",")[1];
-      interval[1] = res[0].split(",")[2] ? res[0].split(",")[2].trim() : res[0].split(",")[2];
+      interval[0] = res[0].split(",")[1]
+        ? res[0].split(",")[1].trim()
+        : res[0].split(",")[1];
+      interval[1] = res[0].split(",")[2]
+        ? res[0].split(",")[2].trim()
+        : res[0].split(",")[2];
     }
     return interval;
   }
@@ -117,7 +121,7 @@ export default class BigQueryQuery {
     target.metricColumn = target.metricColumn || "none";
     target.group = target.group || [];
     target.where = target.where || [
-      { type: "macro", name: "$__timeFilter", params: [] },
+      { type: "macro", name: "$__timeFilter", params: [] }
     ];
     target.select = target.select || [
       [{ type: "column", params: ["-- value --"] }]
@@ -315,7 +319,6 @@ export default class BigQueryQuery {
     }
     return query;
   }
-
 
   public buildValueColumn(column) {
     const columnName = _.find(column, (g: any) => g.type === "column");
@@ -659,15 +662,9 @@ export default class BigQueryQuery {
       " AND " +
       to;
     const fromRange =
-      BigQueryQuery.quoteFiledName(this.target.timeColumn) +
-      " > " +
-      from +
-      " ";
+      BigQueryQuery.quoteFiledName(this.target.timeColumn) + " > " + from + " ";
     const toRange =
-      BigQueryQuery.quoteFiledName(this.target.timeColumn) +
-      " < " +
-      to +
-      " ";
+      BigQueryQuery.quoteFiledName(this.target.timeColumn) + " < " + to + " ";
     q = q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
     q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
     q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
