@@ -53,6 +53,22 @@ describe("BigQueryDatasource", () => {
     expect(res).toBe("just like that: status text");
   });
 
+  describe("_extractFromClause", () => {
+    const sql = "select a from `prj.ds.dt` where";
+
+    const res = BigQueryDatasource._extractFromClause(sql);
+    expect(res).toBe("prj.ds.dt");
+  });
+
+  describe("_FindTimeField", () => {
+    const sql = "select tm,b from `prj.ds.dt` where";
+    const fl = {
+      text: "tm"
+    };
+    const timeFields = new Array(fl);
+    const res = BigQueryDatasource._FindTimeField(sql, timeFields);
+    expect(res.text).toBe("tm");
+  });
   describe("When performing do request", () => {
     let results;
     const response = {
