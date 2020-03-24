@@ -58744,7 +58744,11 @@ function () {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   };
 
-  BigQueryQuery.prototype.getIntervalStr = function (interval, mininterval) {
+  BigQueryQuery.prototype.getIntervalStr = function (interval, mininterval, options) {
+    if (interval === "auto") {
+      interval = this._calcAutoInterval(options);
+    }
+
     var res = _datasource.BigQueryDatasource._getShiftPeriod(interval);
 
     var groupPeriod = res[0];
@@ -59221,8 +59225,8 @@ function () {
       var q = this.target.rawSql;
       q = BigQueryQuery.replaceTimeShift(q);
       q = this.replaceTimeFilters(q, options);
-      q = this.replacetimeGroupAlias(q, true);
-      q = this.replacetimeGroupAlias(q, false);
+      q = this.replacetimeGroupAlias(q, true, options);
+      q = this.replacetimeGroupAlias(q, false, options);
       return q;
     }
   };
@@ -59270,7 +59274,7 @@ function () {
     return q;
   };
 
-  BigQueryQuery.prototype.replacetimeGroupAlias = function (q, alias) {
+  BigQueryQuery.prototype.replacetimeGroupAlias = function (q, alias, options) {
     var res = BigQueryQuery._getInterval(q, alias);
 
     var interval = res[0];
@@ -59280,7 +59284,7 @@ function () {
       return q;
     }
 
-    var intervalStr = this.getIntervalStr(interval, mininterval);
+    var intervalStr = this.getIntervalStr(interval, mininterval, options);
 
     if (alias) {
       return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
@@ -59295,6 +59299,11 @@ function () {
     }
 
     return BigQueryQuery.quoteFiledName(this.target.timeColumn);
+  };
+
+  BigQueryQuery.prototype._calcAutoInterval = function (options) {
+    var seconds = (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) / 1000;
+    return Math.round(seconds / options.maxDataPoints) + "s";
   };
 
   return BigQueryQuery;
@@ -60228,7 +60237,6 @@ function () {
   };
 
   BigQueryDatasource.prototype.setUpQ = function (modOptions, options, query) {
-    console.log("setUpQ  this.queryModel.target.rawSql", this.queryModel.target.rawSql);
     var q = this.queryModel.expend_macros(modOptions);
     q = BigQueryDatasource._updatePartition(q, modOptions);
     q = BigQueryDatasource._updateTableSuffix(q, modOptions);
@@ -62228,7 +62236,7 @@ register({
   label: 'time',
   params: [{
     name: "interval",
-    options: ["$__interval", "1s", "1min", "1h", "1d", "1w", "1m", "1y"],
+    options: ["$__interval", "1s", "1min", "1h", "1d", "1w", "1m", "1y", "auto"],
     type: "interval"
   }, {
     name: 'mininterval',
