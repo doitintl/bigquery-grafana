@@ -844,7 +844,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       params = ["$__interval", "none"];
     }
     const partModel = sqlPart.create({ type: partType, params });
-
     if (partType === "time") {
       // put timeGroup at start
       this.groupParts.splice(0, 0, partModel);

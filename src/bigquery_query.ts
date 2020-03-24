@@ -135,7 +135,10 @@ export default class BigQueryQuery {
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
 
-  public getIntervalStr(interval: string, mininterval: string) {
+  public getIntervalStr(interval: string, mininterval: string, options) {
+    if (interval === "auto") {
+      interval = this._calcAutoInterval(options);
+    }
     const res = BigQueryDatasource._getShiftPeriod(interval);
     const groupPeriod = res[0];
     let IntervalStr =
@@ -618,8 +621,8 @@ export default class BigQueryQuery {
       let q = this.target.rawSql;
       q = BigQueryQuery.replaceTimeShift(q);
       q = this.replaceTimeFilters(q, options);
-      q = this.replacetimeGroupAlias(q, true);
-      q = this.replacetimeGroupAlias(q, false);
+      q = this.replacetimeGroupAlias(q, true, options);
+      q = this.replacetimeGroupAlias(q, false, options);
       return q;
     }
   }
@@ -673,14 +676,14 @@ export default class BigQueryQuery {
     return q;
   }
 
-  public replacetimeGroupAlias(q, alias: boolean) {
+  public replacetimeGroupAlias(q, alias: boolean, options) {
     const res = BigQueryQuery._getInterval(q, alias);
     const interval = res[0];
     const mininterval = res[1];
     if (!interval) {
       return q;
     }
-    const intervalStr = this.getIntervalStr(interval, mininterval);
+    const intervalStr = this.getIntervalStr(interval, mininterval, options);
     if (alias) {
       return q.replace(
         /\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g,
@@ -703,5 +706,11 @@ export default class BigQueryQuery {
       );
     }
     return BigQueryQuery.quoteFiledName(this.target.timeColumn);
+  }
+  private _calcAutoInterval(options) {
+    const seconds =
+      (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) /
+      1000;
+    return Math.round(seconds / options.maxDataPoints) + "s";
   }
 }

@@ -331,25 +331,25 @@ describe("BigQueryQuery", () => {
       where: []
     };
     const query = new BigQueryQuery(target, templateSrv);
-    expect(query.getIntervalStr("1s", "0")).toBe(
+    expect(query.getIntervalStr("1s", "0", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 1) * 1) AS time"
     );
-    expect(query.getIntervalStr("1min", "0")).toBe(
+    expect(query.getIntervalStr("1min", "0", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 60) * 60) AS time"
     );
-    expect(query.getIntervalStr("1h", "1s")).toBe(
+    expect(query.getIntervalStr("1h", "1s", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 3600) * 3600) AS time"
     );
-    expect(query.getIntervalStr("1d", "1s")).toBe(
+    expect(query.getIntervalStr("1d", "1s", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 86400) * 86400) AS time"
     );
-    expect(query.getIntervalStr("1w", "1d")).toBe(
+    expect(query.getIntervalStr("1w", "1d", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800) AS time"
     );
-    expect(query.getIntervalStr("1m", "1d")).toBe(
+    expect(query.getIntervalStr("1m", "1d", null)).toBe(
       "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01')))) AS time"
     );
-    expect(query.getIntervalStr("1y", "2d")).toBe(
+    expect(query.getIntervalStr("1y", "2d", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 31536000) * 31536000) AS time"
     );
   });

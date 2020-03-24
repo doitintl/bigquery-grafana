@@ -520,7 +520,6 @@ export class BigQueryDatasource {
       );
   }
   private setUpQ(modOptions, options, query) {
-    console.log("setUpQ  this.queryModel.target.rawSql", this.queryModel.target.rawSql)
     let q = this.queryModel.expend_macros(modOptions);
     q = BigQueryDatasource._updatePartition(q, modOptions);
     q = BigQueryDatasource._updateTableSuffix(q, modOptions);
