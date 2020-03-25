@@ -58744,6 +58744,10 @@ function () {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   };
 
+  BigQueryQuery.convertToUtc = function (d) {
+    return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  };
+
   BigQueryQuery.prototype.getIntervalStr = function (interval, mininterval, options) {
     if (interval === "auto") {
       interval = this._calcAutoInterval(options);
@@ -59236,23 +59240,14 @@ function () {
     var toD = options.range.to;
 
     if (this.target.convertToUTC === true) {
-      fromD = new Date(options.range.from._d.getTime() + options.range.from._d.getTimezoneOffset() * 60000);
-      toD = new Date(options.range.to._d.getTime() + options.range.to._d.getTimezoneOffset() * 60000);
+      fromD = BigQueryQuery.convertToUtc(options.range.from._d);
+      toD = BigQueryQuery.convertToUtc(options.range.to._d);
     }
 
     var to = "";
     var from = "";
-
-    if (this.target.timeColumnType === "DATE") {
-      from = "'" + BigQueryQuery.formatDateToString(fromD, "-") + "'";
-      to = "'" + BigQueryQuery.formatDateToString(toD, "-") + "'";
-    } else if (this.target.timeColumnType === "DATETIME") {
-      from = "'" + BigQueryQuery.formatDateToString(fromD, "-", true) + "'";
-      to = "'" + BigQueryQuery.formatDateToString(toD, "-", true) + "'";
-    } else {
-      from = "TIMESTAMP_MILLIS (" + fromD.valueOf().toString() + ")";
-      to = "TIMESTAMP_MILLIS (" + toD.valueOf().toString() + ")";
-    }
+    from = this._getDateRangePart(fromD);
+    to = this._getDateRangePart(toD);
 
     if (this.target.timeColumn === "-- time --") {
       var myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
@@ -59304,6 +59299,16 @@ function () {
   BigQueryQuery.prototype._calcAutoInterval = function (options) {
     var seconds = (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) / 1000;
     return Math.round(seconds / options.maxDataPoints) + "s";
+  };
+
+  BigQueryQuery.prototype._getDateRangePart = function (part) {
+    if (this.target.timeColumnType === "DATE") {
+      return "'" + BigQueryQuery.formatDateToString(part, "-") + "'";
+    } else if (this.target.timeColumnType === "DATETIME") {
+      return "'" + BigQueryQuery.formatDateToString(part, "-", true) + "'";
+    } else {
+      return "TIMESTAMP_MILLIS (" + part.valueOf().toString() + ")";
+    }
   };
 
   return BigQueryQuery;
@@ -61814,13 +61819,11 @@ function () {
   };
 
   ResponseParser.manipulateItem = function (item) {
-    if (item.kind === "bigquery#table") {
-      if (item.timePartitioning) {
-        item.tableReference.tableId = item.tableReference.tableId + "__partitioned";
+    if (item.kind === "bigquery#table" && item.timePartitioning) {
+      item.tableReference.tableId = item.tableReference.tableId + "__partitioned";
 
-        if (item.timePartitioning.field) {
-          item.tableReference.tableId += "__" + item.timePartitioning.field;
-        }
+      if (item.timePartitioning.field) {
+        item.tableReference.tableId += "__" + item.timePartitioning.field;
       }
     }
 

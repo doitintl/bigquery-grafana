@@ -108,13 +108,11 @@ export default class ResponseParser {
   }
 
   private static manipulateItem(item) {
-    if (item.kind === "bigquery#table") {
-      if (item.timePartitioning) {
-        item.tableReference.tableId =
-          item.tableReference.tableId + "__partitioned";
-        if (item.timePartitioning.field) {
-          item.tableReference.tableId += "__" + item.timePartitioning.field;
-        }
+    if (item.kind === "bigquery#table" && item.timePartitioning) {
+      item.tableReference.tableId =
+        item.tableReference.tableId + "__partitioned";
+      if (item.timePartitioning.field) {
+        item.tableReference.tableId += "__" + item.timePartitioning.field;
       }
     }
     return item;
@@ -298,7 +296,9 @@ export default class ResponseParser {
         tags: row.f[tagsColumnIndex].v
           ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/)
           : [],
-        text: row.f[textColumnIndex].v ? row.f[textColumnIndex].v.toString() : "",
+        text: row.f[textColumnIndex].v
+          ? row.f[textColumnIndex].v.toString()
+          : "",
         time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
       });
     }
