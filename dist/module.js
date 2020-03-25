@@ -58893,9 +58893,9 @@ function () {
         return g.type === "alias";
       });
 
-      if (hll) {
-        numOfColumns += 1;
+      numOfColumns += 1;
 
+      if (hll) {
         if (hll.type === "hll_count.merge") {
           hllInd = numOfColumns;
         }
@@ -58906,8 +58906,6 @@ function () {
           query += " AS " + alias.params[0];
         }
       } else {
-        numOfColumns += 1;
-
         if (alias) {
           query += ",\n" + alias.params[0];
         } else {
@@ -58963,9 +58961,6 @@ function () {
 
     if (hll !== undefined) {
       this.hll = hll;
-    }
-
-    if (hll !== undefined) {
       return "HLL_COUNT.INIT (CAST(" + columnName.params[0] + " as NUMERIC)) as respondents_hll";
     }
 
@@ -58990,7 +58985,7 @@ function () {
 
       overParts.push("ORDER BY " + this.buildTimeColumn(false));
       var over = overParts.join(" ");
-      var curr = void 0;
+      var curr = query;
       var prev = void 0;
       var tmpval = query;
 
@@ -58998,13 +58993,11 @@ function () {
         case "window":
           switch (windows.params[0]) {
             case "delta":
-              curr = query;
               prev = "lag(" + curr + ") OVER (" + over + ")";
               query = curr + " - " + prev;
               break;
 
             case "increase":
-              curr = query;
               prev = "lag(" + curr + ") OVER (" + over + ")";
               query = "(CASE WHEN " + curr + " >= " + prev + " THEN " + curr + " - " + prev;
               query += " WHEN " + prev + " IS NULL THEN NULL ELSE " + curr + " END)";
@@ -59017,7 +59010,6 @@ function () {
                 timeColumn = "min(" + timeColumn + ")";
               }
 
-              curr = query;
               prev = "lag(" + curr + ") OVER (" + over + ")";
               query = "(CASE WHEN " + curr + " >= " + prev + " THEN " + curr + " - " + prev;
               query += " WHEN " + prev + " IS NULL THEN NULL ELSE " + curr + " END)";
@@ -61756,19 +61748,25 @@ function () {
       };
     }
 
+    var res = null;
+
     if (format === "time_series") {
-      return ResponseParser._toTimeSeries(results);
+      res = ResponseParser._toTimeSeries(results);
     }
 
     if (format === "table") {
-      return ResponseParser._toTable(results);
+      res = ResponseParser._toTable(results);
     }
 
     if (format === "var") {
-      return ResponseParser._toVar(results);
+      res = ResponseParser._toVar(results);
     }
 
-    return [];
+    if (res === null) {
+      res = [];
+    }
+
+    return res;
   };
 
   ResponseParser._convertValues = function (v, type) {
@@ -61986,7 +61984,6 @@ function () {
   ResponseParser.prototype.transformAnnotationResponse = function (options, data) {
     var table = data.data;
     var timeColumnIndex = -1;
-    var titleColumnIndex = -1;
     var textColumnIndex = -1;
     var tagsColumnIndex = -1;
 

@@ -58,16 +58,20 @@ export default class ResponseParser {
     if (!results.rows) {
       return { data: [] };
     }
+    let res = null;
     if (format === "time_series") {
-      return ResponseParser._toTimeSeries(results);
+      res = ResponseParser._toTimeSeries(results);
     }
     if (format === "table") {
-      return ResponseParser._toTable(results);
+      res = ResponseParser._toTable(results);
     }
     if (format === "var") {
-      return ResponseParser._toVar(results);
+      res = ResponseParser._toVar(results);
     }
-    return [];
+    if (res === null) {
+      res = [];
+    }
+    return res;
   }
 
   public static _convertValues(v, type) {
@@ -137,7 +141,6 @@ export default class ResponseParser {
     }
     return res;
   }
-
   private static _toTimeSeries(results) {
     let timeIndex = -1;
     let metricIndex = -1;
@@ -272,7 +275,6 @@ export default class ResponseParser {
   public transformAnnotationResponse(options, data) {
     const table = data.data;
     let timeColumnIndex = -1;
-    const titleColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
     for (let i = 0; i < data.data.schema.fields.length; i++) {

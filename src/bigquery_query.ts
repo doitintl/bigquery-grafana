@@ -280,8 +280,8 @@ export default class BigQueryQuery {
           g.type === "hll_count.merge" || g.type === "hll_count.extract"
       );
       const alias = _.find(column, (g: any) => g.type === "alias");
+      numOfColumns += 1;
       if (hll) {
-        numOfColumns += 1;
         if (hll.type === "hll_count.merge") {
           hllInd = numOfColumns;
         }
@@ -290,7 +290,6 @@ export default class BigQueryQuery {
           query += " AS " + alias.params[0];
         }
       } else {
-        numOfColumns += 1;
         if (alias) {
           query += ",\n" + alias.params[0];
         } else {
@@ -343,8 +342,6 @@ export default class BigQueryQuery {
     );
     if (hll !== undefined) {
       this.hll = hll;
-    }
-    if (hll !== undefined) {
       return (
         "HLL_COUNT.INIT (CAST(" +
         columnName.params[0] +
@@ -365,19 +362,17 @@ export default class BigQueryQuery {
       }
       overParts.push("ORDER BY " + this.buildTimeColumn(false));
       const over = overParts.join(" ");
-      let curr: string;
+      let curr = query;
       let prev: string;
       const tmpval = query;
       switch (windows.type) {
         case "window":
           switch (windows.params[0]) {
             case "delta":
-              curr = query;
               prev = "lag(" + curr + ") OVER (" + over + ")";
               query = curr + " - " + prev;
               break;
             case "increase":
-              curr = query;
               prev = "lag(" + curr + ") OVER (" + over + ")";
               query =
                 "(CASE WHEN " +
@@ -396,8 +391,6 @@ export default class BigQueryQuery {
               if (aggregate) {
                 timeColumn = "min(" + timeColumn + ")";
               }
-
-              curr = query;
               prev = "lag(" + curr + ") OVER (" + over + ")";
               query =
                 "(CASE WHEN " +
