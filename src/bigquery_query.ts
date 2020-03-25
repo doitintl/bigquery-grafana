@@ -92,6 +92,9 @@ export default class BigQueryQuery {
   public static replaceTimeShift(q) {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   }
+  private static convertToUtc(d) {
+    return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+  }
 
   public target: any;
   public templateSrv: any;
@@ -630,27 +633,13 @@ export default class BigQueryQuery {
     let fromD = options.range.from;
     let toD = options.range.to;
     if (this.target.convertToUTC === true) {
-      fromD = new Date(
-        options.range.from._d.getTime() +
-          options.range.from._d.getTimezoneOffset() * 60000
-      );
-      toD = new Date(
-        options.range.to._d.getTime() +
-          options.range.to._d.getTimezoneOffset() * 60000
-      );
+      fromD = BigQueryQuery.convertToUtc(options.range.from._d);
+      toD = BigQueryQuery.convertToUtc(options.range.to._d);
     }
     let to = "";
     let from = "";
-    if (this.target.timeColumnType === "DATE") {
-      from = "'" + BigQueryQuery.formatDateToString(fromD, "-") + "'";
-      to = "'" + BigQueryQuery.formatDateToString(toD, "-") + "'";
-    } else if (this.target.timeColumnType === "DATETIME") {
-      from = "'" + BigQueryQuery.formatDateToString(fromD, "-", true) + "'";
-      to = "'" + BigQueryQuery.formatDateToString(toD, "-", true) + "'";
-    } else {
-      from = "TIMESTAMP_MILLIS (" + fromD.valueOf().toString() + ")";
-      to = "TIMESTAMP_MILLIS (" + toD.valueOf().toString() + ")";
-    }
+    from = this._getDateRangePart(fromD);
+    to = this._getDateRangePart(toD);
     if (this.target.timeColumn === "-- time --") {
       const myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
       const tf = myRegexp.exec(q);
@@ -712,5 +701,14 @@ export default class BigQueryQuery {
       (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) /
       1000;
     return Math.round(seconds / options.maxDataPoints) + "s";
+  }
+  private _getDateRangePart(part) {
+    if (this.target.timeColumnType === "DATE") {
+      return "'" + BigQueryQuery.formatDateToString(part, "-") + "'";
+    } else if (this.target.timeColumnType === "DATETIME") {
+      return "'" + BigQueryQuery.formatDateToString(part, "-", true) + "'";
+    } else {
+      return "TIMESTAMP_MILLIS (" + part.valueOf().toString() + ")";
+    }
   }
 }
