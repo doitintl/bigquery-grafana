@@ -693,7 +693,7 @@ export default class BigQueryQuery {
     const seconds =
       (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) /
       1000;
-    return Math.round(seconds / options.maxDataPoints) + "s";
+    return Math.ceil(seconds / options.maxDataPoints) + "s";
   }
   private _getDateRangePart(part) {
     if (this.target.timeColumnType === "DATE") {
