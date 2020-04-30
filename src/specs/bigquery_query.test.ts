@@ -331,6 +331,15 @@ describe("BigQueryQuery", () => {
       where: []
     };
     const query = new BigQueryQuery(target, templateSrv);
+    const time = {
+      from: { _d: 1588147101364 },
+      to: { _d: 1588148901364 }
+    };
+    query.templateSrv.timeRange = time;
+ 
+    expect(query.getIntervalStr("auto", undefined, { maxDataPoints: 1742 })).toBe(
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 2) * 2) AS time"
+    );
     expect(query.getIntervalStr("1s", "0", null)).toBe(
       "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 1) * 1) AS time"
     );
