@@ -236,7 +236,7 @@ export default class ResponseParser {
       const r = [];
       each(ser, v => {
         for (let i = 0; i < v.length; i++) {
-          const val = ResponseParser._convertValues(v[i].v, columns[i].type);
+          const val = v[i].v ? ResponseParser._convertValues(v[i].v, columns[i].type) : "";
           r.push(val);
         }
       });

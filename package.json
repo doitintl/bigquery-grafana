@@ -6,7 +6,8 @@
         "build:prod": "webpack --config webpack.config.prod.js",
         "build:dev": "webpack --mode development",
         "build:watch": "webpack --mode development --watch",
-        "test": "jest --config jest.config.js && codecov",
+        "test:codecov": "jest --config jest.config.js && codecov",
+        "test": "jest --config jest.config.js",
         "test:watch": "jest --config jest.config.js --watch"
     },
     "author": "DoiT International",
@@ -38,7 +39,7 @@
         "copy-webpack-plugin": "^5.1.1",
         "googleapis": "^49.0.0",
         "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
-        "jest": "^25.4.0",
+        "jest": "^26.0.1",
         "ng-annotate-webpack-plugin": "^0.3.0",
         "plugin-typescript": "^8.0.0",
         "prettier": "^1.16.4",

@@ -22,7 +22,8 @@ export default class BigQueryQuery {
     return res;
   }
 
-  public static formatDateToString(date, separator = "", addtime = false) {
+  public static formatDateToString(inputDate, separator = "", addtime = false) {
+    const date = new Date(inputDate);
     // 01, 02, 03, ... 29, 30, 31
     const DD = (date.getDate() < 10 ? "0" : "") + date.getDate();
     // 01, 02, 03, ... 10, 11, 12

@@ -58753,15 +58753,16 @@ function () {
     return res;
   };
 
-  BigQueryQuery.formatDateToString = function (date, separator, addtime) {
+  BigQueryQuery.formatDateToString = function (inputDate, separator, addtime) {
     if (separator === void 0) {
       separator = "";
     }
 
     if (addtime === void 0) {
       addtime = false;
-    } // 01, 02, 03, ... 29, 30, 31
+    }
 
+    var date = new Date(inputDate); // 01, 02, 03, ... 29, 30, 31
 
     var DD = (date.getDate() < 10 ? "0" : "") + date.getDate(); // 01, 02, 03, ... 10, 11, 12
 
@@ -59387,7 +59388,7 @@ function () {
 
   BigQueryQuery.prototype._calcAutoInterval = function (options) {
     var seconds = (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) / 1000;
-    return Math.round(seconds / options.maxDataPoints) + "s";
+    return Math.ceil(seconds / options.maxDataPoints) + "s";
   };
 
   BigQueryQuery.prototype._getDateRangePart = function (part) {
@@ -60342,7 +60343,14 @@ function () {
     var limit = q.match(/[^]+(\bLIMIT\b)/gi);
 
     if (limit == null) {
-      q += " LIMIT " + options.maxDataPoints;
+      var limitStatement = " LIMIT " + options.maxDataPoints;
+      var limitPosition = q.match(/\$__limitPosition/g);
+
+      if (limitPosition !== null) {
+        q = q.replace(/\$__limitPosition/g, limitStatement);
+      } else {
+        q += limitStatement;
+      }
     }
 
     return q;

@@ -5,6 +5,7 @@
 [![Code Climate](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/gpa.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana/coverage)
 [![Issue Count](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/issue_count.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana)
 [![CodeCpv](https://codecov.io/gh/doitintl/bigquery-grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/doitintl/bigquery-grafana/)
+[![Automated Release Notes by gren](https://img.shields.io/badge/%F0%9F%A4%96-release%20notes-00B2EE.svg)](https://github-tools.github.io/github-release-notes/)
 ## Status: Production Ready
 # BigQuery DataSource for Grafana
 
