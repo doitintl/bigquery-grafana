@@ -101,7 +101,7 @@ Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.goog
 
     ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/newserviceaccount.png)
 
-4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
+4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `BigQuery Data Viewer` and `BigQuery Job User` roles from the `Role` dropdown:
 
     ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_service_account_choose_role.png)
 5. Click the `Create` button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your BigQuery data.
