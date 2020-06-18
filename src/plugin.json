@@ -5,7 +5,9 @@
   "metrics": true,
   "tables": true,
   "annotations": true,
-  "alerting": false,
+  "alerting": true,
+  "backend": true,
+  "executable": "doitintl-bigquery-datasource",
 
   "queryOptions": {
     "maxDataPoints": true

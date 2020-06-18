@@ -529,9 +529,9 @@ export class BigQueryDatasource {
     const limit = q.match(/[^]+(\bLIMIT\b)/gi);
     if (limit == null) {
       const limitStatement = " LIMIT " + options.maxDataPoints;
-      const limitPosition = q.match(/\$__limitPosition/g); 
+      const limitPosition = q.match(/\$__limitPosition/g);
       if (limitPosition !== null)
-      { 
+      {
         q = q.replace(/\$__limitPosition/g, limitStatement);
       } else {
         q += limitStatement;

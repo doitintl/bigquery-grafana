@@ -59623,6 +59623,9 @@ var _response_parser2 = _interopRequireDefault(_response_parser);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
+// import { validate } from "@babel/types";
+// import { sheets } from "googleapis/build/src/apis/sheets";
+// import { countBy, size } from "lodash-es";
 var Shifted = "_shifted";
 
 function sleep(ms) {
@@ -62053,8 +62056,7 @@ function () {
       var r = [];
       (0, _lodashEs.each)(ser, function (v) {
         for (var i = 0; i < v.length; i++) {
-          var val = ResponseParser._convertValues(v[i].v, columns[i].type);
-
+          var val = v[i].v ? ResponseParser._convertValues(v[i].v, columns[i].type) : "";
           r.push(val);
         }
       });
