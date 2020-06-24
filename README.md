@@ -18,7 +18,7 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 
  * Query setup
  * Raw SQL editor
- * Query formatting
+ * Query builder
  * Macros support
  * Additional functions
  * Table view
@@ -27,10 +27,6 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
  * Sharded tables (`tablename_YYYYMMDD`)
  * Partitioned Tables
  * Granular slot allocation (Running queries in a project with flat-rate pricing)
-
-### Limitations:
-
- * Alerts are not yet supported due to [#6841](https://github.com/grafana/grafana/issues/6841)
 
  **Plugin Demo:**
 
@@ -124,11 +120,11 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
-#### Using the Query Builder
-The query builder provides a simple user-friendly interface to help you quickly set up your query. The builder enables you to define the basic parts of your query, The common ones are:
+### Using the Query Builder
+The query builder provides a simple yet a user-friendly interface to help you quickly compose a query. The builder enables you to define the basic parts of your query, The common ones are:
 1. The table you want to query from
 2. The time field and metric field
-3. WHERE clause - You can use one of the pre-defined macros to speed your writing time or set up your own Expression. Existing Macros are:
+3. WHERE clause - Either use one of the pre-defined macros, to speed your writing time, or set up your own expression. Existing supported Macros are:
    
    a. Macro $__timeFiler with last 7 days  example:
 ```
@@ -149,13 +145,16 @@ The query builder provides a simple user-friendly interface to help you quickly 
 
 Note: If your processing location is not the Default US one set your location from the processing Location drop-down at the top right bottom of the query builder
 
-###Troubleshooting
+### Troubleshooting
    Viewing your Query
    1. Use The Query Inspector located at the top of the query builder
-   
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryInspector.png)   
    2. The query Inspector enables you to see the clean query and troubleshoot SQL errors
-   
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/InspectPanel.png)     
    The Query builder comes with a set of defaults which are control from the top of the Query Builder
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryBuilder.png)
+
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryOptions.png)
 
 ### Build
 
