@@ -18,7 +18,7 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 
  * Query setup
  * Raw SQL editor
- * Query formatting
+ * Query builder
  * Macros support
  * Additional functions
  * Table view
@@ -27,10 +27,6 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
  * Sharded tables (`tablename_YYYYMMDD`)
  * Partitioned Tables
  * Granular slot allocation (Running queries in a project with flat-rate pricing)
-
-### Limitations:
-
- * Alerts are not yet supported due to [#6841](https://github.com/grafana/grafana/issues/6841)
 
  **Plugin Demo:**
 
@@ -123,6 +119,42 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 3. Allow access to the `BigQuery API` scope. See instructions [here](changeserviceaccountandscopes).
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
+
+### Using the Query Builder
+The query builder provides a simple yet a user-friendly interface to help you quickly compose a query. The builder enables you to define the basic parts of your query, The common ones are:
+1. The table you want to query from
+2. The time field and metric field
+3. WHERE clause - Either use one of the pre-defined macros, to speed your writing time, or set up your own expression. Existing supported Macros are:
+   
+   a. Macro $__timeFiler with last 7 days  example:
+```
+  WHERE `createDate` BETWEEN TIMESTAMP_MILLIS (1592147699012) AND TIMESTAMP_MILLIS (1592752499012) AND _PARTITIONTIME >= '2020-06-14 18:14:59' AND _PARTITIONTIME < '2020-06-21 18:14:59'
+``` 
+   b. Macro $__timeFrom with last 7 days  example:
+```
+  WHERE `createDate` > TIMESTAMP_MILLIS (1592223758609)  AND _PARTITIONTIME >= '2020-06-15 15:22:38' AND _PARTITIONTIME < '2020-06-22 15:22:38'
+```
+   c. Macro $__timeTo with last 7 days  example:
+```
+  WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
+```
+
+4. GROUP BY option - You can use a pre-defined macro or use one of the fields from your query
+    a. time ($__interval,none)
+5. ORDER BY option
+
+Note: If your processing location is not the Default US one set your location from the processing Location drop-down at the top right bottom of the query builder
+
+### Troubleshooting
+   Viewing your Query
+   1. Use The Query Inspector located at the top of the query builder
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryInspector.png)   
+   2. The query Inspector enables you to see the clean query and troubleshoot SQL errors
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/InspectPanel.png)     
+   The Query builder comes with a set of defaults which are control from the top of the Query Builder
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryBuilder.png)
+
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryOptions.png)
 
 ### Build
 
