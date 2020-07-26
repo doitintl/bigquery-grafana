@@ -207,6 +207,7 @@ export class BigQueryDatasource {
   private mixpanel;
   private runInProject: string;
   private processingLocation: string;
+  private queryPriority: string;
 
   /** @ngInject */
   constructor(
@@ -245,6 +246,7 @@ export class BigQueryDatasource {
       this.jsonData.processingLocation.length
         ? this.jsonData.processingLocation
         : undefined;
+    this.queryPriority = this.jsonData.queryPriority;
   }
 
   public async query(options) {
@@ -258,6 +260,7 @@ export class BigQueryDatasource {
       );
       this.queryModel = queryModel;
       return {
+        queryPriority: this.queryPriority,
         datasourceId: this.id,
         format: target.format,
         intervalMs: options.intervalMs,
@@ -299,7 +302,7 @@ export class BigQueryDatasource {
         const q = this.setUpQ(modOptions, options, query);
         console.log(q);
         this.queryModel.target.rawSql = tmpQ;
-        return this.doQuery(q, options.panelId + query.refId).then(response => {
+        return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then(response => {
           return ResponseParser.parseDataQuery(response, query.format);
         });
       } else {
@@ -323,7 +326,7 @@ export class BigQueryDatasource {
         modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
         const q = this.setUpQ(modOptions, options, query);
         console.log(q);
-        return this.doQuery(q, options.panelId + query.refId).then(
+        return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then(
           response => {
           return ResponseParser.parseDataQuery(response, query.format);
         });
@@ -379,7 +382,7 @@ export class BigQueryDatasource {
       queries: [interpolatedQuery],
       to: range.to.valueOf().toString()
     };
-    return this.doQuery(interpolatedQuery.rawSql, refId).then(metricData =>
+    return this.doQuery(interpolatedQuery.rawSql, refId, query.queryPriority).then(metricData =>
       ResponseParser.parseDataQuery(metricData, "var")
     );
   }
@@ -505,6 +508,7 @@ export class BigQueryDatasource {
     return this.backendSrv
       .datasourceRequest({
         data: {
+          priority: this.queryPriority,
           from: options.range.from.valueOf().toString(),
           query: query.rawSql,
           to: options.range.to.valueOf().toString(),
@@ -566,19 +570,28 @@ export class BigQueryDatasource {
       });
   }
 
-  private async doQueryRequest(query, requestId, maxRetries = 3) {
-    const path = `v2/projects/${this.runInProject}/queries`;
+  private async doQueryRequest(query, requestId, priority, maxRetries = 3) {
+    const location = this.queryModel.target.location || this.processingLocation || "US";
+    let data, queryiesOrJobs;
+    if(priority === 'INTERACTIVE'){
+      queryiesOrJobs ='queries';
+      data = {
+        priority: priority,
+        location,
+        query,
+        useLegacySql: false,
+        useQueryCache: true
+      }
+    }
+    else{ //BATCH
+      queryiesOrJobs ='jobs';
+      data = {configuration: {query: {query, priority}}}
+    }
+    const path = `v2/projects/${this.runInProject}/${queryiesOrJobs}`;
     const url = this.url + `${this.baseUrl}${path}`;
-    const location =
-      this.queryModel.target.location || this.processingLocation || "US";
-    return this.backendSrv
+      return this.backendSrv
       .datasourceRequest({
-        data: {
-          location,
-          query,
-          useLegacySql: false,
-          useQueryCache: true
-        },
+        data: data,
         method: "POST",
         requestId,
         url
@@ -586,7 +599,7 @@ export class BigQueryDatasource {
       .then(result => {
         if (result.status !== 200) {
           if (result.status >= 500 && maxRetries > 0) {
-            return this.doQueryRequest(query, requestId, maxRetries - 1);
+          return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
           }
           throw BigQueryDatasource.formatBigqueryError(result.data.error);
         }
@@ -594,7 +607,7 @@ export class BigQueryDatasource {
       })
       .catch(error => {
         if (maxRetries > 0) {
-          return this.doQueryRequest(query, requestId, maxRetries - 1);
+          return this.doQueryRequest(query, requestId,  priority, maxRetries - 1);
         }
         if (error.cancelled === true) {
           return [];
@@ -643,7 +656,7 @@ export class BigQueryDatasource {
     return rows;
   }
 
-  private async doQuery(query, requestId, maxRetries = 1) {
+  private async doQuery(query, requestId, priority = "INTERACTIVE", maxRetries = 1) {
     if (!query) {
       return {
         rows: null,
@@ -665,7 +678,7 @@ export class BigQueryDatasource {
     let queryResults = await this.doQueryRequest(
       query,
       requestId,
-      (maxRetries = 1)
+      priority
     );
     if (queryResults.length === 0) {
       return {

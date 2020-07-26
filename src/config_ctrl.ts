@@ -14,6 +14,7 @@ export class BigQueryConfigCtrl {
   private readonly defaultSendUsageData: boolean;
   private readonly defaultFlatRateProject: string;
   private readonly defaultProcessingLocation: string;
+  private queryPriority: { text: string; value: string; }[];
 
   /** @ngInject */
   constructor(datasourceSrv) {
@@ -36,6 +37,10 @@ export class BigQueryConfigCtrl {
     if (this.current.jsonData.processingLocations === undefined) {
       this.current.jsonData.processingLocations = this.defaultProcessingLocation;
     }
+    if (this.current.jsonData.queryPriority === undefined) {
+      this.current.jsonData.queryPriority = "INTERACTIVE";
+    }
+
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.authenticationTypes = [
@@ -65,6 +70,7 @@ export class BigQueryConfigCtrl {
       { text: "Singapore (asia-southeast1)", value: "asia-southeast1" },
       { text: "Sydney (australia-southeast1)", value: "australia-southeast1" }
     ];
+    this.queryPriority = [{text:"INTERACTIVE", value: "INTERACTIVE"}, {text:"BATCH", value: "BATCH"}];
   }
 
   public onUpload(json) {
