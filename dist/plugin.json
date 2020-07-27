@@ -8,7 +8,9 @@
   "alerting": true,
   "backend": true,
   "executable": "doitintl-bigquery-datasource",
-
+  "dependencies":{
+    "grafanaVersion": "7.x.x"
+  },
   "queryOptions": {
     "maxDataPoints": true
   },

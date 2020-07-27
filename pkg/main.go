@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	log.DefaultLogger.Info("lior test")
+	// log.DefaultLogger.Info("lior test")
 	// Start listening to requests send from Grafana. This call is blocking so
 	// it wont finish until Grafana shutsdown the process or the plugin choose
 	// to exit close down by itself

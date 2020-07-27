@@ -142,6 +142,32 @@ describe("BigQueryDatasource", () => {
       expect(results.rows.length).toBe(3);
       expect(results.schema.fields.length).toBe(2);
     });
+
+    it("should return expected data batch api", async () => {
+      let priority = "BATCH";
+      await ctx.ds.doQuery("select * from table", "id-1", priority).then(data => {
+        results = data;
+      });
+      expect(results.rows.length).toBe(3);
+      expect(results.schema.fields.length).toBe(2);
+    });
+    it("should return expected data interactive", async () => {
+      let priority = "INTERACTIVE";
+      await ctx.ds.doQuery("select * from table", "id-1", priority).then(data => {
+        results = data;
+      });
+      expect(results.rows.length).toBe(3);
+      expect(results.schema.fields.length).toBe(2);
+    });
+
+    it("should return expected data interactive", async () => {
+      let priority = "INTERACTIVE";
+      await ctx.ds.doQueryRequest("select * from table", "id-1", priority).then(data => {
+        results = data;
+      });
+      expect(results.data.rows.length).toBe(3);
+      expect(results.data.schema.fields.length).toBe(2);
+    });
   });
 
   describe("_waitForJobComplete", () => {

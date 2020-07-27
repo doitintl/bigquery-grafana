@@ -49,6 +49,11 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 | _Default_             | Default datasource means that it will be pre-selected for new panels.               |
 | _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it. |
 
+### Set query priority
+
+You can now set query priority "INTERACTIVE" or "BATCH" per datasouce
+![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryPriority.png)
+
 ### Example of Provisioning a File
 
 You can manage DataSource via [provisioning system](https://grafana.com/docs/administration/provisioning/#datasources). See the example below of a configuration file.
