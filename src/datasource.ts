@@ -572,20 +572,11 @@ export class BigQueryDatasource {
 
   private async doQueryRequest(query, requestId, priority, maxRetries = 3) {
     const location = this.queryModel.target.location || this.processingLocation || "US";
-    let data, queryiesOrJobs;
-    if(priority === 'INTERACTIVE'){
-      queryiesOrJobs ='queries';
-      data = {
-        priority: priority,
-        location,
-        query,
-        useLegacySql: false,
-        useQueryCache: true
-      }
-    }
-    else{ //BATCH
+    let data, queryiesOrJobs ='queries';
+      data = {priority: priority, location, query, useLegacySql: false,useQueryCache: true};
+    if(priority.toUpperCase() === 'BATCH'){
       queryiesOrJobs ='jobs';
-      data = {configuration: {query: {query, priority}}}
+      data = {configuration: {query: {query, priority}}};
     }
     const path = `v2/projects/${this.runInProject}/${queryiesOrJobs}`;
     const url = this.url + `${this.baseUrl}${path}`;

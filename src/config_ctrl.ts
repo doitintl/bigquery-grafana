@@ -37,7 +37,7 @@ export class BigQueryConfigCtrl {
     if (this.current.jsonData.processingLocations === undefined) {
       this.current.jsonData.processingLocations = this.defaultProcessingLocation;
     }
-    if (this.current.jsonData.queryPriority === undefined) {
+    if (!(this.current.jsonData.queryPriority && this.current.jsonData.queryPriority.match(/\b^INTERACTIVE$\b|\b^BATCH$\b/i))) {
       this.current.jsonData.queryPriority = "INTERACTIVE";
     }
 
@@ -68,7 +68,8 @@ export class BigQueryConfigCtrl {
       { text: "Taiwan (asia-east1)", value: "asia-east1" },
       { text: "Tokyo (asia-northeast1)", value: "asia-northeast1" },
       { text: "Singapore (asia-southeast1)", value: "asia-southeast1" },
-      { text: "Sydney (australia-southeast1)", value: "australia-southeast1" }
+      { text: "Sydney (australia-southeast1)", value: "australia-southeast1" },
+      { text: "Seoul (asia-northeast3)", value: "asia-northeast3"}
     ];
     this.queryPriority = [{text:"INTERACTIVE", value: "INTERACTIVE"}, {text:"BATCH", value: "BATCH"}];
   }
