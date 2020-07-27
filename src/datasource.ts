@@ -590,7 +590,7 @@ export class BigQueryDatasource {
       .then(result => {
         if (result.status !== 200) {
           if (result.status >= 500 && maxRetries > 0) {
-          return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
+            return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
           }
           throw BigQueryDatasource.formatBigqueryError(result.data.error);
         }

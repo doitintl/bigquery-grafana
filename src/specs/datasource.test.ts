@@ -399,9 +399,6 @@ describe("BigQueryDatasource", () => {
         });
       expect(results.length).toBe(6);
     });
-    // it("should do query request", async () => {
-    //   await ctx.ds.query();
-    // });
   });
   describe("When performing getProjects", () => {
     let queryResults;
