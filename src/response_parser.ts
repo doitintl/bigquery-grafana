@@ -292,17 +292,19 @@ export default class ResponseParser {
       });
     }
     const list = [];
-    for (const row of table.rows) {
-      list.push({
-        annotation: options.annotation,
-        tags: row.f[tagsColumnIndex].v
-          ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/)
-          : [],
-        text: row.f[textColumnIndex].v
-          ? row.f[textColumnIndex].v.toString()
-          : "",
-        time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
-      });
+    if(table.rows && table.rows.length) {
+      for (const row of table.rows) {
+        list.push({
+          annotation: options.annotation,
+          tags: row.f[tagsColumnIndex].v
+            ? row.f[tagsColumnIndex].v.trim().split(/\s*,\s*/)
+            : [],
+          text: row.f[textColumnIndex].v
+            ? row.f[textColumnIndex].v.toString()
+            : "",
+          time: Number(Math.floor(Number(row.f[timeColumnIndex].v))) * 1000
+        });
+      }
     }
     return list;
   }
