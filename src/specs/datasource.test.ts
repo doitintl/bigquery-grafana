@@ -897,6 +897,25 @@ describe("BigQueryDatasource", () => {
       expect(results.columns[0].type).toBe("TIMESTAMP");
     });
   });
+
+  describe("ResponseParser", () => {
+    it("transformAnnotationResponse empty results with rows", () => {
+      let options = {annotation: {}};
+      let data = {data: {schema: {fields: [{name:"time"}]}, rows: []}};
+      let p = new Promise((reject, resolve)=>{});
+      let rp = new ResponseParser(p);
+      let list = rp.transformAnnotationResponse(options, data);
+      expect(list.length).toBe(0);
+    });
+    it("transformAnnotationResponse empty results without rows", () => {
+      let options = {annotation: {}};
+      let data = {data: {schema: {fields: [{name:"time"}]} }};
+      let p = new Promise((reject, resolve)=>{});
+      let rp = new ResponseParser(p);
+      let list = rp.transformAnnotationResponse(options, data);
+      expect(list.length).toBe(0);
+    });
+  });
   describe("When performing parseDataQuery for time_series", () => {
     let results;
     const response = {
