@@ -897,6 +897,125 @@ describe("BigQueryDatasource", () => {
       expect(results.columns[0].type).toBe("TIMESTAMP");
     });
   });
+
+  describe("ResponseParser", () => {
+    it("transformAnnotationResponse empty results with 0 rows", () => {
+      const fields = [
+        {
+          name: "time",
+          type: "TIMESTAMP",
+          mode: "NULLABLE"
+        },
+        {
+          name: "text",
+          type: "FLOAT",
+          mode: "NULLABLE"
+        },
+        {
+          name: "tags",
+          type: "FLOAT",
+          mode: "NULLABLE"
+        }
+      ];
+      let options = {annotation: {}};
+      let data = {data: {schema: {fields} }};
+      let p = new Promise((reject, resolve)=>{});
+      let rp = new ResponseParser(p);
+      let list = rp.transformAnnotationResponse(options, data);
+      expect(list.length).toBe(0);
+    });
+    it("transformAnnotationResponse empty results without rows", () => {
+      const fields = [
+        {
+          name: "time",
+          type: "TIMESTAMP",
+          mode: "NULLABLE"
+        },
+        {
+          name: "text",
+          type: "FLOAT",
+          mode: "NULLABLE"
+        },
+        {
+          name: "tags",
+          type: "FLOAT",
+          mode: "NULLABLE"
+        }
+      ];
+      let options = {annotation: {}};
+      let data = {data: {schema: {fields} }};
+      let p = new Promise((reject, resolve)=>{});
+      let rp = new ResponseParser(p);
+      let list = rp.transformAnnotationResponse(options, data);
+      expect(list.length).toBe(0);
+    });
+    it("transformAnnotationResponse results with 3 rows", () => {
+      const rows = [
+        {
+          f: [
+            {
+              v: "1.521578851E9"
+            },
+            {
+              v: "37.7753058"
+            },
+            {
+              v: "42.7753058"
+            }
+          ]
+        },
+        {
+          f: [
+            {
+              v: "1.521578916E9"
+            },
+            {
+              v: "37.3322326"
+            },
+            {
+              v: "42.7753058"
+            }
+          ]
+        },
+        {
+          f: [
+            {
+              v: "1.521578927E9"
+            },
+            {
+              v: "37.781752"
+            },
+            {
+              v: "42.7753058"
+            }
+          ]
+        }
+      ],
+      fields = [
+        {
+          name: "time",
+          type: "TIMESTAMP",
+          mode: "NULLABLE"
+        },
+        {
+          name: "text",
+          type: "FLOAT",
+          mode: "NULLABLE"
+        },
+        {
+          name: "tags",
+          type: "FLOAT",
+          mode: "NULLABLE"
+        }
+      ];
+      let options = {annotation: {}};
+      let data = {data: {schema: {fields}, rows}};
+      let p = new Promise((reject, resolve)=>{});
+      let rp = new ResponseParser(p);
+      let list = rp.transformAnnotationResponse(options, data);
+      expect(list.length).toBe(3);
+    });
+  });
   describe("When performing parseDataQuery for time_series", () => {
     let results;
     const response = {
