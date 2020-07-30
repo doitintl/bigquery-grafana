@@ -247,7 +247,7 @@ export default class BigQueryQuery {
       return (
         "CAST (" +
         BigQueryQuery.quoteFiledName(this.target.metricColumn) +
-        "AS String ) AS metric"
+        " AS String ) AS metric"
       );
     }
 
