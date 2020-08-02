@@ -594,8 +594,14 @@ export default class BigQueryQuery {
         query = query + " " + orderBy;
       }
     }
-    if (this.isWindow) {
-      query = "\nSELECT *  EXCEPT (" + this.tmpValue + ") From \n (" + query;
+    else {
+      const DELIMITER = '.';
+      let starFields = "*", parent, child = this.tmpValue;
+      if(this.tmpValue.includes(DELIMITER)){
+        [parent, child] = this.tmpValue.split(DELIMITER);
+        starFields += `, ${parent}.*`;
+      }
+      query = "\nSELECT " + starFields + " EXCEPT (" + child + ") From \n (" + query;
       query = query + " " + this.groupBy;
     }
 

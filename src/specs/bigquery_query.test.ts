@@ -229,6 +229,26 @@ describe("BigQueryQuery", () => {
     expect(query.buildQuery()).toBe(result);
   });
 
+  describe("Window function with except and repeated field", () => {
+    const target = {
+      select: [[{ type: "column", params: ["value"] }]],
+      table: "table",
+      timeColumn: "t",
+      where: [],
+    };
+    const query = new BigQueryQuery(target, templateSrv);
+    query.tmpValue = "t.l";
+    query.isWindow = true;
+    const result = "#standardSQL\nSELECT *, t.* EXCEPT (l) From \n" +
+      " (\n" +
+      "SELECT\n" +
+      " `t` AS time,\n" +
+      "  `value`\n" +
+      "FROM `undefined.undefined.table`)\n" +
+      "GROUP BY 1,2 ";
+    expect(query.buildQuery()).toBe(result);
+  });
+
   describe("escapeLiteral", () => {
     const res = BigQueryQuery.escapeLiteral("'a");
     expect(BigQueryQuery.escapeLiteral("'a")).toBe("''a");
