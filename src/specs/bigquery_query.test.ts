@@ -195,6 +195,12 @@ describe("BigQueryQuery", () => {
     expect(query.buildWhereClause()).toBe(
       "\nWHERE\n  $__timeFilter(t) AND\n  v = 1"
     );
+    query.target.where = [];
+    query.target.partitioned = true;
+    const time = { from: { _d: "1987-06-30" }, to: { _d: "1987-06-30" } };
+    query.templateSrv.timeRange = time;
+    const whereClause = query.buildWhereClause();
+    expect(whereClause).toBe("\nWHERE\n  _PARTITIONTIME >= '1987-06-30 03:00:00' AND\n  _PARTITIONTIME < '1987-06-30 03:00:00'");
   });
 
   describe("When generating GROUP BY clause", () => {
