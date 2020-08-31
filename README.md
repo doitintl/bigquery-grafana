@@ -144,6 +144,8 @@ The query builder provides a simple yet a user-friendly interface to help you qu
   WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
 ```
 
+You can now use timeFilter macro in raw sql mode
+
 4. GROUP BY option - You can use a pre-defined macro or use one of the fields from your query
     a. time ($__interval,none)
 5. ORDER BY option

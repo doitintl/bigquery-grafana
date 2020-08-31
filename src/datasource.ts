@@ -228,9 +228,7 @@ export class BigQueryDatasource {
     this.authenticationType =
       instanceSettings.jsonData.authenticationType || "jwt";
     (async () => {
-      this.projectName =
-        instanceSettings.jsonData.defaultProject ||
-        (await this.getDefaultProject());
+      this.projectName = instanceSettings.jsonData.defaultProject || (await this.getDefaultProject());
     })();
     this.mixpanel = require("mixpanel-browser");
     if (this.jsonData.sendUsageData !== false) {
@@ -525,6 +523,7 @@ export class BigQueryDatasource {
   }
   private setUpQ(modOptions, options, query) {
     let q = this.queryModel.expend_macros(modOptions);
+    q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions);
     q = BigQueryDatasource._updatePartition(q, modOptions);
     q = BigQueryDatasource._updateTableSuffix(q, modOptions);
     if (query.refId.search(Shifted) > -1) {
@@ -542,6 +541,31 @@ export class BigQueryDatasource {
       }
     }
     return q;
+  }
+  /**
+   * Add partition to query unless it has one
+   * @param query 
+   * @param isPartitioned 
+   * @param partitionedField 
+   * @param options 
+   */
+  private setUpPartition(query, isPartitioned, partitionedField, options){
+    partitionedField = partitionedField ? partitionedField : '_PARTITIONTIME';
+    if(isPartitioned && !query.match(partitionedField)) {
+      let fromD = BigQueryQuery.convertToUtc(options.range.from._d);
+      let toD = BigQueryQuery.convertToUtc(options.range.to._d);
+      const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, "-", true)}'`;
+      const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(toD, "-", true)}'`;
+      const partition = `where ${from} AND ${to} AND `;
+      if(query.match(/where/i))
+        query = query.replace(/where/i, partition);
+      else {
+        const reg = /from ('|`|"|){1}(.*?)('|`|"|){1} as ('|`|"|)(\S*)('|`|"|){1}|from ('|`|"|){1}(\S*)('|`|"|){1}/i;
+        const fromMatch = query.match(reg);
+        query = query.replace(reg, `${fromMatch} ${fromMatch}`);
+      }
+    }
+    return query;
   }
   private async doRequest(url, requestId = "requestId", maxRetries = 3) {
     return this.backendSrv

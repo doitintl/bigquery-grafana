@@ -93,7 +93,7 @@ export default class BigQueryQuery {
   public static replaceTimeShift(q) {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, "");
   }
-  private static convertToUtc(d) {
+  static convertToUtc(d) {
     return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
   }
 
@@ -454,8 +454,16 @@ export default class BigQueryQuery {
           return tag.params.join(" ");
       }
     });
-    if (conditions.length > 0) {
-      query = "\nWHERE\n  " + conditions.join(" AND\n  ");
+    if (this.target.partitioned) {
+      const partitionedField = this.target.partitionedField ? this.target.partitionedField : "_PARTITIONTIME";
+      if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
+        const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d, "-", true)}'`;
+        conditions.push(from);
+      }
+      if (this.templateSrv.timeRange && this.templateSrv.timeRange.to) {
+        const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d, "-", true)}'`;
+        conditions.push(to);
+      }
     }
     if (this.target.sharded) {
       const from = BigQueryQuery.formatDateToString(
@@ -464,23 +472,11 @@ export default class BigQueryQuery {
       const to = BigQueryQuery.formatDateToString(
         this.templateSrv.timeRange.to._d
       );
-      query += " AND  _TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
+      const sharded = "_TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
+      conditions.push(sharded);
     }
-    if (this.target.partitioned && this.target.partitionedField === "") {
-      query +=
-        " AND _PARTITIONTIME >= '" +
-        BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.from._d,
-          "-",
-          true
-        ) +
-        "' AND _PARTITIONTIME < '" +
-        BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.to._d,
-          "-",
-          true
-        ) +
-        "'";
+    if (conditions.length > 0) {
+      query = "\nWHERE\n  " + conditions.join(" AND\n  ");
     }
     return query;
   }
@@ -657,7 +653,7 @@ export default class BigQueryQuery {
       BigQueryQuery.quoteFiledName(this.target.timeColumn) + " > " + from + " ";
     const toRange =
       BigQueryQuery.quoteFiledName(this.target.timeColumn) + " < " + to + " ";
-    q = q.replace(/\$__timeFilter\(([\w_.]+)\)/g, range);
+    q = q.replace(/\$__timeFilter\((.*?)\)/g, range);
     q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
     q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
     q = q.replace(/\$__millisTimeTo\(([\w_.]+)\)/g, to);
