@@ -597,7 +597,7 @@ export class BigQueryDatasource {
   private async doQueryRequest(query, requestId, priority, maxRetries = 3) {
     const location = this.queryModel.target.location || this.processingLocation || "US";
     let data, queryiesOrJobs ='queries';
-      data = {priority: priority, location, query, useLegacySql: false,useQueryCache: true};
+      data = {priority: priority, location, query, useLegacySql: false,useQueryCache: true};//ExternalDataConfiguration
     if(priority.toUpperCase() === 'BATCH'){
       queryiesOrJobs ='jobs';
       data = {configuration: {query: {query, priority}}};
@@ -691,6 +691,12 @@ export class BigQueryDatasource {
       };
     }
     let queryResults = await this.doQueryRequest(
+      //"tableDefinitions": {
+    //   string: {
+    //     object (ExternalDataConfiguration)
+    //   },
+    //   ...
+    // },
       query,
       requestId,
       priority
