@@ -231,7 +231,7 @@ export default class BigQueryQuery {
 
   public buildMetricColumn() {
     if (this.hasMetricColumn()) {
-      return 'CAST (' + BigQueryQuery.quoteFiledName(this.target.metricColumn) + ' AS String ) AS metric';
+      return BigQueryQuery.quoteFiledName(this.target.metricColumn) + ' AS metric';
     }
 
     return '';

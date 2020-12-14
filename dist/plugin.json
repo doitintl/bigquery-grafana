@@ -30,7 +30,7 @@
       { "name": "GitHub", "url": "https://github.com/doitintl/bigquery-grafana" },
       { "name": "MIT License", "url": "https://github.com/doitintl/bigquery-grafana/blob/master/LICENSE.md" }
     ],
-    "version": "2.0.0"
+    "version": "2.0.1"
   },
   "routes": [
     {
