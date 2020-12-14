@@ -1,22 +1,20 @@
 module.exports = {
   verbose: true,
-  roots: ["<rootDir>"],
+  roots: ['<rootDir>'],
   transform: {
-    "\\.(js|jsx)$": "babel-jest",
-    "\\.(ts|tsx)?$": "ts-jest",
+    '\\.(js|jsx)$': 'babel-jest',
+    '\\.(ts|tsx)?$': 'ts-jest',
   },
-  testRegex: "(\\.|/)([jt]est)\\.ts$",
-  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-  coverageDirectory: "./coverage/",
+  testRegex: '(\\.|/)([jt]est)\\.ts$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  coverageDirectory: './coverage/',
   collectCoverage: true,
   moduleNameMapper: {
-    "app/core/utils/datemath": "<rootDir>/node_modules/grafana-sdk-mocks/app/core/utils/datemath.ts",
+    'app/core/utils/datemath': '<rootDir>/node_modules/grafana-sdk-mocks/app/core/utils/datemath.ts',
   },
-  transformIgnorePatterns: [
-    "<rootDir>/node_modules/(?!lodash-es).+\\.js$"
-  ],
+  transformIgnorePatterns: ['<rootDir>/node_modules/(?!lodash-es).+\\.js$'],
   globals: {
-    "ts-jest": {
+    'ts-jest': {
       tsConfig: {
         strictNullChecks: false,
         noImplicitAny: false,
@@ -24,5 +22,3 @@ module.exports = {
     },
   },
 };
-
-

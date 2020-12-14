@@ -1,4 +1,3 @@
-
 [![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=svg)](https://github.com/doitintl/bigquery-grafana/stargazers)
 ![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=svg)
 [![Circle CI](https://circleci.com/gh/doitintl/bigquery-grafana.svg?style=svg)](https://circleci.com/gh/doitintl/bigquery-grafana)
@@ -6,32 +5,34 @@
 [![Issue Count](https://codeclimate.com/github/doitintl/bigquery-grafana/badges/issue_count.svg)](https://codeclimate.com/github/doitintl/bigquery-grafana)
 [![CodeCpv](https://codecov.io/gh/doitintl/bigquery-grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/doitintl/bigquery-grafana/)
 [![Automated Release Notes by gren](https://img.shields.io/badge/%F0%9F%A4%96-release%20notes-00B2EE.svg)](https://github-tools.github.io/github-release-notes/)
+
 ## Status: Production Ready
+
 # BigQuery DataSource for Grafana
 
 A BigQuery DataSource plugin provides support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.
 
 ### Quick Start
+
 There are multiple ways to install bigquery-grafana. See [INSTALL](https://doitintl.github.io/bigquery-grafana/INSTALL) for more information.
 
 ### Features:
 
- * Query setup
- * Raw SQL editor
- * Query builder
- * Macros support
- * Additional functions
- * Table view
- * Annotations
- * BQ queries in variables
- * Sharded tables (`tablename_YYYYMMDD`)
- * Partitioned Tables
- * Granular slot allocation (Running queries in a project with flat-rate pricing)
+- Query setup
+- Raw SQL editor
+- Query builder
+- Macros support
+- Additional functions
+- Table view
+- Annotations
+- BQ queries in variables
+- Sharded tables (`tablename_YYYYMMDD`)
+- Partitioned Tables
+- Granular slot allocation (Running queries in a project with flat-rate pricing)
 
- **Plugin Demo:**
+**Plugin Demo:**
 
- ![plugin demo](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/grafana-bigquery-demo.gif)
-
+![plugin demo](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/grafana-bigquery-demo.gif)
 
 ## Adding the DataSource to Grafana
 
@@ -57,6 +58,7 @@ You can now set query priority "INTERACTIVE" or "BATCH" per datasouce
 ### Example of Provisioning a File
 
 You can manage DataSource via [provisioning system](https://grafana.com/docs/administration/provisioning/#datasources). See the example below of a configuration file.
+
 ```
 apiVersion: 1
 
@@ -85,7 +87,7 @@ There are two ways to authenticate the BigQuery plugin - either by uploading a G
 
 ### Using a Google Service Account Key File
 
-To authenticate with the BigQuery API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you can give the service account permissions in each project or  create one datasource per GCP Project.
+To authenticate with the BigQuery API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you can give the service account permissions in each project or create one datasource per GCP Project.
 
 #### Enable APIs
 
@@ -98,14 +100,16 @@ Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.goog
 1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on `Create credentials` and choose `Service account key`.
 
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/createserviceaccountbutton.png)
+   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/createserviceaccountbutton.png)
+
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/newserviceaccount.png)
+   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/newserviceaccount.png)
 
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `BigQuery Data Viewer` and `BigQuery Job User` roles from the `Role` dropdown:
 
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_service_account_choose_role.png)
+   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_service_account_choose_role.png)
+
 5. Click the `Create` button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your BigQuery data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
@@ -113,7 +117,7 @@ Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.goog
 
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_grafana_key_uploaded.png)
+   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_grafana_key_uploaded.png)
 
 ### Using GCE Default Service Account
 
@@ -126,20 +130,27 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
 ### Using the Query Builder
+
 The query builder provides a simple yet a user-friendly interface to help you quickly compose a query. The builder enables you to define the basic parts of your query, The common ones are:
+
 1. The table you want to query from
 2. The time field and metric field
 3. WHERE clause - Either use one of the pre-defined macros, to speed your writing time, or set up your own expression. Existing supported Macros are:
-   
-   a. Macro $__timeFiler with last 7 days  example:
+
+   a. Macro $__timeFiler with last 7 days example:
+
 ```
   WHERE `createDate` BETWEEN TIMESTAMP_MILLIS (1592147699012) AND TIMESTAMP_MILLIS (1592752499012) AND _PARTITIONTIME >= '2020-06-14 18:14:59' AND _PARTITIONTIME < '2020-06-21 18:14:59'
-``` 
-   b. Macro $__timeFrom with last 7 days  example:
+```
+
+b. Macro $__timeFrom with last 7 days example:
+
 ```
   WHERE `createDate` > TIMESTAMP_MILLIS (1592223758609)  AND _PARTITIONTIME >= '2020-06-15 15:22:38' AND _PARTITIONTIME < '2020-06-22 15:22:38'
 ```
-   c. Macro $__timeTo with last 7 days  example:
+
+c. Macro $__timeTo with last 7 days example:
+
 ```
   WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
 ```
@@ -147,19 +158,21 @@ The query builder provides a simple yet a user-friendly interface to help you qu
 You can now use timeFilter macro in raw sql mode
 
 4. GROUP BY option - You can use a pre-defined macro or use one of the fields from your query
-    a. time ($__interval,none)
+   a. time ($__interval,none)
 5. ORDER BY option
 
 Note: If your processing location is not the Default US one set your location from the processing Location drop-down at the top right bottom of the query builder
 
 ### Troubleshooting
-   Viewing your Query
-   1. Use The Query Inspector located at the top of the query builder
-![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryInspector.png)   
-   2. The query Inspector enables you to see the clean query and troubleshoot SQL errors
-![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/InspectPanel.png)     
-   The Query builder comes with a set of defaults which are control from the top of the Query Builder
-![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryBuilder.png)
+
+Viewing your Query
+
+1.  Use The Query Inspector located at the top of the query builder
+    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryInspector.png)
+2.  The query Inspector enables you to see the clean query and troubleshoot SQL errors
+    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/InspectPanel.png)  
+     The Query builder comes with a set of defaults which are control from the top of the Query Builder
+    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryBuilder.png)
 
 ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryOptions.png)
 
@@ -168,11 +181,13 @@ Note: If your processing location is not the Default US one set your location fr
 The build works with Yarn:
 
 #### Development Build
+
 ```
 yarn run build:dev
 ```
 
 #### Production Build
+
 ```
 yarn run build:prod
 ```
@@ -190,4 +205,3 @@ See the [Contribution Guide](https://doitintl.github.io/bigquery-grafana/CONTRIB
 ## License
 
 See the [License File](https://doitintl.github.io/bigquery-grafana/LICENSE).
-

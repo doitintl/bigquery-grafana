@@ -29,7 +29,6 @@ jobs:
           name: build
           command: 'yarn run build:prod'
       - codecov/upload:
-
           token: a1127a6b-ce13-4174-9d14-6dbfa7252a54
           file: coverage/*.json
       - store_artifacts:
