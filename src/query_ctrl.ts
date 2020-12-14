@@ -60,27 +60,35 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       { text: 'DESC', value: '2' },
     ];
     this.locations = [
+      // Multi-regional locations
       { text: 'United States (US)', value: 'US' },
       { text: 'European Union (EU)', value: 'EU' },
+      // Americas
+      { text: 'Las Vegas (us-west4)', value: 'us-west4' },
       { text: 'Los Angeles (us-west2)', value: 'us-west2' },
-      {
-        text: 'Montréal (northamerica-northeast1)',
-        value: 'northamerica-northeast1',
-      },
-      { text: 'South Carolina (us-east1)', value: 'us-east1' },
+      { text: 'Montréal (northamerica-northeast1)', value: 'northamerica-northeast1' },
       { text: 'Northern Virginia (us-east4)', value: 'us-east4' },
+      { text: 'Oregon (us-west1)', value: 'us-west1' },
+      { text: 'Salt Lake City (us-west3)', value: 'us-west3' },
       { text: 'São Paulo (southamerica-east1)', value: 'southamerica-east1' },
+      { text: 'South Carolina (us-east1)', value: 'us-east1' },
+      // Europe
+      { text: 'Belgium (europe-west1)', value: 'europe-west1' },
       { text: 'Finland (europe-north1)', value: 'europe-north1' },
-      { text: 'London (europe-west2)', value: 'europe-west2' },
       { text: 'Frankfurt (europe-west3)', value: 'europe-west3' },
+      { text: 'London (europe-west2)', value: 'europe-west2' },
+      { text: 'Netherlands (europe-west4)', value: 'europe-west4' },
       { text: 'Zürich (europe-west6)', value: 'europe-west6' },
+      // Asia Pacific
       { text: 'Hong Kong (asia-east2)', value: 'asia-east2' },
+      { text: 'Jakarta (asia-southeast2)', value: 'asia-southeast2' },
       { text: 'Mumbai (asia-south1)', value: 'asia-south1' },
       { text: 'Osaka (asia-northeast2)', value: 'asia-northeast2' },
-      { text: 'Taiwan (asia-east1)', value: 'asia-east1' },
-      { text: 'Tokyo (asia-northeast1)', value: 'asia-northeast1' },
+      { text: 'Seoul (asia-northeast3)', value: 'asia-northeast3' },
       { text: 'Singapore (asia-southeast1)', value: 'asia-southeast1' },
       { text: 'Sydney (australia-southeast1)', value: 'australia-southeast1' },
+      { text: 'Taiwan (asia-east1)', value: 'asia-east1' },
+      { text: 'Tokyo (asia-northeast1)', value: 'asia-northeast1' },
     ];
     if (!this.target.rawSql) {
       // special handling when in table panel
@@ -126,14 +134,14 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
   public updateProjection() {
     this.selectParts = _.map(this.target.select, (parts: any) => {
-      return _.map(parts, sqlPart.create).filter((n) => n);
+      return _.map(parts, sqlPart.create).filter(n => n);
     });
-    this.whereParts = _.map(this.target.where, sqlPart.create).filter((n) => n);
-    this.groupParts = _.map(this.target.group, sqlPart.create).filter((n) => n);
+    this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
+    this.groupParts = _.map(this.target.group, sqlPart.create).filter(n => n);
   }
 
   public updatePersistedParts() {
-    this.target.select = _.map(this.selectParts, (selectParts) => {
+    this.target.select = _.map(this.selectParts, selectParts => {
       return _.map(selectParts, (part: any) => {
         return {
           datatype: part.datatype,
@@ -279,8 +287,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.target.partitioned = false;
     this.target.partitionedField = '';
     this.target.table = this.tableSegment.value;
-    this.tablesDataPromise.then((value) => {
-      value.forEach((v) => {
+    this.tablesDataPromise.then(value => {
+      value.forEach(v => {
         if (v.text === this.target.table) {
           const partitioned = v.value.indexOf('__partitioned');
           if (partitioned > -1) {
@@ -306,7 +314,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
 
-    const task1 = this.getTimeColumnSegments().then((result) => {
+    const task1 = this.getTimeColumnSegments().then(result => {
       // check if time column is still valid
       if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
         this.timeColumnSegment.html = this.uiSegmentSrv.newSegment(result[0].text).html;
@@ -315,7 +323,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       return this.timeColumnChanged(false);
     });
 
-    const task2 = this.getValueColumnSegments().then((result) => {
+    const task2 = this.getValueColumnSegments().then(result => {
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
         this.updateProjection();
@@ -377,8 +385,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   }
 
   public transformToSegments(config) {
-    return (results) => {
-      const segments = _.map(results, (segment) => {
+    return results => {
+      const segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -449,7 +457,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       partModel.params[0] = subItem.value;
     }
     let addAlias = false;
-    const _addAlias = function () {
+    const _addAlias = function() {
       return !_.find(selectParts, (p: any) => p.def.type === 'alias');
     };
     switch (partType) {
@@ -606,13 +614,13 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this._setGroupParts(partType, value);
     // add aggregates when adding group by
     for (const selectParts of this.selectParts) {
-      if (!selectParts.some((part) => part.def.type === 'aggregate')) {
+      if (!selectParts.some(part => part.def.type === 'aggregate')) {
         const aggregate = sqlPart.create({
           params: ['avg'],
           type: 'aggregate',
         });
         selectParts.splice(1, 0, aggregate);
-        if (!selectParts.some((part) => part.def.type === 'alias')) {
+        if (!selectParts.some(part => part.def.type === 'alias')) {
           const alias = sqlPart.create({
             params: [selectParts[0].part.params[0]],
             type: 'alias',
@@ -725,7 +733,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
   public getGroupOptions() {
     return this.getMetricColumnSegments()
-      .then((tags) => {
+      .then(tags => {
         const options = [];
         if (!this.queryModel.hasTimeGroup()) {
           options.push(
@@ -782,7 +790,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     let res = '';
     await this.datasource
       .getTableFields(this.target.project, this.target.dataset, this.target.table, ['DATE', 'TIMESTAMP', 'DATETIME'])
-      .then((result) => {
+      .then(result => {
         for (const f of result) {
           if (f.text === this.target.timeColumn) {
             res = f.value;
