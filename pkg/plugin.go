@@ -18,17 +18,17 @@ import (
 
 type queryResult struct {
 	Time   time.Time `bigquery:"time"`
-	Values int32     `bigquery:"metric"`
+	Values int64     `bigquery:"metric"`
 }
 
 // Transformed BigQuery results for Grafana
 type TransformedResults struct {
 	Time   []time.Time
-	Values []int32
+	Values []int64
 }
 type queryModel struct {
 	Format string `json:"format"`
-	// Constant         string/*int32*/ `json:"constant"`
+	// Constant         string `json:"constant"`
 	Dataset          string   `json:"dataset"`
 	Group            []string `json:"group"`
 	MetricColumn     string   `json:"metricColumn"`
@@ -110,7 +110,7 @@ func (td *SampleDatasource) query(ctx context.Context, query backend.DataQuery) 
 
 	rows, err := BigQueryRun(ctx, qm)
 	if err != nil {
-		log.DefaultLogger.Error("format is empty. defaulting to time series")
+		log.DefaultLogger.Error("query BigQueryRun error %v", err)
 	}
 	// Log a warning if `Format` is empty.
 	if qm.Format == "" {
@@ -189,7 +189,7 @@ func BigQueryRun(ctx context.Context, query queryModel) (*TransformedResults, er
 	}
 	status, err := job.Wait(ctx)
 	if err != nil {
-		log.DefaultLogger.Info("Query wait error: %v\n", err)
+		log.DefaultLogger.Info("Query wait", "error: %v\n", err)
 		return nil, err
 	}
 	if err := status.Err(); err != nil {
@@ -198,22 +198,25 @@ func BigQueryRun(ctx context.Context, query queryModel) (*TransformedResults, er
 	}
 	it, err := job.Read(ctx)
 
-	var times []time.Time
-	var values []int32
+	// rows := make([][]bigquery.Value, 0)
 	for {
 		var row queryResult
+		// var row []bigquery.Value
+		// row := make(map[string]bigquery.Value)
+
 		err := it.Next(&row)
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			log.DefaultLogger.Info("lior test rows err", "Query", err)
+			log.DefaultLogger.Info("Rows iterator err", "Query", err)
 			return nil, err
 		}
-		times = append(times, row.Time)
-		values = append(values, row.Values)
+		log.DefaultLogger.Info("Rows", "Query", row)
+
+		tr.Time = append(tr.Time, row.Time)
+		tr.Values = append(tr.Values, row.Values)
 	}
-	tr.Time = times
-	tr.Values = values
+
 	return &tr, nil
 }

@@ -9,7 +9,7 @@ module.exports = {
   },
   context: path.join(__dirname, 'src'),
   entry: {
-    'module': './module.ts',
+    module: './module.ts',
   },
   devtool: 'source-map',
   output: {
@@ -19,27 +19,27 @@ module.exports = {
   },
   externals: [
     'lodash',
-    function (context, request, callback) {
+    function(context, request, callback) {
       var prefix = 'grafana/';
       if (request.indexOf(prefix) === 0) {
         return callback(null, request.substr(prefix.length));
       }
       callback();
-    }
+    },
   ],
   plugins: [
-    new CleanWebpackPlugin('dist', {allowExternal: true}),
+    // new CleanWebpackPlugin('dist', {allowExternal: true}),
     new webpack.optimize.OccurrenceOrderPlugin(),
     new CopyWebpackPlugin([
-      {from: 'plugin.json', to: '.'},
-      {from: '../README.md', to: '.'},
-      {from: '../LICENSE.md', to: '.'},
-      {from: 'img/*', to: '.'},
-      {from: 'partials/*', to: '.'},
+      { from: 'plugin.json', to: '.' },
+      { from: '../README.md', to: '.' },
+      { from: '../LICENSE.md', to: '.' },
+      { from: 'img/*', to: '.' },
+      { from: 'partials/*', to: '.' },
     ]),
   ],
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.js']
+    extensions: ['.ts', '.tsx', '.js', '.js'],
   },
   module: {
     rules: [
@@ -48,9 +48,9 @@ module.exports = {
         loaders: [
           {
             loader: 'babel-loader',
-            options: {presets: ['env']}
+            options: { presets: ['env'] },
           },
-          'ts-loader'
+          'ts-loader',
         ],
         exclude: /(node_modules)/,
       },
@@ -58,17 +58,17 @@ module.exports = {
         test: /\.css$/,
         use: [
           {
-            loader: 'style-loader'
+            loader: 'style-loader',
           },
           {
             loader: 'css-loader',
             options: {
               importLoaders: 1,
-              sourceMap: true
-            }
+              sourceMap: true,
+            },
           },
-        ]
-      }
-    ]
-  }
+        ],
+      },
+    ],
+  },
 };

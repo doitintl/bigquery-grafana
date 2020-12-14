@@ -1,7 +1,9 @@
 # Install bigquery-grafana
+
 There are multiple ways to install bigquery-grafana datasource plugin, please **choose one** below:
 
 ## From grafana.net
+
 Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)
 
 ## Grafana-cli

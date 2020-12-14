@@ -17,11 +17,11 @@ include:
 twitter:
   username: avivl
   card: summary
-url: "https://doitintl.github.io/bigquery-grafana/" # Site url, also used in jekyll-seo-tag
-repo: "https://github.com/doitintl/bigquery-grafana/"
+url: 'https://doitintl.github.io/bigquery-grafana/' # Site url, also used in jekyll-seo-tag
+repo: 'https://github.com/doitintl/bigquery-grafana/'
 
 show_downloads: true
 title: BigQuery Grafana Datasource
 description: BigQuery Grafana datasource plugin provide support for BigQuery as a backend database.
-google_analytics:  UA-137158105-1
+google_analytics: UA-137158105-1
 theme: jekyll-theme-midnight
