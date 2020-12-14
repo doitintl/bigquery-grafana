@@ -28,7 +28,7 @@ module.exports = {
     },
   ],
   plugins: [
-    // new CleanWebpackPlugin('dist', {allowExternal: true}),
+    new CleanWebpackPlugin('dist', {allowExternal: true}),
     new webpack.optimize.OccurrenceOrderPlugin(),
     new CopyWebpackPlugin([
       { from: 'plugin.json', to: '.' },

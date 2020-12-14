@@ -137,19 +137,19 @@ The query builder provides a simple yet a user-friendly interface to help you qu
 2. The time field and metric field
 3. WHERE clause - Either use one of the pre-defined macros, to speed your writing time, or set up your own expression. Existing supported Macros are:
 
-   a. Macro $\_\_timeFiler with last 7 days example:
+   a. Macro $__timeFiler with last 7 days example:
 
 ```
   WHERE `createDate` BETWEEN TIMESTAMP_MILLIS (1592147699012) AND TIMESTAMP_MILLIS (1592752499012) AND _PARTITIONTIME >= '2020-06-14 18:14:59' AND _PARTITIONTIME < '2020-06-21 18:14:59'
 ```
 
-b. Macro $\_\_timeFrom with last 7 days example:
+b. Macro $__timeFrom with last 7 days example:
 
 ```
   WHERE `createDate` > TIMESTAMP_MILLIS (1592223758609)  AND _PARTITIONTIME >= '2020-06-15 15:22:38' AND _PARTITIONTIME < '2020-06-22 15:22:38'
 ```
 
-c. Macro $\_\_timeTo with last 7 days example:
+c. Macro $__timeTo with last 7 days example:
 
 ```
   WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
@@ -158,7 +158,7 @@ c. Macro $\_\_timeTo with last 7 days example:
 You can now use timeFilter macro in raw sql mode
 
 4. GROUP BY option - You can use a pre-defined macro or use one of the fields from your query
-   a. time ($\_\_interval,none)
+   a. time ($__interval,none)
 5. ORDER BY option
 
 Note: If your processing location is not the Default US one set your location from the processing Location drop-down at the top right bottom of the query builder
