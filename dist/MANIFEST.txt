@@ -9,12 +9,12 @@ Hash: SHA512
   "signedByOrgName": "DoiT International",
   "plugin": "doitintl-bigquery-datasource",
   "version": "2.0.1",
-  "time": 1607956447803,
+  "time": 1608061716784,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "LICENSE.md": "b40d79313086aafb7ab31bf033798850a20ff52daf52f9dba84f6ef169e326b2",
     "doitintl-bigquery-datasource_darwin_amd64": "89d3c1769d56208894555aaeb428d4d81d227d134d521cebdf1a3ea36333f93c",
-    "module.js.map": "850a6e4547db7b738abb14f8d40b0ec840ca07734708e087883cf4e597121ceb",
+    "module.js.map": "aaf3e2e96b59fc8fa89135cb16735a73b272660657baabbbdc1a0bc198f6e703",
     "doitintl-bigquery-datasource_windows_amd64.exe": "89d3c1769d56208894555aaeb428d4d81d227d134d521cebdf1a3ea36333f93c",
     "plugin.json": "198f8a869a085aefecfd17d3eb40166a54df2ed113fad4408ac67ddb4019f215",
     "README.md": "2c54953a9adbfd16ac4cc4ee4de052dc1895892416713cd9626a0e353e5e2047",
@@ -30,9 +30,9 @@ Hash: SHA512
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAl/Xd98ACgkQfk0ManCIZudNRwIIj0r5euochQC/cihenY8A
-WUocEkHTCgvWHW2klOAQAEFGkW1DQbpjUCEatvXn04CYDGSQrhbDOba4O72t
-/19kAiUCCQGiWfeSMR3bT0uERc/ru2CHVoXasu1weUGKHNusP/cRzLe7Jeuz
-hf0IV415nwN9zEzuOVm1JGKMG1niqloIWx8ttA==
-=8Fzc
+wqEEARMKAAYFAl/ZExQACgkQfk0ManCIZuc+dAIIyFLAGT0h43BJ67tyGL4l
+wI7cAdOcAPTu6tObWdvu4M3glt80DiI11p3aEVxfxSx20Ujg52bFP+GvjvtU
+/j6NQCgCCQGRP0x2vnwTbA28p99xXl8t5jtBuqdXzOUQ9E0d8aeI523UvDDM
+cJlfojMoeTmuOpu47akPzV7QVSSA51bodaVL4A==
+=pdTb
 -----END PGP SIGNATURE-----
