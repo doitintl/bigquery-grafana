@@ -323,7 +323,7 @@ export default class BigQueryQuery {
       }
       overParts.push('ORDER BY ' + this.buildTimeColumn(false));
       const over = overParts.join(' ');
-      let curr = query;
+      const curr = query;
       let prev: string;
       const tmpval = query;
       switch (windows.type) {
