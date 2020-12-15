@@ -136,7 +136,7 @@ describe('BigQueryDatasource', () => {
     });
 
     it('should return expected data batch api', async () => {
-      let priority = 'BATCH';
+      const priority = 'BATCH';
       await ctx.ds.doQuery('select * from table', 'id-1', priority).then(data => {
         results = data;
       });
@@ -144,7 +144,7 @@ describe('BigQueryDatasource', () => {
       expect(results.schema.fields.length).toBe(2);
     });
     it('should return expected data interactive', async () => {
-      let priority = 'INTERACTIVE';
+      const priority = 'INTERACTIVE';
       await ctx.ds.doQuery('select * from table', 'id-1', priority).then(data => {
         results = data;
       });
@@ -153,7 +153,7 @@ describe('BigQueryDatasource', () => {
     });
 
     it('should return expected data interactive', async () => {
-      let priority = 'INTERACTIVE';
+      const priority = 'INTERACTIVE';
       await ctx.ds.doQueryRequest('select * from table', 'id-1', priority).then(data => {
         results = data;
       });
@@ -868,11 +868,11 @@ describe('BigQueryDatasource', () => {
           mode: 'NULLABLE',
         },
       ];
-      let options = { annotation: {} };
-      let data = { data: { schema: { fields } } };
-      let p = new Promise((reject, resolve) => {});
-      let rp = new ResponseParser(p);
-      let list = rp.transformAnnotationResponse(options, data);
+      const options = { annotation: {} };
+      const data = { data: { schema: { fields } } };
+      const p = new Promise((reject, resolve) => { });
+      const rp = new ResponseParser(p);
+      const list = rp.transformAnnotationResponse(options, data);
       expect(list.length).toBe(0);
     });
     it('transformAnnotationResponse empty results without rows', () => {
@@ -893,55 +893,55 @@ describe('BigQueryDatasource', () => {
           mode: 'NULLABLE',
         },
       ];
-      let options = { annotation: {} };
-      let data = { data: { schema: { fields } } };
-      let p = new Promise((reject, resolve) => {});
-      let rp = new ResponseParser(p);
-      let list = rp.transformAnnotationResponse(options, data);
+      const options = { annotation: {} };
+      const data = { data: { schema: { fields } } };
+      const p = new Promise((reject, resolve) => { });
+      const rp = new ResponseParser(p);
+      const list = rp.transformAnnotationResponse(options, data);
       expect(list.length).toBe(0);
     });
     it('transformAnnotationResponse results with 3 rows', () => {
       const rows = [
-          {
-            f: [
-              {
-                v: '1.521578851E9',
-              },
-              {
-                v: '37.7753058',
-              },
-              {
-                v: '42.7753058',
-              },
-            ],
-          },
-          {
-            f: [
-              {
-                v: '1.521578916E9',
-              },
-              {
-                v: '37.3322326',
-              },
-              {
-                v: '42.7753058',
-              },
-            ],
-          },
-          {
-            f: [
-              {
-                v: '1.521578927E9',
-              },
-              {
-                v: '37.781752',
-              },
-              {
-                v: '42.7753058',
-              },
-            ],
-          },
-        ],
+        {
+          f: [
+            {
+              v: '1.521578851E9',
+            },
+            {
+              v: '37.7753058',
+            },
+            {
+              v: '42.7753058',
+            },
+          ],
+        },
+        {
+          f: [
+            {
+              v: '1.521578916E9',
+            },
+            {
+              v: '37.3322326',
+            },
+            {
+              v: '42.7753058',
+            },
+          ],
+        },
+        {
+          f: [
+            {
+              v: '1.521578927E9',
+            },
+            {
+              v: '37.781752',
+            },
+            {
+              v: '42.7753058',
+            },
+          ],
+        },
+      ],
         fields = [
           {
             name: 'time',
@@ -959,11 +959,11 @@ describe('BigQueryDatasource', () => {
             mode: 'NULLABLE',
           },
         ];
-      let options = { annotation: {} };
-      let data = { data: { schema: { fields }, rows } };
-      let p = new Promise((reject, resolve) => {});
-      let rp = new ResponseParser(p);
-      let list = rp.transformAnnotationResponse(options, data);
+      const options = { annotation: {} };
+      const data = { data: { schema: { fields }, rows } };
+      const p = new Promise((reject, resolve) => { });
+      const rp = new ResponseParser(p);
+      const list = rp.transformAnnotationResponse(options, data);
       expect(list.length).toBe(3);
     });
   });

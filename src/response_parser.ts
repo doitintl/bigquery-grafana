@@ -197,9 +197,9 @@ export default class ResponseParser {
       });
     }
     const rows = [];
-    each(results.rows, (ser) => {
+    each(results.rows, ser => {
       const r = [];
-      each(ser, (v) => {
+      each(ser, v => {
         for (let i = 0; i < v.length; i++) {
           const val = v[i].v ? ResponseParser._convertValues(v[i].v, columns[i].type) : '';
           r.push(val);
@@ -220,7 +220,7 @@ export default class ResponseParser {
       res.push(row.f[0].v);
     }
 
-    return _.map(res, (value) => {
+    return _.map(res, value => {
       return { text: value };
     });
   }

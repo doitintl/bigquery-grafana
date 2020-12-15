@@ -345,8 +345,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   public async timeColumnChanged(refresh?: boolean) {
     this.target.timeColumn = this.timeColumnSegment.value;
     this.target.timeColumnType = await this._getDateFieldType();
-    let partModel;
-    partModel = sqlPart.create({
+    const partModel = sqlPart.create({
       name: '$__timeFilter',
       params: [],
       type: 'macro',
