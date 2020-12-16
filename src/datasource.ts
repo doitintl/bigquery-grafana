@@ -292,12 +292,14 @@ export class BigQueryDatasource {
     });
     return this.$q.all(allQueryPromise).then((responses): any => {
       const data = [];
-      for (const response of responses) {
-        if (response.type && response.type === 'table') {
-          data.push(response);
-        } else {
-          for (const dp of response) {
-            data.push(dp);
+      if (responses) {
+        for (const response of responses) {
+          if (response.type && response.type === 'table') {
+            data.push(response);
+          } else {
+            for (const dp of response) {
+              data.push(dp);
+            }
           }
         }
       }
@@ -450,20 +452,22 @@ export class BigQueryDatasource {
   }
   private setUpQ(modOptions, options, query) {
     let q = this.queryModel.expend_macros(modOptions);
-    q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions);
-    q = BigQueryDatasource._updatePartition(q, modOptions);
-    q = BigQueryDatasource._updateTableSuffix(q, modOptions);
-    if (query.refId.search(Shifted) > -1) {
-      q = this._updateAlias(q, modOptions, query.refId);
-    }
-    const limit = q.match(/[^]+(\bLIMIT\b)/gi);
-    if (limit == null) {
-      const limitStatement = ' LIMIT ' + options.maxDataPoints;
-      const limitPosition = q.match(/\$__limitPosition/g);
-      if (limitPosition !== null) {
-        q = q.replace(/\$__limitPosition/g, limitStatement);
-      } else {
-        q += limitStatement;
+    if (q) {
+      q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions);
+      q = BigQueryDatasource._updatePartition(q, modOptions);
+      q = BigQueryDatasource._updateTableSuffix(q, modOptions);
+      if (query.refId.search(Shifted) > -1) {
+        q = this._updateAlias(q, modOptions, query.refId);
+      }
+      const limit = q.match(/[^]+(\bLIMIT\b)/gi);
+      if (limit == null) {
+        const limitStatement = ' LIMIT ' + options.maxDataPoints;
+        const limitPosition = q.match(/\$__limitPosition/g);
+        if (limitPosition !== null) {
+          q = q.replace(/\$__limitPosition/g, limitStatement);
+        } else {
+          q += limitStatement;
+        }
       }
     }
     return q;
