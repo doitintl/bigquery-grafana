@@ -390,21 +390,25 @@ export default class BigQueryQuery {
     });
     if (this.target.partitioned) {
       const partitionedField = this.target.partitionedField ? this.target.partitionedField : '_PARTITIONTIME';
-      if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
-        const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.from._d,
-          '-',
-          true
-        )}'`;
-        conditions.push(from);
-      }
-      if (this.templateSrv.timeRange && this.templateSrv.timeRange.to) {
-        const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(
-          this.templateSrv.timeRange.to._d,
-          '-',
-          true
-        )}'`;
-        conditions.push(to);
+      if (this.target.timeColumn !== partitionedField) {
+        if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
+          let fromD = this.templateSrv.timeRange.from;
+          const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(
+              fromD._d,
+              '-',
+              true
+          )}'`;
+          conditions.push(from);
+        }
+        if (this.templateSrv.timeRange && this.templateSrv.timeRange.to) {
+          let toD = this.templateSrv.timeRange.to;
+          const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(
+              toD._d,
+              '-',
+              true
+          )}'`;
+          conditions.push(to);
+        }
       }
     }
     if (this.target.sharded) {
