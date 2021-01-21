@@ -482,8 +482,8 @@ export class BigQueryDatasource {
   private setUpPartition(query, isPartitioned, partitionedField, options) {
     partitionedField = partitionedField ? partitionedField : '_PARTITIONTIME';
     if (isPartitioned && !query.match(partitionedField)) {
-      const fromD = BigQueryQuery.convertToUtc(options.range.from._d);
-      const toD = BigQueryQuery.convertToUtc(options.range.to._d);
+      const fromD = options.range.from._d.getTime();
+      const toD = options.range.to._d.getTime();
       const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, '-', true)}'`;
       const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(toD, '-', true)}'`;
       const partition = `where ${from} AND ${to} AND `;

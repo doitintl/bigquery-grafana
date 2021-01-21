@@ -89,9 +89,6 @@ export default class BigQueryQuery {
   public static replaceTimeShift(q) {
     return q.replace(/(\$__timeShifting\().*?(?=\))./g, '');
   }
-  static convertToUtc(d) {
-    return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-  }
 
   public target: any;
   public templateSrv: any;
@@ -545,13 +542,11 @@ export default class BigQueryQuery {
     let fromD = options.range.from;
     let toD = options.range.to;
     if (this.target.convertToUTC === true) {
-      fromD = BigQueryQuery.convertToUtc(options.range.from._d);
-      toD = BigQueryQuery.convertToUtc(options.range.to._d);
+      fromD = options.range.from._d.getTime();
+      toD = options.range.to._d.getTime();
     }
-    let to = '';
-    let from = '';
-    from = this._getDateRangePart(fromD);
-    to = this._getDateRangePart(toD);
+    let from = this._getDateRangePart(fromD);
+    let to = this._getDateRangePart(toD);
     if (this.target.timeColumn === '-- time --') {
       const myRegexp = /\$__timeFilter\(([\w_.]+)\)/g;
       const tf = myRegexp.exec(q);
