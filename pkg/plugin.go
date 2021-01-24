@@ -110,7 +110,7 @@ func (td *SampleDatasource) query(ctx context.Context, query backend.DataQuery) 
 
 	rows, err := BigQueryRun(ctx, qm)
 	if err != nil {
-		log.DefaultLogger.Error("query BigQueryRun error %v", err)
+		log.DefaultLogger.Error("query BigQueryRun error", "Error", err)
 	}
 	// Log a warning if `Format` is empty.
 	if qm.Format == "" {
@@ -184,16 +184,16 @@ func BigQueryRun(ctx context.Context, query queryModel) (*TransformedResults, er
 	job, err := q.Run(ctx)
 
 	if err != nil {
-		log.DefaultLogger.Info("Query run error: %v\n", err)
+		log.DefaultLogger.Info("Query run error", "Error", err)
 		return nil, err
 	}
 	status, err := job.Wait(ctx)
 	if err != nil {
-		log.DefaultLogger.Info("Query wait", "error: %v\n", err)
+		log.DefaultLogger.Info("Query wait", "Error", err)
 		return nil, err
 	}
 	if err := status.Err(); err != nil {
-		log.DefaultLogger.Info("Query status error: %v\n", err)
+		log.DefaultLogger.Info("Query status error", "Error", err)
 		return nil, err
 	}
 	it, err := job.Read(ctx)
