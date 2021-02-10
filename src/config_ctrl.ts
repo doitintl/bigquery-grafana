@@ -12,7 +12,6 @@ export class BigQueryConfigCtrl {
   private datasourceSrv: any;
   private current: any;
   private readonly defaultAuthenticationType: string;
-  private readonly defaultSendUsageData: boolean;
   private readonly defaultFlatRateProject: string;
   private readonly defaultProcessingLocation: string;
   private queryPriority: { text: string; value: string }[];
@@ -20,7 +19,6 @@ export class BigQueryConfigCtrl {
   /** @ngInject */
   constructor(datasourceSrv) {
     this.defaultAuthenticationType = 'jwt';
-    this.defaultSendUsageData = true;
     this.defaultFlatRateProject = undefined;
     this.defaultProcessingLocation = undefined;
     this.datasourceSrv = datasourceSrv;
@@ -28,9 +26,6 @@ export class BigQueryConfigCtrl {
     this.current.jsonData.authenticationType = this.current.jsonData.authenticationType
       ? this.current.jsonData.authenticationType
       : this.defaultAuthenticationType;
-    if (this.current.jsonData.sendUsageData === undefined) {
-      this.current.jsonData.sendUsageData = this.defaultSendUsageData;
-    }
     if (this.current.jsonData.flatRateProject === undefined) {
       this.current.jsonData.flatRateProject = this.defaultFlatRateProject;
     }

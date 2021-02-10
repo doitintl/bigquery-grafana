@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -24,7 +25,7 @@ type queryResult struct {
 // Transformed BigQuery results for Grafana
 type TransformedResults struct {
 	Time   []time.Time
-	Values []int64
+	Values []int64 //string //
 }
 type queryModel struct {
 	Format string `json:"format"`
@@ -36,7 +37,7 @@ type queryModel struct {
 	OrderBySort      string/*int32*/ `json:"orderBySort"`
 	Partitioned      bool   `json:"partitioned"`
 	PartitionedField string `json:"partitionedField"`
-	Project          string `json:"project"`
+	ProjectID        string `json:"project"`
 	RawQuery         bool   `json:"rawQuery"`
 	RawSQL           string `json:"rawSql"`
 	RefID            string `json:"refId"`
@@ -166,11 +167,14 @@ func (s *instanceSettings) Dispose() {
 	// to cleanup.
 }
 
-// BigQueryRun: Run the query againt BigQuery
+// BigQueryRun ... Run the query against BigQuery
 func BigQueryRun(ctx context.Context, query queryModel) (*TransformedResults, error) {
-	projectID := query.Project
+	projectID := query.ProjectID
 	var tr TransformedResults
-
+	log.DefaultLogger.Info("projectID: " + projectID)
+	if projectID == "" {
+		return nil, errors.New("No projectID")
+	}
 	client, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("bigquery.NewClient: %v", err)
@@ -181,10 +185,10 @@ func BigQueryRun(ctx context.Context, query queryModel) (*TransformedResults, er
 	// Location must match that of the dataset(s) referenced in the query.
 	q.Location = query.Location
 	// Run the query and print results when the query job is completed.
+	log.DefaultLogger.Info("The query to run: " + query.RawSQL)
 	job, err := q.Run(ctx)
-
 	if err != nil {
-		log.DefaultLogger.Info("Query run error", "Error", err)
+		log.DefaultLogger.Error("Query run error: ", "Error", err)
 		return nil, err
 	}
 	status, err := job.Wait(ctx)
@@ -193,7 +197,7 @@ func BigQueryRun(ctx context.Context, query queryModel) (*TransformedResults, er
 		return nil, err
 	}
 	if err := status.Err(); err != nil {
-		log.DefaultLogger.Info("Query status error", "Error", err)
+		log.DefaultLogger.Info("Query status error: ", "Error", err)
 		return nil, err
 	}
 	it, err := job.Read(ctx)

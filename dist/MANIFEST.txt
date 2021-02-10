@@ -9,21 +9,34 @@ Hash: SHA512
   "signedByOrgName": "DoiT International",
   "plugin": "doitintl-bigquery-datasource",
   "version": "2.0.1",
-  "time": 1610017627530,
+  "time": 1612960215632,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "LICENSE.md": "b40d79313086aafb7ab31bf033798850a20ff52daf52f9dba84f6ef169e326b2",
     ".DS_Store": "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3",
-    "doitintl-bigquery-datasource_darwin_amd64": "89d3c1769d56208894555aaeb428d4d81d227d134d521cebdf1a3ea36333f93c",
-    "module.js.map": "c674267fa0d98e3295e8dbc225cc1f4fc563f6e59bb782088ce200219e04e27d",
+    "doitintl-bigquery-datasource_darwin_amd64": "a1acd822aa3f859973bb4e688fa51e759f6bed2147c0665decf225429533af29",
+    "module.js.map": "d3b797c41a13caf60b8d040592188a18d27ae7c51344d3075ee0ca9f135b65ef",
     "doitintl-bigquery-datasource_windows_amd64.exe": "bfaa4dd2fc271e68ece7458f7dda4eb01ed5965e23a1c9052aa925b9aa61a9b9",
-    "plugin.json": "a1d813d29f55c189cd99b332db7361e17ee80982028b78f67ce917fb57a7ffb2",
+    "plugin.json": "d91e99fc7614b5edaf1bc12a05422de0145782b8f31d7ddc14079f3d084e72a3",
     "README.md": "73f37f56e09728a0c2296279407d3735b2141bdcfd4d491cb8a03b220283d5f5",
+    "img/QueryOptions.png": "6c9f60af993db810186741a0e6e5b935ef739f0d66fedbbc65bfab8d4df9a65f",
+    "img/bigquery_enable_api.png": "ae19176c07db844d4561afb8c434f4804d7ac667fd64d4a8746cb164b51a7c6e",
+    "img/InspectPanel.png": "c43a8830ed29aa97d035908cb357345452b0689fb74315c03a414f846c7c1985",
+    "img/QueryPrioriy.png": "52ff6925a495060390de8141b9d2e1fcead526985cff565afbaad8694daaa733",
+    "img/createserviceaccountbutton.png": "d82b2c37d3f638a043ffbc147ec85a23930a27451f2f2def0d7da620ca2aff51",
+    "img/grafana-bigquery-demo.gif": "b82c598827c603cadfa4a56bbdc04bc62de03c57e970da32ac43fb52391dadc6",
     "img/logo.png": "dcd9277d3dfc4e412dc006a000d0ee5b9ff4d9f126687a01f189cea9987e2bfa",
-    "module.js": "ba4bb31df5beb210d312a7bcd03a345c86e727933319cc9156ba73b7a603a0c2",
+    "img/newserviceaccount.png": "3ac6ceafd68d489998d858eceb2cd16cef9dac008fb1b828df0230de71ba90ca",
+    "img/bq__grafana_upload_key.png": "969e15250e81c781187a9c71bfac5fa463790122a8a470b2c993d0ed6dc9022e",
+    "img/bq_grafana_key_uploaded.png": "bc56ee6155fbac29889cbb036fc31b5fe6d5ef366138491de66d6b1393d3d21c",
+    "img/bq_service_account_choose_role.png": "b36e3a5adcea14e9d342b7b772a0d209fb1ffa117c9be755b1b0335752a3ee7b",
+    "img/QueryBuilder.png": "dc0f6a0418b4eb6c7c3136f31df26f1af910d9d57aba889bff98f8711dbc162b",
+    "img/QueryInspector.png": "9a6d16cee486966604cf1ba626b2c6b6ae4d032d2effe6864c01e9a5cc59ccdc",
+    "module.js": "de9c302ab2ccbb71b0cae388de305b739fca4be19f4c26b112a0ebdcc6ec6f9a",
     "partials/annotations.editor.html": "c8b36fe73e7c3b13df4db94153ebd820a9bec4104c1b179db92d64dcdcf04156",
     "partials/query.editor.html": "b1bd544d357e006339cf14ea27802692f9e33341e385cd74fb2dcf653ab8fb1d",
-    "partials/config.html": "31cadbac85238e8a0cb8e4766fc20329cda9d918b4140e6130626cb3631dbe8d",
+    "partials/config.html": "962bd793de8089f3243df3703bea211757c6b89728ce3722ddbcf08388e1bdb3",
+    "MANIFEST11.txt": "9f881831ddf59c9eff19ec564bc49d8d095162013e6071e6730116ee96df2d35",
     "doitintl-bigquery-datasource_linux_amd64": "be64c3ed2eff027a886d9c8b5a8c75ca4aa883c093baf15943a3df46eca20956"
   }
 }
@@ -31,9 +44,9 @@ Hash: SHA512
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAl/261sACgkQfk0ManCIZucQwAII42ki8JPco/uXnrN7TGe3
-5a144L2+qIbG/wCIatxSCO2E+l7qNnBjJgQJsGf3Ity53lYJaqPtPIOUgyH0
-Rah7wVICCQEhbIh2dpebV8N28Q4Ki3aP/r1AOPoBT3fpj2a8RF1NsHIXV6bA
-zUiOzScw4yJxuCHUZUqnnq1uX0wJoGUXx5Gd8A==
-=OlQG
+wqEEARMKAAYFAmAj0dcACgkQfk0ManCIZucnqQIJAcTvM87QfJzH1qnI9CBK
+7HC7alFPW1HGJN1XZWYTe1ckubNkAD2i6FCq4oms+eqP4rwScNt+aJqWyKs1
+uf7rCO7uAgjQYkSaOJchSm03uZdI2uMI5VagtZcEe2xww9A8hvgWbN9Bg7RO
+HpN504Z9ZJxHnz49i8hT3CgvMMMErsUE3qvwtQ==
+=QStB
 -----END PGP SIGNATURE-----

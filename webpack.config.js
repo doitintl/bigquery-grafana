@@ -28,7 +28,8 @@ module.exports = {
     },
   ],
   plugins: [
-    // new CleanWebpackPlugin('dist', {allowExternal: true}),
+    new CleanWebpackPlugin('doitintl-bigquery-datasource/', {allowExternal: true}),
+    new CleanWebpackPlugin('doitintl-bigquery-datasource-*.zip', {allowExternal: true}),
     new webpack.optimize.OccurrenceOrderPlugin(),
     new CopyWebpackPlugin([
       { from: 'plugin.json', to: '.' },
@@ -36,6 +37,13 @@ module.exports = {
       { from: '../LICENSE.md', to: '.' },
       { from: 'img/*', to: '.' },
       { from: 'partials/*', to: '.' },
+    ]),
+    new CopyWebpackPlugin([
+      { from: 'plugin.json', to: '../doitintl-bigquery-datasource/' },
+      { from: '../README.md', to: '../doitintl-bigquery-datasource/' },
+      { from: '../LICENSE.md', to: '../doitintl-bigquery-datasource/' },
+      { from: 'img/*', to: '../doitintl-bigquery-datasource/' },
+      { from: 'partials/*', to: '../doitintl-bigquery-datasource/' },
     ]),
   ],
   resolve: {
