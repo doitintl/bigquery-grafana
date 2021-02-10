@@ -179,7 +179,6 @@ export class BigQueryDatasource {
   private queryModel: BigQueryQuery;
   private readonly baseUrl: string;
   private readonly url: string;
-  private mixpanel;
   private runInProject: string;
   private processingLocation: string;
   private queryPriority: string;
@@ -196,11 +195,6 @@ export class BigQueryDatasource {
     (async () => {
       this.projectName = instanceSettings.jsonData.defaultProject || (await this.getDefaultProject());
     })();
-    this.mixpanel = require('mixpanel-browser');
-    if (this.jsonData.sendUsageData !== false) {
-      this.mixpanel.init('86fa5c838013959cc6867dc884958f7e');
-      this.mixpanel.track('datasource.create');
-    }
     this.runInProject =
       this.jsonData.flatRateProject && this.jsonData.flatRateProject.length
         ? this.jsonData.flatRateProject
@@ -260,7 +254,7 @@ export class BigQueryDatasource {
         modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
         const q = this.setUpQ(modOptions, options, query);
         console.log(q);
-        this.queryModel.target.rawSql = tmpQ;
+        this.queryModel.target.rawSql = q;
         return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then((response) => {
           return ResponseParser.parseDataQuery(response, query.format);
         });
@@ -359,9 +353,6 @@ export class BigQueryDatasource {
       if (error.status !== 404) {
         message = error.statusText ? error.statusText : defaultErrorMessage;
       }
-    }
-    if (this.jsonData.sendUsageData !== false) {
-      this.mixpanel.track('datasource.save');
     }
     return {
       message,

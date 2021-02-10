@@ -13,7 +13,8 @@
     "testg": "grafana-toolkit plugin:test",
     "dev": "grafana-toolkit plugin:dev",
     "watch": "grafana-toolkit plugin:dev --watch",
-    "sign": "grafana-toolkit plugin:sign"
+    "sign": "grafana-toolkit plugin:sign",
+    "build:sign" : "yarn run build:prod && yarn run sign"
   },
   "author": "DoiT International",
   "license": "MIT",
