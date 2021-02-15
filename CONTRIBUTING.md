@@ -9,7 +9,6 @@ The following is a set of guidelines for contributing to BigQuery Plugin for Gra
 
 ---
 
-
 ## Table of Contents
 
 [How can I contribute?](#how-can-i-contribute)
@@ -46,9 +45,6 @@ If you would like to suggest an enhancement or ask for a new feature:
 - **Code contributions are welcomed**. For big changes or significant features, it's usually better to reach out first and discuss what you want to implement and how (we recommend reading: [Pull Request First](https://medium.com/practical-blend/pull-request-first-f6bb667a9b6#.ozlqxvj36)). This to make sure that what you want to implement is aligned with our goals for the project and that no one else is already working on it.
 - Include screenshots and animated GIFs in your pull request whenever possible.
 - Please add [documentation](#documentation) for new features or changes in functionality along with the code.
-- Please follow existing code style:
-  - Python: we use [Black](https://github.com/psf/black) to auto format the code.
-  - Javascript: we use [Prettier](https://github.com/prettier/prettier) to auto-format the code.
   
 ### Documentation
 
