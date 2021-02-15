@@ -9,14 +9,14 @@ Hash: SHA512
   "signedByOrgName": "DoiT International",
   "plugin": "doitintl-bigquery-datasource",
   "version": "2.0.1",
-  "time": 1612960215632,
+  "time": 1613386443942,
   "keyId": "7e4d0c6a708866e7",
   "files": {
     "LICENSE.md": "b40d79313086aafb7ab31bf033798850a20ff52daf52f9dba84f6ef169e326b2",
-    ".DS_Store": "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3",
+    ".DS_Store": "53d660276fad521a7331308cfe40ae47fb126c695b17a58d6b7e16d268c3accf",
     "doitintl-bigquery-datasource_darwin_amd64": "a1acd822aa3f859973bb4e688fa51e759f6bed2147c0665decf225429533af29",
     "module.js.map": "d3b797c41a13caf60b8d040592188a18d27ae7c51344d3075ee0ca9f135b65ef",
-    "doitintl-bigquery-datasource_windows_amd64.exe": "bfaa4dd2fc271e68ece7458f7dda4eb01ed5965e23a1c9052aa925b9aa61a9b9",
+    "doitintl-bigquery-datasource_windows_amd64.exe": "2b08aff3769b8696c2cdf6f8f0adc51aa6bbc8d8d175f98b5e384576ab15a11f",
     "plugin.json": "d91e99fc7614b5edaf1bc12a05422de0145782b8f31d7ddc14079f3d084e72a3",
     "README.md": "73f37f56e09728a0c2296279407d3735b2141bdcfd4d491cb8a03b220283d5f5",
     "img/QueryOptions.png": "6c9f60af993db810186741a0e6e5b935ef739f0d66fedbbc65bfab8d4df9a65f",
@@ -36,17 +36,16 @@ Hash: SHA512
     "partials/annotations.editor.html": "c8b36fe73e7c3b13df4db94153ebd820a9bec4104c1b179db92d64dcdcf04156",
     "partials/query.editor.html": "b1bd544d357e006339cf14ea27802692f9e33341e385cd74fb2dcf653ab8fb1d",
     "partials/config.html": "962bd793de8089f3243df3703bea211757c6b89728ce3722ddbcf08388e1bdb3",
-    "MANIFEST11.txt": "9f881831ddf59c9eff19ec564bc49d8d095162013e6071e6730116ee96df2d35",
-    "doitintl-bigquery-datasource_linux_amd64": "be64c3ed2eff027a886d9c8b5a8c75ca4aa883c093baf15943a3df46eca20956"
+    "doitintl-bigquery-datasource_linux_amd64": "d2488e96637c195a3f5010e0bdb514fc5ec8cf996c852b5500d0dd5aad2bf10a"
   }
 }
 -----BEGIN PGP SIGNATURE-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-wqEEARMKAAYFAmAj0dcACgkQfk0ManCIZucnqQIJAcTvM87QfJzH1qnI9CBK
-7HC7alFPW1HGJN1XZWYTe1ckubNkAD2i6FCq4oms+eqP4rwScNt+aJqWyKs1
-uf7rCO7uAgjQYkSaOJchSm03uZdI2uMI5VagtZcEe2xww9A8hvgWbN9Bg7RO
-HpN504Z9ZJxHnz49i8hT3CgvMMMErsUE3qvwtQ==
-=QStB
+wqEEARMKAAYFAmAqUswACgkQfk0ManCIZucmOwII4/eVCbBf855edwb7jFK8
+C0BjTjpwyiGsUxNLH4L9o9U3u92P6bUvnCC1gctbmkekBihNjRS3qtn0VKbh
+zfsmKKcCCQEHudI4S/XoTevvnAaAXME6DW6lt4sZsDNWf6vM2NbM+c5AtD/J
+SnntLv0OmRXVoHEnvR8MYlc8LQsgO4NeBLGrWw==
+=CgQk
 -----END PGP SIGNATURE-----

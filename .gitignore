@@ -38,6 +38,7 @@ build/Release
 node_modules/
 jspm_packages/
 dist/
+dist/*
 doitintl-bigquery-datasource/
 
 # TypeScript v1 declaration files

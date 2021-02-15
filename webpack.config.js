@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const ZipPlugin = require('zip-webpack-plugin');
 
 module.exports = {
   node: {
@@ -39,12 +40,11 @@ module.exports = {
       { from: 'partials/*', to: '.' },
     ]),
     new CopyWebpackPlugin([
-      { from: 'plugin.json', to: '../doitintl-bigquery-datasource/' },
-      { from: '../README.md', to: '../doitintl-bigquery-datasource/' },
-      { from: '../LICENSE.md', to: '../doitintl-bigquery-datasource/' },
-      { from: 'img/*', to: '../doitintl-bigquery-datasource/' },
-      { from: 'partials/*', to: '../doitintl-bigquery-datasource/' },
+      { from: '../dist/', to: '../doitintl-bigquery-datasource/' },
     ]),
+    // new ZipPlugin({
+    //   path: ''
+    // })
   ],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.js'],
