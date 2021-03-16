@@ -472,7 +472,7 @@ export class BigQueryDatasource {
    */
   private setUpPartition(query, isPartitioned, partitionedField, options) {
     partitionedField = partitionedField ? partitionedField : '_PARTITIONTIME';
-    if (isPartitioned && !query.match(partitionedField)) {
+    if (isPartitioned && !query.match(new RegExp(partitionedField, "i"))) {
       const fromD = BigQueryQuery.convertToUtc(options.range.from._d);
       const toD = BigQueryQuery.convertToUtc(options.range.to._d);
       const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, '-', true)}'`;
