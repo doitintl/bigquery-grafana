@@ -52,7 +52,7 @@ export default class ResponseParser {
 
   public static parseDataQuery(results, format) {
     if (!results.rows) {
-      return { data: [] };
+      return [ { data: [] }];
     }
     let res = null;
     if (format === 'time_series') {
