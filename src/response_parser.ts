@@ -70,14 +70,15 @@ export default class ResponseParser {
     return res;
   }
 
-  public static _convertValues(v, type) {
+  public static _convertValues(value, type) {
     if (['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER'].includes(type)) {
-      return Number(v);
+      return Number(value);
     }
-    if (['DATE', 'DATETIME', 'TIMESTAMP'].includes(type)) {
-      return new Date(Number(v) * 1000).toString();
+    if (['TIMESTAMP'].includes(type)) {
+      return new Date(Number(value) * 1000).toString();
     }
-    return v;
+    //  No casting is required for types: DATE, DATETIME, TIME
+    return value;
   }
 
   private static parseData(results, text, value): IResultFormat[] {
