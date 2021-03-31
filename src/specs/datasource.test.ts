@@ -65,7 +65,7 @@ describe('BigQueryDatasource', () => {
     const sql = 'select a from `prj.ds.dt` where';
 
     const res = BigQueryDatasource._extractFromClause(sql);
-    expect(res).toBe('prj.ds.dt');
+    expect(res).toEqual(['prj', 'ds', 'dt']);
   });
 
   describe('_FindTimeField', () => {
@@ -858,9 +858,14 @@ describe('BigQueryDatasource', () => {
     const options = {
       annotation: {
         name: 'Annotation test name',
-        rawQuery: 'select x from y where z'
+        rawQuery: `select x from y where z`
       },
-      scopedVars: {},
+      scopedVars: {
+        __interval: {
+          text: "600000",
+          value: 600000
+        }
+      },
       range: {
         from: moment.utc('2018-04-25 10:00'),
         to: moment.utc('2018-04-25 11:00'),
