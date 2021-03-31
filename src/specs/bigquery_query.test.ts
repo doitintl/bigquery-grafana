@@ -198,6 +198,10 @@ describe('BigQueryQuery', () => {
     expect(whereClause).toBe(
       "\nWHERE\n  _PARTITIONTIME >= '1987-06-30 03:00:00' AND\n  _PARTITIONTIME < '1987-06-30 03:00:00'"
     );
+    query.target.partitionedField = 't';
+    expect(query.buildWhereClause()).toBe('');
+    query.target.sharded = true;
+    expect(query.buildWhereClause()).toBe(`\nWHERE\n  _TABLE_SUFFIX BETWEEN '19870630' AND '19870630' `);
   });
 
   describe('When generating GROUP BY clause', () => {

@@ -39,7 +39,7 @@ export class BigQueryDatasource {
       strInterval = 'M';
     }
 
-    if (strInterval === 'min') {
+    if (strInterval.trim() === 'min') {
       strInterval = 'm';
     }
     return [strInterval, shift];
