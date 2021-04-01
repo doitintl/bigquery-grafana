@@ -45,11 +45,27 @@ describe('BigQueryDatasource', () => {
     expect(res).toBe('just like that: status text');
   });
 
+  describe('metricFindQuery', () => {
+    beforeEach(() => ctx.backendSrv.datasourceRequest = jest.fn(() => Promise.resolve({ data: {}, status: 200 })));
+    const query = '', options = { variable: { name: 'refId' } };
+    it('should check response for empty query', async () => {
+      const res = await ctx.ds.metricFindQuery(query, options);
+      expect(res).toEqual([{ data: [] }]);
+    });
+  });
+
+  describe('_getShiftPeriod', () => {
+    const interval = '55 min';
+
+    const res = BigQueryDatasource._getShiftPeriod(interval);
+    expect(res).toEqual(['m', '55']);
+  });
+
   describe('_extractFromClause', () => {
     const sql = 'select a from `prj.ds.dt` where';
 
     const res = BigQueryDatasource._extractFromClause(sql);
-    expect(res).toBe('prj.ds.dt');
+    expect(res).toEqual(['prj', 'ds', 'dt']);
   });
 
   describe('_FindTimeField', () => {
@@ -779,8 +795,90 @@ describe('BigQueryDatasource', () => {
       });
     });
   });
+  describe('annotationQuery', () => {
+    const response = {
+      kind: 'bigquery#queryResponse',
+      schema: {
+        fields: [
+          {
+            name: 'time',
+            type: 'TIMESTAMP',
+            mode: 'NULLABLE',
+          },
+          {
+            name: 'text',
+            type: 'STRING',
+            mode: 'NULLABLE',
+          },
+          {
+            name: 'tags',
+            type: 'STRING',
+            mode: 'NULLABLE',
+          },
+        ],
+      },
+      jobReference: {
+        projectId: 'proj-1',
+        jobId: 'job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5',
+        location: 'US',
+      },
+      totalRows: '2',
+      rows: [
+        {
+          f: [
+            { v: 1 },
+            { v: 'text1' },
+            { v: 'tags1' },
+          ],
+        },
+        {
+          f: [
+            { v: 2 },
+            { v: 'text2' },
+            { v: 'tags2' },
+          ],
+        },
+      ],
+      totalBytesProcessed: '23289520',
+      jobComplete: true,
+      cacheHit: false,
+    };
+
+    const expectedResult = [
+      { annotation: { name: "Annotation test name", rawQuery: "select x from y where z" }, tags: ["tags1"], text: "text1", time: 1000 },
+      { annotation: { name: "Annotation test name", rawQuery: "select x from y where z" }, tags: ["tags2"], text: "text2", time: 2000 }
+    ];
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        return Promise.resolve({ data: response, status: 200 });
+      });
+    });
+
+    const options = {
+      annotation: {
+        name: 'Annotation test name',
+        rawQuery: `select x from y where z`
+      },
+      scopedVars: {
+        __interval: {
+          text: "600000",
+          value: 600000
+        }
+      },
+      range: {
+        from: moment.utc('2018-04-25 10:00'),
+        to: moment.utc('2018-04-25 11:00'),
+      }
+    };
+    it('should return expected data', async () => {
+      const res = await ctx.ds.annotationQuery(options);
+      expect(res).toEqual(expectedResult);
+      expect(res.length).toBe(expectedResult.length);
+    });
+  });
+
   describe('When performing parseDataQuery for table', () => {
-    let results;
     const response = {
       kind: 'bigquery#queryResponse',
       schema: {
@@ -840,7 +938,7 @@ describe('BigQueryDatasource', () => {
       cacheHit: false,
     };
 
-    results = ResponseParser.parseDataQuery(response, 'table');
+    const results = ResponseParser.parseDataQuery(response, 'table');
     it('should return a table', () => {
       expect(results.columns.length).toBe(2);
       expect(results.rows.length).toBe(3);
@@ -899,6 +997,7 @@ describe('BigQueryDatasource', () => {
       const rp = new ResponseParser(p);
       const list = rp.transformAnnotationResponse(options, data);
       expect(list.length).toBe(0);
+      expect(list).toEqual([]);
     });
     it('transformAnnotationResponse results with 3 rows', () => {
       const rows = [
