@@ -392,20 +392,18 @@ export default class BigQueryQuery {
       const partitionedField = this.target.partitionedField ? this.target.partitionedField : '_PARTITIONTIME';
       if (this.target.timeColumn !== partitionedField) {
         if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
-          let fromD = this.templateSrv.timeRange.from;
           const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(
-              fromD._d,
-              '-',
-              true
+            this.templateSrv.timeRange.from._d,
+            '-',
+            true
           )}'`;
           conditions.push(from);
         }
         if (this.templateSrv.timeRange && this.templateSrv.timeRange.to) {
-          let toD = this.templateSrv.timeRange.to;
           const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(
-              toD._d,
-              '-',
-              true
+            this.templateSrv.timeRange.to._d,
+            '-',
+            true
           )}'`;
           conditions.push(to);
         }
