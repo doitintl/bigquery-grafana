@@ -328,6 +328,13 @@ export class BigQueryDatasource {
     let status = 'success';
     let message = 'Successfully queried the BigQuery API.';
     const defaultErrorMessage = 'Cannot connect to BigQuery API';
+    if (!this.projectName) {
+      try {
+        await this.getDefaultProject();
+      } catch (error) {
+        message = error.statusText ? error.statusText : defaultErrorMessage;
+      }
+    }
     try {
       const path = `v2/projects/${this.projectName}/datasets`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
@@ -391,9 +398,11 @@ export class BigQueryDatasource {
   public async getDefaultProject() {
     try {
       if (this.authenticationType === 'gce' || !this.projectName) {
-        let data;
-        data = await this.getProjects();
+        const data = await this.getProjects();
         this.projectName = data[0].value;
+        if (!this.runInProject) {
+          this.runInProject = this.projectName;
+        }
         return data[0].value;
       } else {
         return this.projectName;
