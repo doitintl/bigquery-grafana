@@ -6,6 +6,7 @@ import moment from 'moment';
 import BigQueryQuery from './bigquery_query';
 import ResponseParser, { IResultFormat } from './response_parser';
 import superQueryLib from '@superquery/superquery-lib';
+import { v4 as generateID } from 'uuid';
 
 const Shifted = '_shifted';
 function sleep(ms) {
@@ -486,10 +487,10 @@ export class BigQueryDatasource {
     return this.backendSrv
       .datasourceRequest({
         method: 'GET',
-        requestId,
-        url: this.url + url,
+        requestId: generateID(),
+        url: this.url + url
       })
-      .then((result) => {
+      .then(result => {
         if (result.status !== 200) {
           if (result.status >= 500 && maxRetries > 0) {
             return this.doRequest(url, requestId, maxRetries - 1);
@@ -498,7 +499,7 @@ export class BigQueryDatasource {
         }
         return result;
       })
-      .catch((error) => {
+      .catch(error => {
         if (maxRetries > 0) {
           return this.doRequest(url, requestId, maxRetries - 1);
         }
@@ -656,13 +657,14 @@ export class BigQueryDatasource {
   private async paginatedResults(path, dataName) {
     let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
     let data = queryResults.data;
+    if (!data) return data;
     const dataList = dataName.split('.');
-    dataList.forEach((element) => {
-      data = data[element];
+    dataList.forEach(element => {
+      if (data && data[element]) data = data[element];
     });
-    while (queryResults.data.nextPageToken) {
+    while (queryResults && queryResults.data && queryResults.data.nextPageToken) {
       queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-      dataList.forEach((element) => {
+      dataList.forEach(element => {
         data = data.concat(queryResults.data[element]);
       });
     }
