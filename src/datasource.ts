@@ -6,6 +6,7 @@ import moment from 'moment';
 import BigQueryQuery from './bigquery_query';
 import ResponseParser, { IResultFormat } from './response_parser';
 import superQueryLib from '@superquery/superquery-lib';
+import { v4 as generateID } from 'uuid';
 
 const Shifted = '_shifted';
 function sleep(ms) {
@@ -327,6 +328,13 @@ export class BigQueryDatasource {
     let status = 'success';
     let message = 'Successfully queried the BigQuery API.';
     const defaultErrorMessage = 'Cannot connect to BigQuery API';
+    if (!this.projectName) {
+      try {
+        await this.getDefaultProject();
+      } catch (error) {
+        message = error.statusText ? error.statusText : defaultErrorMessage;
+      }
+    }
     try {
       const path = `v2/projects/${this.projectName}/datasets`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
@@ -390,9 +398,11 @@ export class BigQueryDatasource {
   public async getDefaultProject() {
     try {
       if (this.authenticationType === 'gce' || !this.projectName) {
-        let data;
-        data = await this.getProjects();
+        const data = await this.getProjects();
         this.projectName = data[0].value;
+        if (!this.runInProject) {
+          this.runInProject = this.projectName;
+        }
         return data[0].value;
       } else {
         return this.projectName;
@@ -486,10 +496,10 @@ export class BigQueryDatasource {
     return this.backendSrv
       .datasourceRequest({
         method: 'GET',
-        requestId,
-        url: this.url + url,
+        requestId: generateID(),
+        url: this.url + url
       })
-      .then((result) => {
+      .then(result => {
         if (result.status !== 200) {
           if (result.status >= 500 && maxRetries > 0) {
             return this.doRequest(url, requestId, maxRetries - 1);
@@ -498,7 +508,7 @@ export class BigQueryDatasource {
         }
         return result;
       })
-      .catch((error) => {
+      .catch(error => {
         if (maxRetries > 0) {
           return this.doRequest(url, requestId, maxRetries - 1);
         }
@@ -656,13 +666,14 @@ export class BigQueryDatasource {
   private async paginatedResults(path, dataName) {
     let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
     let data = queryResults.data;
+    if (!data) return data;
     const dataList = dataName.split('.');
-    dataList.forEach((element) => {
-      data = data[element];
+    dataList.forEach(element => {
+      if (data && data[element]) data = data[element];
     });
-    while (queryResults.data.nextPageToken) {
+    while (queryResults && queryResults.data && queryResults.data.nextPageToken) {
       queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-      dataList.forEach((element) => {
+      dataList.forEach(element => {
         data = data.concat(queryResults.data[element]);
       });
     }
