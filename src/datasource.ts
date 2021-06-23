@@ -1,11 +1,8 @@
-// import { validate } from "@babel/types";
-// import { sheets } from "googleapis/build/src/apis/sheets";
 import _ from 'lodash';
-// import { countBy, size } from "lodash-es";
 import moment from 'moment';
 import BigQueryQuery from './bigquery_query';
 import ResponseParser, { IResultFormat } from './response_parser';
-import superQueryLib from '@superquery/superquery-lib';
+import SqlParser from './sql_parser';
 import { v4 as generateID } from 'uuid';
 
 const Shifted = '_shifted';
@@ -48,8 +45,7 @@ export class BigQueryDatasource {
   }
 
   public static _extractFromClause(sql: string) {
-    const superqueryLib = new superQueryLib();
-    return superqueryLib.getProjectDatasetTableFromSql(sql);
+    return SqlParser.getProjectDatasetTableFromSql(sql);
   }
 
   public static _FindTimeField(sql, timeFields) {
