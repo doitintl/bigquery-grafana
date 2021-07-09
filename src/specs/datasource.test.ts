@@ -1097,7 +1097,7 @@ describe('BigQueryDatasource', () => {
               v: '1.521578851E9',
             },
             {
-              v: '37.7753058',
+              v: null,
             },
           ],
         },
@@ -1130,7 +1130,7 @@ describe('BigQueryDatasource', () => {
     results = ResponseParser.parseDataQuery(response, 'time_series');
     it('should return a time_series', () => {
       expect(results[0].datapoints.length).toBe(3);
-      expect(results[0].datapoints[0][0]).toBe(37.7753058);
+      expect(results[0].datapoints[0][0]).toBe(null);
       expect(results[0].datapoints[0][1]).toBe(1521578851000);
       expect(results[0].datapoints[2][0]).toBe(37.781752);
       expect(results[0].datapoints[2][1]).toBe(1521578927000);
