@@ -172,7 +172,8 @@ export default class ResponseParser {
             targetName = metricName;
           }
           const bucket = ResponseParser.findOrCreateBucket(data, targetName, metricName);
-          bucket.datapoints.push([Number(row.f[valueIndexes[i]].v), epoch]);
+          const value = row.f[valueIndexes[i]].v === null ? null : Number(row.f[valueIndexes[i]].v)
+          bucket.datapoints.push([value, epoch]);
         }
       }
     }
