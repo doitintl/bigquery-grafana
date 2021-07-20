@@ -51,13 +51,17 @@ this.locations = [
       // Multi-regional locations
       { text: 'United States (US)', value: 'US' },
       { text: 'European Union (EU)', value: 'EU' },
-      // Americas
-      { text: 'Las Vegas (us-west4)', value: 'us-west4' },
-      { text: 'Los Angeles (us-west2)', value: 'us-west2' },
-      { text: 'Montréal (northamerica-northeast1)', value: 'northamerica-northeast1' },
-      { text: 'Northern Virginia (us-east4)', value: 'us-east4' },
       { text: 'Oregon (us-west1)', value: 'us-west1' },
+      { text: 'Los Angeles (us-west2)', value: 'us-west2' },
       { text: 'Salt Lake City (us-west3)', value: 'us-west3' },
+      { text: 'Las Vegas (us-west4)', value: 'us-west4' },
+      { text: 'Iowa (us-central1)', value: 'us-central1' },
+      { text: 'South Carolina (us-east1)', value: 'us-east1' },
+      { text: 'Northern Virginia (us-east4)', value: 'us-east4' },
+      {
+        text: 'Montréal (northamerica-northeast1)',
+        value: 'northamerica-northeast1',
+      },
       { text: 'São Paulo (southamerica-east1)', value: 'southamerica-east1' },
       { text: 'South Carolina (us-east1)', value: 'us-east1' },
       // Europe
