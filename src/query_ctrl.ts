@@ -104,23 +104,23 @@ export class BigQueryQueryCtrl extends QueryCtrl {
 
     this.projectSegment = !this.target.project
       ? uiSegmentSrv.newSegment({
-          fake: true,
-          value: 'select project',
-        })
+        fake: true,
+        value: 'select project',
+      })
       : uiSegmentSrv.newSegment(this.target.project);
 
     this.datasetSegment = !this.target.dataset
       ? uiSegmentSrv.newSegment({
-          fake: true,
-          value: 'select dataset',
-        })
+        fake: true,
+        value: 'select dataset',
+      })
       : uiSegmentSrv.newSegment(this.target.dataset);
 
     this.tableSegment = !this.target.table
       ? uiSegmentSrv.newSegment({
-          fake: true,
-          value: 'select table',
-        })
+        fake: true,
+        value: 'select table',
+      })
       : uiSegmentSrv.newSegment(this.target.table);
 
     this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
@@ -457,7 +457,7 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       partModel.params[0] = subItem.value;
     }
     let addAlias = false;
-    const _addAlias = function() {
+    const _addAlias = function () {
       return !_.find(selectParts, (p: any) => p.def.type === 'alias');
     };
     switch (partType) {
@@ -663,7 +663,19 @@ export class BigQueryQueryCtrl extends QueryCtrl {
             return this.$q.when([]);
           case 'op':
             return this.$q.when(
-              this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN', 'LIKE', 'NOT LIKE'])
+              this.uiSegmentSrv.newOperators([
+                '=',
+                '!=',
+                '<',
+                '<=',
+                '>',
+                '>=',
+                'IN',
+                'LIKE',
+                'NOT LIKE',
+                'IS',
+                'IS NOT',
+              ])
             );
           default:
             return this.$q.when([]);
