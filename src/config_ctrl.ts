@@ -47,7 +47,7 @@ export class BigQueryConfigCtrl {
       { key: this.defaultAuthenticationType, value: 'Google JWT File' },
       { key: 'gce', value: 'GCE Default Service Account' },
     ];
-this.locations = [
+    this.locations = [
       // Multi-regional locations
       { text: 'United States (US)', value: 'US' },
       { text: 'European Union (EU)', value: 'EU' },
@@ -63,7 +63,6 @@ this.locations = [
         value: 'northamerica-northeast1',
       },
       { text: 'São Paulo (southamerica-east1)', value: 'southamerica-east1' },
-      { text: 'South Carolina (us-east1)', value: 'us-east1' },
       // Europe
       { text: 'Belgium (europe-west1)', value: 'europe-west1' },
       { text: 'Finland (europe-north1)', value: 'europe-north1' },
