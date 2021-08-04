@@ -34,9 +34,6 @@ export class BigQueryDatasource {
   public static _getShiftPeriod(strInterval) {
     const shift = strInterval.match(/\d+/)[0];
     strInterval = strInterval.substr(shift.length, strInterval.length);
-    if (strInterval === 'm') {
-      strInterval = 'M';
-    }
 
     if (strInterval.trim() === 'min') {
       strInterval = 'm';
@@ -122,9 +119,6 @@ export class BigQueryDatasource {
     query.format = query.format.substr(0, index);
     strInterval = res[0];
     const shift = res[1];
-    if (strInterval === 'm') {
-      strInterval = 'M';
-    }
 
     if (strInterval === 'min') {
       strInterval = 'm';
