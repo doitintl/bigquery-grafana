@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -22,36 +23,36 @@ import (
 )
 
 type QueryModel struct {
-	Format 				string `json:"format"`
+	Format string `json:"format"`
 	// Constant			string `json:"constant"`
-	Dataset 			string `json:"dataset"`
+	Dataset string `json:"dataset"`
 	// Group            []Group `json:"group"`
-	MetricColumn     	string `json:"metricColumn"`
-	OrderByCol       	string/*int32*/ `json:"orderByCol"`
-	OrderBySort      	string/*int32*/ `json:"orderBySort"`
-	Partitioned      	bool   `json:"partitioned"`
-	PartitionedField 	string `json:"partitionedField"`
-	ProjectID        	string `json:"project"`
-	RawQuery         	bool   `json:"rawQuery"`
-	RawSQL           	string `json:"rawSql"`
-	RefID            	string `json:"refId"`
+	MetricColumn     string `json:"metricColumn"`
+	OrderByCol       string/*int32*/ `json:"orderByCol"`
+	OrderBySort      string/*int32*/ `json:"orderBySort"`
+	Partitioned      bool   `json:"partitioned"`
+	PartitionedField string `json:"partitionedField"`
+	ProjectID        string `json:"project"`
+	RawQuery         bool   `json:"rawQuery"`
+	RawSQL           string `json:"rawSql"`
+	RefID            string `json:"refId"`
 	// Select           []string `json:"select"`
-	Sharded        		bool   `json:"sharded"`
-	Table          		string `json:"table"`
-	TimeColumn     		string `json:"timeColumn"`
-	TimeColumnType 		string `json:"timeColumnType"`
-	Location       		string `json:"location"`
+	Sharded        bool   `json:"sharded"`
+	Table          string `json:"table"`
+	TimeColumn     string `json:"timeColumn"`
+	TimeColumnType string `json:"timeColumnType"`
+	Location       string `json:"location"`
 	// Where            []string `json:"where"`
 }
 
 // JSONData holds the req.PluginContext.DataSourceInstanceSettings.JSONData struct
 type JSONData struct {
-	AuthenticationType 	string `json:"authenticationType"`
-	ClientEmail        	string `json:"clientEmail"`
-	DefaultProject     	string `json:"defaultProject"`
-	ProcessingLocation 	string `json:"processingLocation"`
-	QueryPriority      	string `json:"queryPriority"`
-	TokenURI           	string `json:"tokenUri"`
+	AuthenticationType string `json:"authenticationType"`
+	ClientEmail        string `json:"clientEmail"`
+	DefaultProject     string `json:"defaultProject"`
+	ProcessingLocation string `json:"processingLocation"`
+	QueryPriority      string `json:"queryPriority"`
+	TokenURI           string `json:"tokenUri"`
 }
 
 // BigQueryResult represents a full resultset.
@@ -149,6 +150,7 @@ func (td *BigQueryDatasource) query(ctx context.Context, query backend.DataQuery
 							return response
 						}
 						values = append(values, v)
+						break
 					default:
 						response.Error = fmt.Errorf("unexpected type for field '%s': %s", fieldSchema.Name, fieldSchema.Type)
 						return response
@@ -157,6 +159,7 @@ func (td *BigQueryDatasource) query(ctx context.Context, query backend.DataQuery
 				frame.Fields = append(frame.Fields,
 					data.NewField(fieldSchema.Name, nil, values),
 				)
+				break
 			default:
 				switch fieldSchema.Type {
 				case bigquery.IntegerFieldType:
@@ -173,6 +176,7 @@ func (td *BigQueryDatasource) query(ctx context.Context, query backend.DataQuery
 					frame.Fields = append(frame.Fields,
 						data.NewField("values", nil, values),
 					)
+					break
 				case bigquery.FloatFieldType:
 					values := make([]float64, 0)
 					for _, row := range bigQueryResult.Rows {
@@ -187,12 +191,15 @@ func (td *BigQueryDatasource) query(ctx context.Context, query backend.DataQuery
 					frame.Fields = append(frame.Fields,
 						data.NewField(fieldSchema.Name, nil, values),
 					)
+					break
 				default:
 					response.Error = fmt.Errorf("unexpected type for field '%s': %s", fieldSchema.Name, fieldSchema.Type)
 					return response
 				}
+				break
 			}
 		}
+		break
 	default:
 		response.Error = fmt.Errorf("unimplemented format '%s'. expected one of ['time_series']", queryModel.Format)
 		return response
@@ -308,7 +315,7 @@ func (td *BigQueryDatasource) executeQuery(ctx context.Context, queryModel Query
 	}
 
 	// substituteVariables replaces any placeholder variables
-	sql := substituteVariables(queryModel.RawSQL, originalQuery)
+	sql := substituteVariables(queryModel.RawSQL, queryModel, originalQuery)
 	log.DefaultLogger.Debug(fmt.Sprintf("query: %s\n", sql))
 
 	// create the query
@@ -356,7 +363,7 @@ func (td *BigQueryDatasource) executeQuery(ctx context.Context, queryModel Query
 }
 
 // substituteVariables replaces standard grafana variables in an input string and returns the result
-func substituteVariables(sql string, originalQuery backend.DataQuery) string {
+func substituteVariables(sql string, queryModel QueryModel, originalQuery backend.DataQuery) string {
 	// __from
 	sql = strings.Replace(sql, "${__from}", fmt.Sprintf("%d", originalQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)), -1)
 	sql = strings.Replace(sql, "${__from:date}", originalQuery.TimeRange.From.Format(time.RFC3339), -1)
@@ -371,5 +378,46 @@ func substituteVariables(sql string, originalQuery backend.DataQuery) string {
 	sql = strings.Replace(sql, "${__to:date:seconds}", fmt.Sprintf("%d", originalQuery.TimeRange.To.Unix()), -1)
 	sql = strings.Replace(sql, "${__to:date:YYYY-MM}", originalQuery.TimeRange.To.Format("2006-01"), -1)
 
+	// Macros
+	from := adjustTime(originalQuery.TimeRange.From, queryModel.TimeColumnType)
+	to := adjustTime(originalQuery.TimeRange.To, queryModel.TimeColumnType)
+	wholeRange := quoteTimeColumn(queryModel.TimeColumn) + " BETWEEN " + from + " AND " + to
+	fromRange := quoteTimeColumn(queryModel.TimeColumn) + " > " + from + " "
+	toRange := quoteTimeColumn(queryModel.TimeColumn) + " < " + to + " "
+
+	timeFilterRegex := regexp.MustCompile(`\$__timeFilter\((.*?)\)`)
+	sql = timeFilterRegex.ReplaceAllString(sql, wholeRange)
+	timeFromRegex := regexp.MustCompile(`\$__timeFrom\(([\w_.]+)\)`)
+	sql = timeFromRegex.ReplaceAllString(sql, fromRange)
+	timeToRegex := regexp.MustCompile(`\$__timeTo\(([\w_.]+)\)`)
+	sql = timeToRegex.ReplaceAllString(sql, toRange)
+	millisTimeToRegex := regexp.MustCompile(`\$__millisTimeTo\(([\w_.]+)\)`)
+	sql = millisTimeToRegex.ReplaceAllString(sql, to)
+	millisTimeFromRegex := regexp.MustCompile(`\$__millisTimeFrom\(([\w_.]+)\)`)
+	sql = millisTimeFromRegex.ReplaceAllString(sql, from)
+
 	return sql
+}
+
+func adjustTime(value time.Time, timeType string) string {
+	switch timeType {
+	case "DATE":
+		return fmt.Sprintf("'%s'", value.Format("2006-01-01")) //  '2006-01-01'
+	case "DATETIME":
+		return fmt.Sprintf("'%s'", value.Format("2006-01-01 15:04:05")) //  '2006-01-01 15:04:05'
+	default:
+		return fmt.Sprintf("TIMESTAMP_MILLIS (%d)", value.UnixMilli()) //  TIMESTAMP_MILLIS (1612056873199)
+	}
+}
+
+func quoteTimeColumn(value string) string {
+	vals := strings.Split(value, ".")
+	res := ""
+	for i := 0; i < len(vals); i++ {
+		res = res + "`" + vals[i] + "`"
+		if len(vals) > 1 && i+1 < len(vals) {
+			res = res + "."
+		}
+	}
+	return res
 }
