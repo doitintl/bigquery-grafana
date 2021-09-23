@@ -1,5 +1,7 @@
 {
-  "id": "doitintl-bigquery-datasource",
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+
+  "id": "grafana-bigquery-datasource",
   "type": "datasource",
   "name": "Google BigQuery",
   "metrics": true,
@@ -7,7 +9,7 @@
   "annotations": true,
   "alerting": true,
   "backend": true,
-  "executable": "doitintl-bigquery-datasource",
+  "executable": "grafana-bigquery-datasource",
   "dependencies": {
     "grafanaDependency": "7.x || 8.x"
   },
@@ -18,8 +20,8 @@
   "info": {
     "description": "Google BigQuery datasource for Grafana",
     "author": {
-      "name": "DoiT International",
-      "url": "https://www.doit-intl.com/"
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
     },
     "keywords": ["bigquery"],
     "logos": {
@@ -27,11 +29,13 @@
       "large": "img/logo.png"
     },
     "links": [
-      { "name": "GitHub", "url": "https://github.com/doitintl/bigquery-grafana" },
-      { "name": "MIT License", "url": "https://github.com/doitintl/bigquery-grafana/blob/master/LICENSE.md" }
+      {
+        "name": "Website",
+        "url": "https://github.com/grafana/google-bigquery-datasource/"
+      }
     ],
-    "updated": "2021-06-29",
-    "version": "2.0.2"
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
   },
   "routes": [
     {

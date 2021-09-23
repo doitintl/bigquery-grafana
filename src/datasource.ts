@@ -1,236 +1,128 @@
 import _ from 'lodash';
-import moment from 'moment';
-import BigQueryQuery from './bigquery_query';
-import ResponseParser, { IResultFormat } from './response_parser';
-import SqlParser from './sql_parser';
+import BigQueryQuery, { BigQueryQueryNG } from './bigquery_query';
+import { map } from 'rxjs/operators';
+import ResponseParser, { ResultFormat } from './ResponseParser';
+import { BigQueryOptions, GoogleAuthType, QueryFormat, QueryPriority } from './types';
 import { v4 as generateID } from 'uuid';
+import {
+  ArrayVector,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  dateTime,
+  FieldType,
+  VariableModel,
+} from '@grafana/data';
+import { FetchResponse, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import {
+  convertToUtc,
+  createTimeShiftQuery,
+  extractFromClause,
+  findTimeField,
+  formatBigqueryError,
+  formatDateToString,
+  getShiftPeriod,
+  handleError,
+  quoteLiteral,
+  setupTimeShiftQuery,
+  updatePartition,
+  updateTableSuffix,
+  SHIFTED,
+} from 'utils';
+import BQTypes from '@google-cloud/bigquery/build/src/types';
 
-const Shifted = '_shifted';
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
 
-export class BigQueryDatasource {
-  public static formatBigqueryError(error) {
-    let message = 'BigQuery: ';
-    let status = '';
-    let data = '';
-    if (error !== undefined) {
-      message += error.message ? error.message : 'Cannot connect to BigQuery API';
-      status = error.code;
-      data = error.errors[0].reason + ': ' + error.message;
-    }
-    return {
-      data: {
-        message: data,
-      },
-      status,
-      statusText: message,
-    };
-  }
+export class BigQueryDatasource extends DataSourceApi<any, BigQueryOptions> {
+  private readonly baseUrl: string;
+  private readonly url?: string;
 
-  public static _getShiftPeriod(strInterval) {
-    const shift = strInterval.match(/\d+/)[0];
-    strInterval = strInterval.substr(shift.length, strInterval.length);
-
-    if (strInterval.trim() === 'min') {
-      strInterval = 'm';
-    }
-    return [strInterval, shift];
-  }
-
-  public static _extractFromClause(sql: string) {
-    return SqlParser.getProjectDatasetTableFromSql(sql);
-  }
-
-  public static _FindTimeField(sql, timeFields) {
-    const select = sql.search(/select/i);
-    const from = sql.search(/from/i);
-    const fields = sql.substring(select + 6, from);
-    const splitFrom = fields.split(',');
-    let col;
-    for (let i = 0; i < splitFrom.length; i++) {
-      let field = splitFrom[i].search(/ AS /i);
-      if (field === -1) {
-        field = splitFrom[i].length;
-      }
-      col = splitFrom[i].substring(0, field).trim().replace('`', '').replace('`', '');
-      col = col.replace(/\$__timeGroupAlias\(/g, '');
-      col = col.replace(/\$__timeGroup\(/g, '');
-      col = col.replace(/\$__timeFilter\(/g, '');
-      col = col.replace(/\$__timeFrom\(/g, '');
-      col = col.replace(/\$__timeTo\(/g, '');
-      col = col.replace(/\$__millisTimeTo\(/g, '');
-      col = col.replace(/\$__millisTimeFrom\(/g, '');
-      for (const fl of timeFields) {
-        if (fl.text === col) {
-          return fl;
-        }
-      }
-    }
-    return null;
-  }
-  private static _handleError(error) {
-    if (error.cancelled === true) {
-      return [];
-    }
-    let msg = error;
-    if (error.data !== undefined) {
-      msg = error.data.error;
-    }
-    throw BigQueryDatasource.formatBigqueryError(msg);
-  }
-  private static _createTimeShiftQuery(query) {
-    const res = BigQueryQuery.getTimeShift(query.rawSql);
-    if (!res) {
-      return res;
-    }
-    const copy = query.constructor();
-    for (const attr in query) {
-      if (query.hasOwnProperty(attr)) {
-        copy[attr] = query[attr];
-      }
-    }
-    copy.rawSql = BigQueryQuery.replaceTimeShift(copy.rawSql);
-    copy.format += '#' + res;
-    copy.refId += Shifted + '_' + res;
-    return copy;
-  }
-
-  private static _setupTimeShiftQuery(query, options) {
-    const index = query.format.indexOf('#');
-    const copy = options.constructor();
-    for (const attr in options) {
-      if (options.hasOwnProperty(attr)) {
-        copy[attr] = options[attr];
-      }
-    }
-    if (index === -1) {
-      return copy;
-    }
-    let strInterval = query.format.substr(index + 1, query.format.len);
-    const res = BigQueryDatasource._getShiftPeriod(strInterval);
-    strInterval = res[0];
-    if (!['s', 'min', 'h', 'd', 'w', 'm', 'w', 'y', 'M'].includes(strInterval)) {
-      return copy;
-    }
-    query.format = query.format.substr(0, index);
-    strInterval = res[0];
-    const shift = res[1];
-
-    if (strInterval === 'min') {
-      strInterval = 'm';
-    }
-    copy.range.from = options.range.from.subtract(parseInt(shift, 10), strInterval);
-    copy.range.to = options.range.to.subtract(parseInt(shift, 10), strInterval);
-    return copy;
-  }
-
-  private static _updatePartition(q, options) {
-    if (q.indexOf('AND _PARTITIONTIME >= ') < 1) {
-      return q;
-    }
-    if (q.indexOf('AND _PARTITIONTIME <') < 1) {
-      return q;
-    }
-    const from = q.substr(q.indexOf('AND _PARTITIONTIME >= ') + 22, 21);
-
-    const newFrom = "'" + BigQueryQuery.formatDateToString(options.range.from._d, '-', true) + "'";
-    q = q.replace(from, newFrom);
-    const to = q.substr(q.indexOf('AND _PARTITIONTIME < ') + 21, 21);
-    const newTo = "'" + BigQueryQuery.formatDateToString(options.range.to._d, '-', true) + "'";
-
-    q = q.replace(to, newTo) + '\n ';
-    return q;
-  }
-
-  private static _updateTableSuffix(q, options) {
-    const ind = q.indexOf('AND  _TABLE_SUFFIX BETWEEN ');
-    if (ind < 1) {
-      return q;
-    }
-    const from = q.substr(ind + 28, 8);
-
-    const newFrom = BigQueryQuery.formatDateToString(options.range.from._d);
-    q = q.replace(from, newFrom);
-    const to = q.substr(ind + 43, 8);
-    const newTo = BigQueryQuery.formatDateToString(options.range.to._d);
-    q = q.replace(to, newTo) + '\n ';
-    return q;
-  }
-  public authenticationType: string;
-  public projectName: string;
-  private readonly id: any;
-  private jsonData: any;
+  private runInProject: string;
+  private jsonData: BigQueryOptions;
   private responseParser: ResponseParser;
   private queryModel: BigQueryQuery;
-  private readonly baseUrl: string;
-  private readonly url: string;
-  private runInProject: string;
-  private processingLocation: string;
-  private queryPriority: string;
+  private processingLocation?: string;
+  private queryPriority?: QueryPriority;
 
-  /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
-    this.id = instanceSettings.id;
-    this.jsonData = instanceSettings.jsonData;
-    this.responseParser = new ResponseParser(this.$q);
-    this.queryModel = new BigQueryQuery({});
+  authenticationType: string;
+  projectName = '';
+
+  constructor(instanceSettings: DataSourceInstanceSettings<BigQueryOptions>) {
+    super(instanceSettings);
+
     this.baseUrl = `/bigquery/`;
     this.url = instanceSettings.url;
-    this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
+    this.responseParser = new ResponseParser();
+    this.queryModel = new BigQueryQuery({} as any);
+
+    this.jsonData = instanceSettings.jsonData;
+    this.authenticationType = instanceSettings.jsonData.authenticationType || GoogleAuthType.JWT;
+
     (async () => {
       this.projectName = instanceSettings.jsonData.defaultProject || (await this.getDefaultProject());
     })();
+
     this.runInProject =
       this.jsonData.flatRateProject && this.jsonData.flatRateProject.length
         ? this.jsonData.flatRateProject
         : this.projectName;
+
     this.processingLocation =
       this.jsonData.processingLocation && this.jsonData.processingLocation.length
         ? this.jsonData.processingLocation
         : undefined;
+
     this.queryPriority = this.jsonData.queryPriority;
   }
 
-  public async query(options) {
-    const queries = _.filter(options.targets, (target) => {
-      return target.hide !== true;
-    }).map((target) => {
-      const queryModel = new BigQueryQuery(target, this.templateSrv, options.scopedVars);
-      this.queryModel = queryModel;
-      return {
-        queryPriority: this.queryPriority,
-        datasourceId: this.id,
-        format: target.format,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        metricColumn: target.metricColumn,
-        partitioned: target.partitioned,
-        partitionedField: target.partitionedField,
-        rawSql: queryModel.render(this.interpolateVariable),
-        refId: target.refId,
-        sharded: target.sharded,
-        table: target.table,
-        timeColumn: target.timeColumn,
-        timeColumnType: target.timeColumnType,
-      };
-    });
+  async query(options: DataQueryRequest<BigQueryQueryNG>): Promise<DataQueryResponse> {
+    const queries = options.targets
+      .filter((target) => {
+        return target.hide !== true;
+      })
+      .map<BigQueryQueryNG>((target) => {
+        const queryModel = new BigQueryQuery(target, options.scopedVars);
+        this.queryModel = queryModel;
+
+        return {
+          queryPriority: this.queryPriority,
+          datasourceId: this.id,
+          format: target.format,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          metricColumn: target.metricColumn,
+          partitioned: target.partitioned,
+          partitionedField: target.partitionedField,
+          rawSql: queryModel.render(true),
+          refId: target.refId,
+          sharded: target.sharded,
+          table: target.table,
+          timeColumn: target.timeColumn,
+          timeColumnType: target.timeColumnType,
+        };
+      });
 
     if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
-    _.map(queries, (query) => {
-      const newQuery = BigQueryDatasource._createTimeShiftQuery(query);
+
+    queries.map((query) => {
+      const newQuery = createTimeShiftQuery(query);
       if (newQuery) {
         queries.push(newQuery);
       }
     });
+
     let modOptions;
-    const allQueryPromise = _.map(queries, (query) => {
+
+    const allQueryPromise = queries.map((query) => {
       const tmpQ = this.queryModel.target.rawSql;
+
       if (this.queryModel.target.rawQuery === false) {
         this.queryModel.target.metricColumn = query.metricColumn;
         this.queryModel.target.partitioned = query.partitioned;
@@ -240,20 +132,32 @@ export class BigQueryDatasource {
         this.queryModel.target.table = query.table;
         this.queryModel.target.timeColumn = query.timeColumn;
         this.queryModel.target.timeColumnType = query.timeColumnType;
-        modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
+
+        modOptions = setupTimeShiftQuery(query, options);
+
         const q = this.setUpQ(modOptions, options, query);
-        console.log(q);
+
         this.queryModel.target.rawSql = q;
+
         return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then((response) => {
-          return ResponseParser.parseDataQuery(response, query.format);
+          if (!response) {
+            return null;
+          }
+          return ResponseParser.parseQueryResults(response.data, query);
         });
       } else {
         // Fix raw sql
-        const sqlWithNoVariables = this.templateSrv.replace(tmpQ, options.scopedVars, this.interpolateVariable);
-        const [project, dataset, table] = BigQueryDatasource._extractFromClause(sqlWithNoVariables);
-        this.getDateFields(project, dataset, table)
+        const sqlWithNoVariables = getTemplateSrv().replace(tmpQ, options.scopedVars, this.interpolateVariable);
+        const [project, dataset, table] = extractFromClause(sqlWithNoVariables);
+
+        if (!project || !dataset || !table) {
+          console.error(`Unable to extract project, dataset, or table from query: ${sqlWithNoVariables}`);
+        }
+
+        // TODO: fix the !
+        this.getDateFields(project!, dataset!, table!)
           .then((dateFields) => {
-            const tm = BigQueryDatasource._FindTimeField(tmpQ, dateFields);
+            const tm = findTimeField(tmpQ, dateFields);
             this.queryModel.target.timeColumn = tm.text;
             this.queryModel.target.timeColumnType = tm.value;
             this.queryModel.target.table = table;
@@ -262,69 +166,80 @@ export class BigQueryDatasource {
             console.log(err);
           });
         this.queryModel.target.rawSql = query.rawSql;
-        modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
+        modOptions = setupTimeShiftQuery(query, options);
         const q = this.setUpQ(modOptions, options, query);
-        console.log(q);
-        return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then((response) => {
-          return ResponseParser.parseDataQuery(response, query.format);
+
+        return this.doQuery(q!, options.panelId + query.refId, query.queryPriority).then((response) => {
+          if (!response) {
+            return null;
+          }
+          return ResponseParser.parseQueryResults(response.data, query);
         });
       }
     });
-    return this.$q.all(allQueryPromise).then((responses): any => {
+
+    return Promise.all(allQueryPromise).then((responses) => {
       const data = [];
+
       if (responses) {
-        for (const response of responses) {
-          if (response.type && response.type === 'table') {
-            data.push(response);
-          } else {
-            for (const dp of response) {
-              data.push(dp);
+        for (let i = 0; i < responses.length; i++) {
+          data.push(responses[i]);
+        }
+      }
+
+      for (let i = 0; i < data.length; i++) {
+        const q = queries[i];
+
+        if (q.timeShift) {
+          const timeField = data[i]?.fields.find((f, i) => {
+            if (f.type === FieldType.time) {
+              return true;
             }
+            return false;
+          });
+          if (timeField) {
+            const shiftPeriod = getShiftPeriod(q.timeShift);
+            timeField.values = new ArrayVector(
+              timeField.values.toArray().map((v) => dateTime(v).add(shiftPeriod[1], shiftPeriod[0]).valueOf())
+            );
           }
         }
       }
-      for (const d of data) {
-        if (typeof d.target !== 'undefined' && d.target.search(Shifted) > -1) {
-          const res = BigQueryDatasource._getShiftPeriod(
-            d.target.substring(d.target.lastIndexOf('_') + 1, d.target.length)
-          );
-          const shiftPeriod = res[0];
-          const shiftVal = res[1];
-          for (let i = 0; i < d.datapoints.length; i++) {
-            d.datapoints[i][1] = moment(d.datapoints[i][1]).subtract(shiftVal, shiftPeriod).valueOf();
-          }
-        }
-      }
+
       return { data };
     });
   }
 
-  public metricFindQuery(query, optionalOptions) {
+  async metricFindQuery(query: string, optionalOptions: any) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
     }
+
     const interpolatedQuery = {
       datasourceId: this.id,
       format: 'table',
-      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      rawSql: getTemplateSrv().replace(query, {}, this.interpolateVariable),
       refId,
     };
-    return this.doQuery(interpolatedQuery.rawSql, refId, query.queryPriority).then(metricData =>
-      ResponseParser.parseDataQuery(metricData, "var")
-    );
+
+    return await this.doQuery(interpolatedQuery.rawSql, refId).then((metricData) => {
+      if (!metricData) {
+        return [];
+      }
+      return ResponseParser.toVar(metricData);
+    });
   }
-  public async testDatasource() {
+
+  async testDatasource() {
     let status = 'success';
     let message = 'Successfully queried the BigQuery API.';
     const defaultErrorMessage = 'Cannot connect to BigQuery API';
+
     if (!this.projectName) {
-      try {
-        await this.getDefaultProject();
-      } catch (error) {
-        message = error.statusText ? error.statusText : defaultErrorMessage;
-      }
+      await this.getDefaultProject();
     }
+
     try {
       const path = `v2/projects/${this.projectName}/datasets`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
@@ -333,8 +248,9 @@ export class BigQueryDatasource {
         message = response.statusText ? response.statusText : defaultErrorMessage;
       }
     } catch (error) {
-      message = error.statusText ? error.statusText : defaultErrorMessage;
+      message = (error as any).statusText ? (error as any).statusText : defaultErrorMessage;
     }
+
     try {
       const path = `v2/projects/${this.projectName}/jobs/no-such-jobs`;
       const response = await this.doRequest(`${this.baseUrl}${path}`);
@@ -343,8 +259,8 @@ export class BigQueryDatasource {
         message = response.statusText ? response.statusText : defaultErrorMessage;
       }
     } catch (error) {
-      if (error.status !== 404) {
-        message = error.statusText ? error.statusText : defaultErrorMessage;
+      if ((error as any).status !== 404) {
+        message = (error as any).statusText ? (error as any).statusText : defaultErrorMessage;
       }
     }
     return {
@@ -353,39 +269,41 @@ export class BigQueryDatasource {
     };
   }
 
-  public async getProjects(): Promise<IResultFormat[]> {
+  async getProjects(): Promise<ResultFormat[]> {
     const path = `v2/projects`;
     const data = await this.paginatedResults(path, 'projects');
     return ResponseParser.parseProjects(data);
   }
 
-  public async getDatasets(projectName): Promise<IResultFormat[]> {
+  async getDatasets(projectName: string): Promise<ResultFormat[]> {
     const path = `v2/projects/${projectName}/datasets`;
     const data = await this.paginatedResults(path, 'datasets');
     return ResponseParser.parseDatasets(data);
   }
 
-  public async getTables(projectName: string, datasetName: string): Promise<IResultFormat[]> {
+  async getTables(projectName: string, datasetName: string): Promise<ResultFormat[]> {
     const path = `v2/projects/${projectName}/datasets/${datasetName}/tables`;
-    const data = await this.paginatedResults(path, 'tables');
-    return new ResponseParser(this.$q).parseTabels(data);
+    const data: BQTypes.ITableList['tables'] = await this.paginatedResults(path, 'tables');
+
+    return new ResponseParser().parseTabels(data);
   }
 
-  public async getTableFields(
+  async getTableFields(
     projectName: string,
     datasetName: string,
     tableName: string,
-    filter
-  ): Promise<IResultFormat[]> {
+    filter: string[]
+  ): Promise<ResultFormat[]> {
     const path = `v2/projects/${projectName}/datasets/${datasetName}/tables/${tableName}`;
     const data = await this.paginatedResults(path, 'schema.fields');
     return ResponseParser.parseTableFields(data, filter);
   }
 
-  public async getDateFields(projectName: string, datasetName: string, tableName: string) {
+  async getDateFields(projectName: string, datasetName: string, tableName: string) {
     return this.getTableFields(projectName, datasetName, tableName, ['DATE', 'TIMESTAMP', 'DATETIME']);
   }
-  public async getDefaultProject() {
+
+  async getDefaultProject() {
     try {
       if (this.authenticationType === 'gce' || !this.projectName) {
         const data = await this.getProjects();
@@ -402,26 +320,28 @@ export class BigQueryDatasource {
     }
   }
 
-  public annotationQuery(options) {
+  async annotationQuery(options: any) {
     const path = `v2/projects/${this.runInProject}/queries`;
     const url = this.url + `${this.baseUrl}${path}`;
     if (!options.annotation.rawQuery) {
-      return this.$q.reject({
+      return Promise.reject({
         message: 'Query missing in annotation definition',
       });
     }
-    const rawSql = this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable);
+    const rawSql = getTemplateSrv().replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable);
 
     const query = {
-      datasourceId: this.id,
-      format: 'table',
+      // datasourceId: this.id,
+      format: QueryFormat.Table,
       rawSql,
       refId: options.annotation.name,
-    };
+    } as BigQueryQueryNG;
+
     this.queryModel.target.rawSql = query.rawSql;
     query.rawSql = this.queryModel.expend_macros(options);
-    return this.backendSrv
-      .datasourceRequest({
+
+    return getBackendSrv()
+      .fetch({
         data: {
           priority: this.queryPriority,
           from: options.range.from.valueOf().toString(),
@@ -434,23 +354,35 @@ export class BigQueryDatasource {
         requestId: options.annotation.name,
         url,
       })
-      .then((data) => this.responseParser.transformAnnotationResponse(options, data));
+      .pipe(
+        map(async (res: FetchResponse) => {
+          return await this.responseParser.transformAnnotationResponse(options, res);
+        })
+      )
+      .toPromise();
   }
-  private setUpQ(modOptions, options, query) {
+
+  private setUpQ(modOptions: any, options: DataQueryRequest<BigQueryQueryNG>, query: BigQueryQueryNG) {
     let q = this.queryModel.expend_macros(modOptions);
+
     if (q) {
-      q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions);
-      q = BigQueryDatasource._updatePartition(q, modOptions);
-      q = BigQueryDatasource._updateTableSuffix(q, modOptions);
-      if (query.refId.search(Shifted) > -1) {
-        q = this._updateAlias(q, modOptions, query.refId);
+      q = this.setUpPartition(q, Boolean(query.partitioned), query.partitionedField || '', modOptions);
+      q = updatePartition(q, modOptions);
+      q = updateTableSuffix(q, modOptions);
+
+      if (query.refId.search(SHIFTED) > -1) {
+        // TODO: get rid of !
+        q = this._updateAlias(q!, modOptions, query.refId);
       }
-      const limit = q.match(/[^]+(\bLIMIT\b)/gi);
+
+      const limit = q?.match(/[^]+(\bLIMIT\b)/gi);
+
       if (limit == null) {
         const limitStatement = ' LIMIT ' + options.maxDataPoints;
-        const limitPosition = q.match(/\$__limitPosition/g);
+        const limitPosition = q?.match(/\$__limitPosition/g);
+
         if (limitPosition !== null) {
-          q = q.replace(/\$__limitPosition/g, limitStatement);
+          q = q?.replace(/\$__limitPosition/g, limitStatement);
         } else {
           q += limitStatement;
         }
@@ -458,6 +390,7 @@ export class BigQueryDatasource {
     }
     return q;
   }
+
   /**
    * Add partition to query unless it has one
    * @param query
@@ -465,16 +398,24 @@ export class BigQueryDatasource {
    * @param partitionedField
    * @param options
    */
-  private setUpPartition(query, isPartitioned, partitionedField, options) {
+  private setUpPartition(
+    query: string,
+    isPartitioned: boolean,
+    partitionedField: string,
+    options: DataQueryRequest<BigQueryQueryNG>
+  ) {
     partitionedField = partitionedField ? partitionedField : '_PARTITIONTIME';
-    if (isPartitioned && !query.match(new RegExp(partitionedField, "i"))) {
-      const fromD = BigQueryQuery.convertToUtc(options.range.from._d);
-      const toD = BigQueryQuery.convertToUtc(options.range.to._d);
-      const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, '-', true)}'`;
-      const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(toD, '-', true)}'`;
+
+    if (isPartitioned && !query.match(new RegExp(partitionedField, 'i'))) {
+      const fromD = convertToUtc(options.range.from.toDate());
+      const toD = convertToUtc(options.range.to.toDate());
+
+      const from = `${partitionedField} >= '${formatDateToString(fromD, '-', true)}'`;
+      const to = `${partitionedField} < '${formatDateToString(toD, '-', true)}'`;
       const partition = `where ${from} AND ${to} AND `;
-      if (query.match(/where/i)) query = query.replace(/where/i, partition);
-      else {
+      if (query.match(/where/i)) {
+        query = query.replace(/where/i, partition);
+      } else {
         const reg = /from ('|`|"|){1}(.*?)('|`|"|){1} as ('|`|"|)(\S*)('|`|"|){1}|from ('|`|"|){1}(\S*)('|`|"|){1}/i;
         const fromMatch = query.match(reg);
         query = query.replace(reg, `${fromMatch} ${fromMatch}`);
@@ -482,88 +423,109 @@ export class BigQueryDatasource {
     }
     return query;
   }
-  private async doRequest(url, requestId = 'requestId', maxRetries = 3) {
-    return this.backendSrv
-      .datasourceRequest({
+
+  // @ts-ignore
+  private async doRequest(url: string, requestId = 'requestId', maxRetries = 3) {
+    return getBackendSrv()
+      .fetch<BQTypes.IQueryResponse>({
         method: 'GET',
         requestId: generateID(),
-        url: this.url + url
+        url: this.url + url,
       })
-      .then(result => {
+      .toPromise()
+      .then((result) => {
         if (result.status !== 200) {
           if (result.status >= 500 && maxRetries > 0) {
             return this.doRequest(url, requestId, maxRetries - 1);
           }
-          throw BigQueryDatasource.formatBigqueryError(result.data.error);
+          throw formatBigqueryError((result.data as any).error);
         }
+
         return result;
-      })
-      .catch(error => {
-        if (maxRetries > 0) {
-          return this.doRequest(url, requestId, maxRetries - 1);
-        }
-        if (error.cancelled === true) {
-          return [];
-        }
-        return BigQueryDatasource._handleError(error);
       });
+    // TODO: fix this
+    // .catch((error) => {
+    //   if (error.status === 500 && maxRetries > 0) {
+    //     return this.doRequest(url, requestId, maxRetries - 1);
+    //   }
+
+    //   if (error.cancelled === true) {
+    //     return [];
+    //   }
+    //   return handleError(error);
+    // });
   }
 
-  private async doQueryRequest(query, requestId, priority, maxRetries = 3) {
+  // @ts-ignore
+  private async doQueryRequest(query: string, requestId: string, priority: QueryPriority, maxRetries = 3) {
     const location = this.queryModel.target.location || this.processingLocation || 'US';
     let data,
       queryiesOrJobs = 'queries';
-    data = { priority: priority, location, query, useLegacySql: false, useQueryCache: true }; //ExternalDataConfiguration
+    data = { priority, location, query, useLegacySql: false, useQueryCache: true }; //ExternalDataConfiguration
+
     if (priority.toUpperCase() === 'BATCH') {
       queryiesOrJobs = 'jobs';
       data = { configuration: { query: { query, priority } } };
     }
+
     const path = `v2/projects/${this.runInProject}/${queryiesOrJobs}`;
     const url = this.url + `${this.baseUrl}${path}`;
-    return this.backendSrv
-      .datasourceRequest({
+
+    return getBackendSrv()
+      .fetch<BQTypes.IQueryResponse>({
         data: data,
         method: 'POST',
         requestId,
         url,
+        retry: 3,
       })
+      .toPromise()
       .then((result) => {
         if (result.status !== 200) {
           if (result.status >= 500 && maxRetries > 0) {
             return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
           }
-          throw BigQueryDatasource.formatBigqueryError(result.data.error);
+          throw formatBigqueryError((result.data as any).error);
         }
         return result;
       })
       .catch((error) => {
-        if (maxRetries > 0) {
+        if (error.status === 500 && maxRetries > 0) {
           return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
         }
+
         if (error.cancelled === true) {
           return [];
         }
-        return BigQueryDatasource._handleError(error);
+        return handleError(error);
       });
   }
-  private async _waitForJobComplete(queryResults, requestId, jobId) {
+
+  private async _waitForJobComplete(
+    queryResults: FetchResponse<BQTypes.IQueryResponse>,
+    requestId: string,
+    jobId: string
+  ) {
     let sleepTimeMs = 100;
-    console.log('New job id: ', jobId);
+
     const location = this.queryModel.target.location || this.processingLocation || 'US';
     const path = `v2/projects/${this.runInProject}/queries/` + jobId + '?location=' + location;
     while (!queryResults.data.jobComplete) {
       await sleep(sleepTimeMs);
       sleepTimeMs *= 2;
       queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
-      console.log('wating for job to complete ', jobId);
     }
-    console.log('Job Done ', jobId);
     return queryResults;
   }
 
-  private async _getQueryResults(queryResults, rows, requestId, jobId) {
+  private async _getQueryResults(
+    queryResults: FetchResponse<BQTypes.IQueryResponse>,
+    requestId: string,
+    jobId: string
+  ) {
     while (queryResults.data.pageToken) {
       const location = this.queryModel.target.location || this.processingLocation || 'US';
+
       const path =
         `v2/projects/${this.runInProject}/queries/` +
         jobId +
@@ -571,73 +533,56 @@ export class BigQueryDatasource {
         queryResults.data.pageToken +
         '&location=' +
         location;
-      queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
-      if (queryResults.length === 0) {
-        return rows;
+
+      const nextResult = await this.doRequest(`${this.baseUrl}${path}`, requestId);
+
+      queryResults.data.pageToken = nextResult.data.pageToken;
+      if (nextResult.data.rows?.length === 0) {
+        return queryResults;
       }
-      rows = rows.concat(queryResults.data.rows);
-      console.log('getting results for: ', jobId);
+
+      queryResults.data.rows = queryResults.data.rows
+        ? queryResults.data.rows.concat(nextResult.data.rows)
+        : nextResult.data.rows;
     }
-    return rows;
+
+    return queryResults;
   }
 
-  private async doQuery(query, requestId, priority = 'INTERACTIVE') {
+  private async doQuery(
+    query: string,
+    requestId: string,
+    priority = QueryPriority.Interactive
+  ): Promise<FetchResponse<BQTypes.IQueryResponse> | null> {
     if (!query) {
-      return {
-        rows: null,
-        schema: null,
-      };
+      return null;
     }
+
     let notReady = false;
+
     ['-- time --', '-- value --'].forEach((element) => {
       if (query.indexOf(element) !== -1) {
         notReady = true;
       }
     });
+
     if (notReady) {
-      return {
-        rows: null,
-        schema: null,
-      };
+      return null;
     }
-    let queryResults = await this.doQueryRequest(
-      //"tableDefinitions": {
-      //   string: {
-      //     object (ExternalDataConfiguration)
-      //   },
-      //   ...
-      // },
-      query,
-      requestId,
-      priority
-    );
-    if (queryResults.length === 0) {
-      return {
-        rows: null,
-        schema: null,
-      };
-    }
+
+    let queryResults = await this.doQueryRequest(query, requestId, priority);
+
     const jobId = queryResults.data.jobReference.jobId;
     queryResults = await this._waitForJobComplete(queryResults, requestId, jobId);
-    if (queryResults.length === 0) {
-      return {
-        rows: null,
-        schema: null,
-      };
-    }
-    let rows = queryResults.data.rows;
-    const schema = queryResults.data.schema;
-    rows = await this._getQueryResults(queryResults, rows, requestId, jobId);
-    return {
-      rows,
-      schema,
-    };
+
+    return await this._getQueryResults(queryResults, requestId, jobId);
   }
 
-  private interpolateVariable = (value, variable) => {
+  private interpolateVariable = (value: any, variable: VariableModel) => {
     if (typeof value === 'string') {
+      // @ts-ignore
       if (variable.multi || variable.includeAll) {
-        return BigQueryQuery.quoteLiteral(value);
+        return quoteLiteral(value);
       } else {
         return value;
       }
@@ -648,30 +593,38 @@ export class BigQueryDatasource {
     }
 
     const quotedValues = _.map(value, (v) => {
-      return BigQueryQuery.quoteLiteral(v);
+      return quoteLiteral(v);
     });
     return quotedValues.join(',');
   };
 
-  private async paginatedResults(path, dataName) {
+  private async paginatedResults(path: string, dataName: string) {
     let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
     let data = queryResults.data;
-    if (!data) return data;
+
+    if (!data) {
+      return data;
+    }
+
     const dataList = dataName.split('.');
-    dataList.forEach(element => {
-      if (data && data[element]) data = data[element];
+    dataList.forEach((element) => {
+      if (data && data[element]) {
+        data = data[element];
+      }
     });
+
     while (queryResults && queryResults.data && queryResults.data.nextPageToken) {
       queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-      dataList.forEach(element => {
+      dataList.forEach((element) => {
         data = data.concat(queryResults.data[element]);
       });
     }
     return data;
   }
-  private _updateAlias(q, options, shiftstr) {
+
+  private _updateAlias(q: string, options: any, shiftstr: string) {
     if (shiftstr !== undefined) {
-      const index = shiftstr.search(Shifted);
+      const index = shiftstr.search(SHIFTED);
       const shifted = shiftstr.substr(index, shiftstr.length);
       for (const al of options.targets[0].select[0]) {
         if (al.type === 'alias') {

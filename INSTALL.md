@@ -4,14 +4,14 @@ There are multiple ways to install bigquery-grafana datasource plugin, please **
 
 ## From grafana.net
 
-Install from [grafana.net](https://grafana.net/plugins/doitintl-bigquery-datasource)
+Install from [grafana.net](https://grafana.net/plugins/grafana-bigquery-datasource)
 
 ## Grafana-cli
 
 Use the [grafana-cli](http://docs.grafana.org/plugins/installation/#installing-plugins-manually)
 
 ```bash
-grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/2.0.2.zip plugins install doitintl-bigquery-datasource
+grafana-cli --pluginUrl https://github.com/doitintl/bigquery-grafana/archive/2.0.2.zip plugins install grafana-bigquery-datasource
 ```
 
 ## Copy files
@@ -31,7 +31,7 @@ plugins:
 
 grafana.ini:
   plugins:
-    allow_loading_unsigned_plugins: doitintl-bigquery-datasource
+    allow_loading_unsigned_plugins: grafana-bigquery-datasource
 ...
 ```
 

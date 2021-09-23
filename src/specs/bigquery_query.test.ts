@@ -1,22 +1,30 @@
+import { GroupType } from 'types';
 import BigQueryQuery from '../bigquery_query';
-describe('BigQueryQuery', () => {
-  const templateSrv = {
-    replace: jest.fn(text => text),
-  };
+import { escapeLiteral, formatDateToString, getUnixSecondsFromString, replaceTimeShift, getTimeShift } from '../utils';
 
+const templateSrvMock = {
+  replace: jest.fn((text) => text),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => templateSrvMock,
+}));
+
+describe('BigQueryQuery', () => {
   describe('When initializing', () => {
     it('should not be in SQL mode', () => {
-      const query = new BigQueryQuery({}, templateSrv);
+      const query = new BigQueryQuery({} as any);
       expect(query.target.rawQuery).toBe(false);
     });
     it('should be in SQL mode for pre query builder queries', () => {
-      const query = new BigQueryQuery({ rawSql: 'SELECT 1' }, templateSrv);
+      const query = new BigQueryQuery({ rawSql: 'SELECT 1' } as any);
       expect(query.target.rawQuery).toBe(true);
     });
   });
 
   describe('When generating time column SQL', () => {
-    const query = new BigQueryQuery({}, templateSrv);
+    const query = new BigQueryQuery({} as any);
 
     query.target.timeColumn = 'time';
     expect(query.buildTimeColumn()).toBe('`time` AS time');
@@ -25,28 +33,25 @@ describe('BigQueryQuery', () => {
   });
 
   describe('When generating time column SQL with group by time', () => {
-    let query = new BigQueryQuery(
-      { timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'none'] }] },
-      templateSrv
-    );
+    let query = new BigQueryQuery({
+      timeColumn: 'time',
+      group: [{ type: GroupType.Time, params: ['5m', 'none'] }],
+    } as any);
     expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m)');
     expect(query.buildTimeColumn(false)).toBe('$__timeGroup(time,5m)');
 
-    query = new BigQueryQuery({ timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'NULL'] }] }, templateSrv);
+    query = new BigQueryQuery({ timeColumn: 'time', group: [{ type: GroupType.Time, params: ['5m', 'NULL'] }] } as any);
     expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m,NULL)');
 
-    query = new BigQueryQuery(
-      {
-        group: [{ type: 'time', params: ['5m', 'none'] }],
-        timeColumn: 'time',
-        timeColumnType: 'int4',
-      },
-      templateSrv
-    );
+    query = new BigQueryQuery({
+      group: [{ type: GroupType.Time, params: ['5m', 'none'] }],
+      timeColumn: 'time',
+      timeColumnType: 'int4',
+    } as any);
   });
 
   describe('When generating metric column SQL', () => {
-    const query = new BigQueryQuery({}, templateSrv);
+    const query = new BigQueryQuery({} as any);
     expect(query.buildMetricColumn()).toBe('');
     query.target.metricColumn = 'host';
     expect(query.buildMetricColumn()).toBe('`host` AS metric');
@@ -55,7 +60,7 @@ describe('BigQueryQuery', () => {
   });
 
   describe('When generating value column SQL', () => {
-    const query = new BigQueryQuery({}, templateSrv);
+    const query = new BigQueryQuery({} as any);
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('`value`');
     column = [
@@ -138,7 +143,7 @@ describe('BigQueryQuery', () => {
   });
 
   describe('When generating value column SQL with metric column', () => {
-    const query = new BigQueryQuery({}, templateSrv);
+    const query = new BigQueryQuery({} as any);
     query.target.metricColumn = 'host';
 
     let column = [{ type: 'column', params: ['value'] }];
@@ -174,7 +179,7 @@ describe('BigQueryQuery', () => {
   });
 
   describe('When generating WHERE clause', () => {
-    const query = new BigQueryQuery({ where: [] }, templateSrv);
+    const query = new BigQueryQuery({ where: [] } as any);
 
     expect(query.buildWhereClause()).toBe('');
 
@@ -192,11 +197,11 @@ describe('BigQueryQuery', () => {
     expect(query.buildWhereClause()).toBe('\nWHERE\n  $__timeFilter(t) AND\n  v = 1');
     query.target.where = [];
     query.target.partitioned = true;
-    const time = { from: { _d: '1987-06-30' }, to: { _d: '1987-06-30' } };
-    query.templateSrv.timeRange = time;
+    const time = { from: { toDate: () => '1987-06-30' }, to: { toDate: () => '1987-06-30' } };
+    (query.templateSrv as any).timeRange = time;
     const whereClause = query.buildWhereClause();
     expect(whereClause).toBe(
-      "\nWHERE\n  _PARTITIONTIME >= '1987-06-30 03:00:00' AND\n  _PARTITIONTIME < '1987-06-30 03:00:00'"
+      "\nWHERE\n  _PARTITIONTIME >= '1987-06-30 00:00:00' AND\n  _PARTITIONTIME < '1987-06-30 00:00:00'"
     );
     query.target.partitionedField = 't';
     expect(query.buildWhereClause()).toBe('');
@@ -205,10 +210,10 @@ describe('BigQueryQuery', () => {
   });
 
   describe('When generating GROUP BY clause', () => {
-    const query = new BigQueryQuery({ group: [], metricColumn: 'none' }, templateSrv);
+    const query = new BigQueryQuery({ group: [], metricColumn: 'none' } as any);
 
     expect(query.buildGroupClause()).toBe('\nGROUP BY 1,2');
-    query.target.group = [{ type: 'time', params: ['5m'] }];
+    query.target.group = [{ type: GroupType.Time, params: ['5m'] }];
     expect(query.buildGroupClause()).toBe('\nGROUP BY 1,2');
     query.target.metricColumn = 'm';
     query.isAggregate = true;
@@ -223,7 +228,7 @@ describe('BigQueryQuery', () => {
     };
     let result =
       '#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2 \nORDER BY 1';
-    const query = new BigQueryQuery(target, templateSrv);
+    const query = new BigQueryQuery(target as any);
 
     expect(query.buildQuery()).toBe(result);
 
@@ -240,7 +245,7 @@ describe('BigQueryQuery', () => {
       timeColumn: 't',
       where: [],
     };
-    const query = new BigQueryQuery(target, templateSrv);
+    const query = new BigQueryQuery(target as any);
     query.tmpValue = 't.l';
     query.isWindow = true;
     const result =
@@ -255,9 +260,9 @@ describe('BigQueryQuery', () => {
   });
 
   describe('escapeLiteral', () => {
-    const res = BigQueryQuery.escapeLiteral("'a");
+    const res = escapeLiteral("'a");
     expect(res).toBe("''a");
-    // expect(BigQueryQuery.escapeLiteral("'a")).toBe("''a");
+    // expect(escapeLiteral("'a")).toBe("''a");
   });
   describe('macros', () => {
     const target = {
@@ -267,7 +272,7 @@ describe('BigQueryQuery', () => {
       timeColumn: 't',
       where: [],
     };
-    const query = new BigQueryQuery(target, templateSrv);
+    const query = new BigQueryQuery(target as any);
     const options = {
       dashboardId: null,
       interval: '12h',
@@ -313,9 +318,10 @@ describe('BigQueryQuery', () => {
       },
     };
     const time = {
-      from: { _d: 'Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)' },
-      to: { _d: 'Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)' },
+      from: { toDate: () => 'Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)' },
+      to: { toDate: () => 'Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)' },
     };
+    // @ts-ignore
     query.templateSrv.timeRange = time;
     it('Check macros', () => {
       expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400) AS time');
@@ -330,7 +336,7 @@ describe('BigQueryQuery', () => {
 
   describe('formatDateToString', () => {
     const date1 = new Date('December 17, 1995 03:24:00');
-    expect(BigQueryQuery.formatDateToString(date1, '-', true)).toBe('1995-12-17 03:24:00');
+    expect(formatDateToString(date1, '-', true)).toBe('1995-12-17 03:24:00');
   });
 
   describe('getIntervalStr', () => {
@@ -341,11 +347,12 @@ describe('BigQueryQuery', () => {
       timeColumn: 'my_data',
       where: [],
     };
-    const query = new BigQueryQuery(target, templateSrv);
+    const query = new BigQueryQuery(target as any);
     const time = {
-      from: { _d: 1588147101364 },
-      to: { _d: 1588148901364 },
+      from: { toDate: () => 1588147101364 },
+      to: { toDate: () => 1588148901364 },
     };
+    // @ts-ignore
     query.templateSrv.timeRange = time;
 
     expect(query.getIntervalStr('auto', undefined, { maxDataPoints: 1742 })).toBe(
@@ -366,7 +373,7 @@ describe('BigQueryQuery', () => {
     expect(query.getIntervalStr('1w', '1d', null)).toBe(
       'TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800) AS time'
     );
-    expect(query.getIntervalStr('1m', '1d', null)).toBe(
+    expect(query.getIntervalStr('1M', '1d', null)).toBe(
       "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01')))) AS time"
     );
     expect(query.getIntervalStr('1y', '2d', null)).toBe(
@@ -375,21 +382,21 @@ describe('BigQueryQuery', () => {
   });
 
   describe('getUnixSecondsFromString', () => {
-    expect(BigQueryQuery.getUnixSecondsFromString('5s')).toBe(5);
-    expect(BigQueryQuery.getUnixSecondsFromString('2min')).toBe(120);
-    expect(BigQueryQuery.getUnixSecondsFromString('1h')).toBe(3600);
-    expect(BigQueryQuery.getUnixSecondsFromString('1d')).toBe(86400);
-    expect(BigQueryQuery.getUnixSecondsFromString('1w')).toBe(604800);
-    expect(BigQueryQuery.getUnixSecondsFromString('1m')).toBe(2629743);
-    expect(BigQueryQuery.getUnixSecondsFromString('1y')).toBe(31536000);
-    expect(BigQueryQuery.getUnixSecondsFromString('1z')).toBe(0);
+    expect(getUnixSecondsFromString('5s')).toBe(5);
+    expect(getUnixSecondsFromString('2min')).toBe(120);
+    expect(getUnixSecondsFromString('1h')).toBe(3600);
+    expect(getUnixSecondsFromString('1d')).toBe(86400);
+    expect(getUnixSecondsFromString('1w')).toBe(604800);
+    expect(getUnixSecondsFromString('1M')).toBe(2629743);
+    expect(getUnixSecondsFromString('1y')).toBe(31536000);
+    expect(getUnixSecondsFromString('1z')).toBe(0);
   });
 
   describe('replaceTimeShift', () => {
-    expect(BigQueryQuery.replaceTimeShift('$__timeShifting(1d)')).toBe('');
+    expect(replaceTimeShift('$__timeShifting(1d)')).toBe('');
   });
   describe('getTimeShift', () => {
-    expect(BigQueryQuery.getTimeShift('$__timeShifting(1d)')).toBe('1d');
-    expect(BigQueryQuery.getTimeShift('$__timeShifting(1d')).toBe(null);
+    expect(getTimeShift('$__timeShifting(1d)')).toBe('1d');
+    expect(getTimeShift('$__timeShifting(1d')).toBe(null);
   });
 });

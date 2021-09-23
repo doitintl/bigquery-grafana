@@ -1,111 +1,56 @@
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataQuery, ScopedVars, VariableModel } from '@grafana/data';
 import _ from 'lodash';
-import { BigQueryDatasource } from './datasource';
+import {
+  getShiftPeriod,
+  getUnixSecondsFromString,
+  quoteFiledName,
+  escapeLiteral,
+  quoteLiteral,
+  formatDateToString,
+  replaceTimeShift,
+  convertToUtc,
+  getInterval,
+} from 'utils';
+import { GroupType, QueryFormat, QueryPriority } from 'types';
+
+export interface BigQueryQueryNG extends DataQuery {
+  dataset?: string;
+  format: QueryFormat;
+  orderByCol?: string;
+  orderBySort?: string;
+  location?: string;
+  timeColumn: string;
+  timeColumnType?: 'TIMESTAMP' | 'DATE' | 'DATETIME' | 'int4';
+  metricColumn: string;
+  group?: Array<{ type: GroupType; params: string[] }>;
+  where?: any[];
+  select?: any[];
+  rawQuery?: boolean;
+  rawSql: string;
+  partitioned?: boolean;
+  partitionedField?: string;
+  convertToUTC?: boolean;
+  sharded?: boolean;
+  project?: string;
+  table?: string;
+  queryPriority?: QueryPriority;
+  timeShift?: string;
+}
 
 export default class BigQueryQuery {
-  public static quoteLiteral(value) {
-    return "'" + String(value).replace(/'/g, "''") + "'";
-  }
+  target: BigQueryQueryNG;
+  templateSrv: TemplateSrv;
+  scopedVars: any;
+  isWindow: boolean;
+  isAggregate: boolean;
+  hll: any;
+  groupBy: string;
+  tmpValue: string;
 
-  public static escapeLiteral(value) {
-    return String(value).replace(/'/g, "''");
-  }
-
-  public static quoteFiledName(value) {
-    const vals = value.split('.');
-    let res = '';
-    for (let i = 0; i < vals.length; i++) {
-      res = res + '`' + String(vals[i]) + '`';
-      if (vals.length > 1 && i + 1 < vals.length) {
-        res = res + '.';
-      }
-    }
-    return res;
-  }
-
-  public static formatDateToString(inputDate, separator = '', addtime = false) {
-    const date = new Date(inputDate);
-    // 01, 02, 03, ... 29, 30, 31
-    const DD = (date.getDate() < 10 ? '0' : '') + date.getDate();
-    // 01, 02, 03, ... 10, 11, 12
-    const MM = (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1);
-    // 1970, 1971, ... 2015, 2016, ...
-    const YYYY = date.getFullYear();
-
-    // create the format you want
-    let dateStr = YYYY + separator + MM + separator + DD;
-    if (addtime === true) {
-      dateStr += ' ' + date.toTimeString().substr(0, 8);
-    }
-    return dateStr;
-  }
-
-  public static _getInterval(q, alias: boolean) {
-    const interval: string[] = [];
-    const res = alias
-      ? q.match(/(\$__timeGroupAlias\(([\w._]+,)).*?(?=\))/g)
-      : q.match(/(\$__timeGroup\(([\w_.]+,)).*?(?=\))/g);
-    if (res) {
-      interval[0] = res[0].split(',')[1] ? res[0].split(',')[1].trim() : res[0].split(',')[1];
-      interval[1] = res[0].split(',')[2] ? res[0].split(',')[2].trim() : res[0].split(',')[2];
-    }
-    return interval;
-  }
-
-  public static getUnixSecondsFromString(str) {
-    if (str === undefined) {
-      return 0;
-    }
-    const res = BigQueryDatasource._getShiftPeriod(str);
-    const groupPeriod = res[0];
-    const groupVal = res[1];
-    switch (groupPeriod) {
-      case 's':
-        return 1 * groupVal;
-      case 'm':
-        return 60 * groupVal;
-      case 'h':
-        return 3600 * groupVal;
-      case 'd':
-        return groupVal * 86400;
-      case 'w':
-        return 604800 * groupVal;
-      case 'M':
-        return 2629743 * groupVal;
-      case 'y':
-        return 31536000 * groupVal;
-    }
-    return 0;
-  }
-
-  public static getTimeShift(q) {
-    let res: string;
-    res = q.match(/(.*\$__timeShifting\().*?(?=\))/g);
-    if (res) {
-      res = res[0].substr(1 + res[0].lastIndexOf('('));
-    }
-    return res;
-  }
-
-  public static replaceTimeShift(q) {
-    return q.replace(/(\$__timeShifting\().*?(?=\))./g, '');
-  }
-  static convertToUtc(d) {
-    return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-  }
-
-  public target: any;
-  public templateSrv: any;
-  public scopedVars: any;
-  public isWindow: boolean;
-  public isAggregate: boolean;
-  public hll: any;
-  public groupBy: string;
-  public tmpValue: string;
-
-  /** @ngInject */
-  constructor(target, templateSrv?, scopedVars?) {
+  constructor(target: BigQueryQueryNG, scopedVars?: ScopedVars) {
     this.target = target;
-    this.templateSrv = templateSrv;
+    this.templateSrv = getTemplateSrv();
     this.scopedVars = scopedVars;
     this.isWindow = false;
     this.isAggregate = false;
@@ -122,6 +67,7 @@ export default class BigQueryQuery {
     target.group = target.group || [];
     target.where = target.where || [{ type: 'macro', name: '$__timeFilter', params: [] }];
     target.select = target.select || [[{ type: 'column', params: ['-- value --'] }]];
+
     // handle pre query gui panels gracefully
     if (!('rawQuery' in this.target)) {
       target.rawQuery = 'rawSql' in target;
@@ -131,27 +77,25 @@ export default class BigQueryQuery {
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
 
-  public getIntervalStr(interval: string, mininterval: string, options) {
+  getIntervalStr(interval: string, mininterval: string | undefined, options: any) {
     if (interval === 'auto') {
       interval = this._calcAutoInterval(options);
     }
-    const res = BigQueryDatasource._getShiftPeriod(interval);
+    const res = getShiftPeriod(interval);
     const groupPeriod = res[0];
     let IntervalStr = 'TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(' + this._dateToTimestamp() + '), ';
-    let unixSeconds = BigQueryQuery.getUnixSecondsFromString(interval);
+    let unixSeconds = getUnixSecondsFromString(interval);
     let minUnixSeconds;
-    minUnixSeconds = !(mininterval !== undefined || mininterval !== '0')
-      ? 0
-      : BigQueryQuery.getUnixSecondsFromString(mininterval);
+    minUnixSeconds = !(mininterval !== undefined || mininterval !== '0') ? 0 : getUnixSecondsFromString(mininterval);
     unixSeconds = Math.max(unixSeconds, minUnixSeconds);
     if (groupPeriod === 'M') {
       IntervalStr =
         'TIMESTAMP(' +
         '  (' +
         'PARSE_DATE( "%Y-%m-%d",CONCAT( CAST((EXTRACT(YEAR FROM ' +
-        BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+        quoteFiledName(this.target.timeColumn) +
         ")) AS STRING),'-',CAST((EXTRACT(MONTH FROM " +
-        BigQueryQuery.quoteFiledName(this.target.timeColumn) +
+        quoteFiledName(this.target.timeColumn) +
         ')) AS STRING),' +
         "'-','01'" +
         ')' +
@@ -164,29 +108,32 @@ export default class BigQueryQuery {
     return IntervalStr + ' AS time';
   }
 
-  public hasTimeGroup() {
+  hasTimeGroup() {
     return _.find(this.target.group, (g: any) => g.type === 'time');
   }
 
-  public hasMetricColumn() {
+  hasMetricColumn() {
     return this.target.metricColumn !== 'none';
   }
 
-  public interpolateQueryStr(value, variable, defaultFormatFn) {
+  interpolateQueryStr(value: string, variable: VariableModel) {
     // if no multi or include all do not regexEscape
+
+    // TODO: fix this
+    // @ts-ignore
     if (!variable.multi && !variable.includeAll) {
-      return BigQueryQuery.escapeLiteral(value);
+      return escapeLiteral(value);
     }
 
     if (typeof value === 'string') {
-      return BigQueryQuery.quoteLiteral(value);
+      return quoteLiteral(value);
     }
 
-    const escapedValues = _.map(value, BigQueryQuery.quoteLiteral);
+    const escapedValues = _.map(value, quoteLiteral);
     return escapedValues.join(',');
   }
 
-  public render(interpolate?) {
+  render(interpolate?: boolean) {
     const target = this.target;
     // new query with no table set yet
     if (!this.target.rawQuery && !('table' in this.target)) {
@@ -202,7 +149,7 @@ export default class BigQueryQuery {
     }
   }
 
-  public _buildTimeColumntimeGroup(alias, timeGroup) {
+  _buildTimeColumntimeGroup(alias: boolean, timeGroup: { type: GroupType; params: string[] }) {
     let args;
     let macro = '$__timeGroup';
 
@@ -215,13 +162,13 @@ export default class BigQueryQuery {
     return macro + '(' + this.target.timeColumn + ',' + args + ')';
   }
 
-  public buildTimeColumn(alias = true) {
+  buildTimeColumn(alias = true) {
     const timeGroup = this.hasTimeGroup();
     let query;
     if (timeGroup) {
       query = this._buildTimeColumntimeGroup(alias, timeGroup);
     } else {
-      query = BigQueryQuery.quoteFiledName(this.target.timeColumn);
+      query = quoteFiledName(this.target.timeColumn);
       if (alias) {
         query += ' AS time';
       }
@@ -229,59 +176,66 @@ export default class BigQueryQuery {
     return query;
   }
 
-  public buildMetricColumn() {
+  buildMetricColumn() {
     if (this.hasMetricColumn()) {
-      return BigQueryQuery.quoteFiledName(this.target.metricColumn) + ' AS metric';
+      return quoteFiledName(this.target.metricColumn) + ' AS metric';
     }
 
     return '';
   }
 
-  public buildValueColumns() {
+  buildValueColumns() {
     let query = '';
-    for (const column of this.target.select) {
-      const c = this.buildValueColumn(column);
-      if (c.length > 0) {
-        query += ',\n  ' + c;
+    if (this.target.select) {
+      for (const column of this.target.select) {
+        const c = this.buildValueColumn(column);
+        if (c.length > 0) {
+          query += ',\n  ' + c;
+        }
       }
     }
     return query;
   }
 
-  public buildHllOuterQuery() {
+  buildHllOuterQuery() {
     let query = 'time';
     let numOfColumns = 1;
     let hllInd = 0;
+
     if (this.hasMetricColumn()) {
       query += ',\nmetric';
       numOfColumns += 1;
     }
     let colId = 0;
-    for (const column of this.target.select) {
-      const hll = _.find(column, (g: any) => g.type === 'hll_count.merge' || g.type === 'hll_count.extract');
-      const alias = _.find(column, (g: any) => g.type === 'alias');
-      numOfColumns += 1;
-      if (hll) {
-        if (hll.type === 'hll_count.merge') {
-          hllInd = numOfColumns;
-        }
-        query += ',\n' + hll.type + '(respondents_hll)';
-        if (alias) {
-          query += ' AS ' + alias.params[0];
-        }
-      } else {
-        if (alias) {
-          query += ',\n' + alias.params[0];
+
+    if (this.target.select) {
+      for (const column of this.target.select) {
+        const hll = _.find(column, (g: any) => g.type === 'hll_count.merge' || g.type === 'hll_count.extract');
+        const alias = _.find(column, (g: any) => g.type === 'alias');
+        numOfColumns += 1;
+        if (hll) {
+          if (hll.type === 'hll_count.merge') {
+            hllInd = numOfColumns;
+          }
+          query += ',\n' + hll.type + '(respondents_hll)';
+          if (alias) {
+            query += ' AS ' + alias.params[0];
+          }
         } else {
-          query += ',\n' + 'f' + colId;
-          colId += 1;
+          if (alias) {
+            query += ',\n' + alias.params[0];
+          } else {
+            query += ',\n' + 'f' + colId;
+            colId += 1;
+          }
         }
       }
     }
+
     return { query, numOfColumns, hllInd };
   }
 
-  public _buildAggregate(aggregate, query) {
+  _buildAggregate(aggregate: any, query: string) {
     if (aggregate) {
       const func = aggregate.params[0];
       switch (aggregate.type) {
@@ -299,9 +253,9 @@ export default class BigQueryQuery {
     return query;
   }
 
-  public buildValueColumn(column) {
+  buildValueColumn(column: any) {
     const columnName = _.find(column, (g: any) => g.type === 'column');
-    let query = BigQueryQuery.quoteFiledName(columnName.params[0]);
+    let query = quoteFiledName(columnName.params[0]);
     const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
     const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
     const hll = _.find(column, (g: any) => g.type === 'hll_count.merge' || g.type === 'hll_count.extract');
@@ -378,7 +332,7 @@ export default class BigQueryQuery {
     return query;
   }
 
-  public buildWhereClause() {
+  buildWhereClause() {
     let query = '';
     const conditions = _.map(this.target.where, (tag, index) => {
       switch (tag.type) {
@@ -391,27 +345,34 @@ export default class BigQueryQuery {
     if (this.target.partitioned) {
       const partitionedField = this.target.partitionedField ? this.target.partitionedField : '_PARTITIONTIME';
       if (this.target.timeColumn !== partitionedField) {
+        //  TODO: get rid of timeRange read from templateSrv
+        // @ts-ignore
         if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
-          const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(
-            this.templateSrv.timeRange.from._d,
+          const from = `${partitionedField} >= '${formatDateToString(
+            // @ts-ignore
+            this.templateSrv.timeRange.from.toDate(),
             '-',
             true
           )}'`;
           conditions.push(from);
         }
+
+        //  TODO: get rid of timeRange read from templateSrv
+        // @ts-ignore
         if (this.templateSrv.timeRange && this.templateSrv.timeRange.to) {
-          const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(
-            this.templateSrv.timeRange.to._d,
-            '-',
-            true
-          )}'`;
+          // @ts-ignore
+          const to = `${partitionedField} < '${formatDateToString(this.templateSrv.timeRange.to.toDate(), '-', true)}'`;
           conditions.push(to);
         }
       }
     }
     if (this.target.sharded) {
-      const from = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d);
-      const to = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d);
+      //  TODO: get rid of timeRange read from templateSrv
+      // @ts-ignore
+      const from = formatDateToString(this.templateSrv.timeRange.from.toDate());
+      //  TODO: get rid of timeRange read from templateSrv
+      // @ts-ignore
+      const to = formatDateToString(this.templateSrv.timeRange.to.toDate());
       const sharded = "_TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
       conditions.push(sharded);
     }
@@ -421,20 +382,24 @@ export default class BigQueryQuery {
     return query;
   }
 
-  public buildGroupClause() {
+  buildGroupClause() {
     let query = '';
     let groupSection = '';
-    for (let i = 0; i < this.target.group.length; i++) {
-      const part = this.target.group[i];
-      if (i > 0) {
-        groupSection += ', ';
-      }
-      if (part.type === 'time') {
-        groupSection += '1';
-      } else {
-        groupSection += part.params[0];
+
+    if (this.target.group) {
+      for (let i = 0; i < this.target.group.length; i++) {
+        const part = this.target.group[i];
+        if (i > 0) {
+          groupSection += ', ';
+        }
+        if (part.type === 'time') {
+          groupSection += '1';
+        } else {
+          groupSection += part.params[0];
+        }
       }
     }
+
     query = '\nGROUP BY ';
     if (groupSection.length) {
       query += groupSection;
@@ -458,16 +423,18 @@ export default class BigQueryQuery {
       ind += 1;
     }
 
-    for (const column of this.target.select) {
-      const hll = _.find(column, (g: any) => g.type === 'hll_count.merge' || g.type === 'hll_count.extract');
-      const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    if (this.target.select) {
+      for (const column of this.target.select) {
+        const hll = _.find(column, (g: any) => g.type === 'hll_count.merge' || g.type === 'hll_count.extract');
+        const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
 
-      if (hll || aggregate) {
+        if (hll || aggregate) {
+          ind++;
+          continue;
+        }
         ind++;
-        continue;
+        query += ',' + ind;
       }
-      ind++;
-      query += ',' + ind;
     }
     if (this.isWindow) {
       query = ')' + query;
@@ -475,7 +442,7 @@ export default class BigQueryQuery {
     return query;
   }
 
-  public buildQuery() {
+  buildQuery() {
     let query = '';
     let outerQuery = '';
     query += '\n' + 'SELECT';
@@ -533,22 +500,31 @@ export default class BigQueryQuery {
     return query;
   }
 
-  public expend_macros(options) {
+  expend_macros(options: any) {
     if (this.target.rawSql) {
       let q = this.target.rawSql;
-      q = BigQueryQuery.replaceTimeShift(q);
+      q = replaceTimeShift(q);
       q = this.replaceTimeFilters(q, options);
       q = this.replacetimeGroupAlias(q, true, options);
       q = this.replacetimeGroupAlias(q, false, options);
       return q;
     }
+
+    let q = this.target.rawSql;
+    q = replaceTimeShift(q);
+    q = this.replaceTimeFilters(q, options);
+    q = this.replacetimeGroupAlias(q, true, options);
+    q = this.replacetimeGroupAlias(q, false, options);
+    return q;
   }
-  public replaceTimeFilters(q, options) {
+
+  replaceTimeFilters(q: string, options: any) {
     let fromD = options.range.from;
     let toD = options.range.to;
+
     if (this.target.convertToUTC === true) {
-      fromD = BigQueryQuery.convertToUtc(options.range.from._d);
-      toD = BigQueryQuery.convertToUtc(options.range.to._d);
+      fromD = convertToUtc(options.range.from._d);
+      toD = convertToUtc(options.range.to._d);
     }
     let to = '';
     let from = '';
@@ -561,9 +537,9 @@ export default class BigQueryQuery {
         this.target.timeColumn = tf[1];
       }
     }
-    const range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + ' BETWEEN ' + from + ' AND ' + to;
-    const fromRange = BigQueryQuery.quoteFiledName(this.target.timeColumn) + ' > ' + from + ' ';
-    const toRange = BigQueryQuery.quoteFiledName(this.target.timeColumn) + ' < ' + to + ' ';
+    const range = quoteFiledName(this.target.timeColumn) + ' BETWEEN ' + from + ' AND ' + to;
+    const fromRange = quoteFiledName(this.target.timeColumn) + ' > ' + from + ' ';
+    const toRange = quoteFiledName(this.target.timeColumn) + ' < ' + to + ' ';
     q = q.replace(/\$__timeFilter\((.*?)\)/g, range);
     q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
     q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
@@ -572,8 +548,8 @@ export default class BigQueryQuery {
     return q;
   }
 
-  public replacetimeGroupAlias(q, alias: boolean, options) {
-    const res = BigQueryQuery._getInterval(q, alias);
+  replacetimeGroupAlias(q: string, alias: boolean, options: any) {
+    const res = getInterval(q, alias);
     const interval = res[0];
     const mininterval = res[1];
     if (!interval) {
@@ -589,19 +565,22 @@ export default class BigQueryQuery {
 
   private _dateToTimestamp() {
     if (this.target.timeColumnType === 'DATE') {
-      return 'Timestamp(' + BigQueryQuery.quoteFiledName(this.target.timeColumn) + ')';
+      return 'Timestamp(' + quoteFiledName(this.target.timeColumn) + ')';
     }
-    return BigQueryQuery.quoteFiledName(this.target.timeColumn);
+    return quoteFiledName(this.target.timeColumn);
   }
-  private _calcAutoInterval(options) {
-    const seconds = (this.templateSrv.timeRange.to._d - this.templateSrv.timeRange.from._d) / 1000;
+
+  private _calcAutoInterval(options: any) {
+    // @ts-ignore
+    const seconds = (this.templateSrv.timeRange.to.toDate() - this.templateSrv.timeRange.from.toDate()) / 1000;
     return Math.ceil(seconds / options.maxDataPoints) + 's';
   }
-  private _getDateRangePart(part) {
+
+  private _getDateRangePart(part: Date) {
     if (this.target.timeColumnType === 'DATE') {
-      return "'" + BigQueryQuery.formatDateToString(part, '-') + "'";
+      return "'" + formatDateToString(part, '-') + "'";
     } else if (this.target.timeColumnType === 'DATETIME') {
-      return "'" + BigQueryQuery.formatDateToString(part, '-', true) + "'";
+      return "'" + formatDateToString(part, '-', true) + "'";
     } else {
       return 'TIMESTAMP_MILLIS (' + part.valueOf().toString() + ')';
     }

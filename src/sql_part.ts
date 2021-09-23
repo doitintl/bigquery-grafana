@@ -17,7 +17,7 @@ export class SqlPartDef {
     } else {
       this.label = this.type[0].toUpperCase() + this.type.substring(1) + ':';
     }
-    
+
     this.style = options.style;
     if (this.style === 'function') {
       this.wrapOpen = '(';
@@ -62,7 +62,7 @@ export class SqlPart {
     this.params = part.params;
   }
 
-  updateParam(strValue, index) {
+  updateParam(strValue: string, index: number) {
     // handle optional parameters
     if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
@@ -74,9 +74,9 @@ export class SqlPart {
   }
 }
 
-const index = [];
+const index: Record<string, SqlPartDef> = {};
 
-function createPart(part): any {
+function createPart(part: { params: string[]; type: string }): any {
   const def = index[part.type];
   if (!def) {
     return null;

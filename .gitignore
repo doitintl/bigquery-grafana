@@ -129,7 +129,6 @@ internal/
 !tests/cases/projects/NodeModulesSearch/**/*
 !tests/baselines/reference/project/nodeModules*/**/*
 .idea
-yarn.lock
 yarn-error.log
 .parallelperf.*
 tests/cases/user/*/package-lock.json
@@ -146,3 +145,6 @@ TEST-results.xml
 package-lock.json
 /todo.txt
 todo.txt
+
+# dist directory
+dist/

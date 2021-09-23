@@ -1,37 +1,10 @@
 {
-  "compileOnSave": false,
+  "extends": "@grafana/toolkit/src/config/tsconfig.plugin.json",
+  "include": ["src", "types"],
   "compilerOptions": {
-    "target": "es5",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "lib": ["dom", "esnext"],
-    "declaration": false,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "noEmitHelpers": true,
-    "removeComments": false,
-    "inlineSourceMap": false,
-    "sourceMap": true,
-    "noEmitOnError": false,
-    "emitDecoratorMetadata": false,
-    "experimentalDecorators": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitUseStrict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    // TODO
-    "pretty": true,
-    "strict": false,
-    // TODO
-    "skipLibCheck": true,
+    "target": "es6",
     "rootDir": "./src",
     "baseUrl": "./src",
     "typeRoots": ["./node_modules/@types"]
-  },
-  "include": ["./src/**/*.ts", "types"],
-  "exclude": ["node_modules", "./src/specs/*.*.ts"],
-  "extends": "./node_modules/@grafana/toolkit/src/config/tsconfig.plugin.json"
+  }
 }

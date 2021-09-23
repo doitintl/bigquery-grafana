@@ -22,36 +22,36 @@ import (
 )
 
 type QueryModel struct {
-	Format 				string `json:"format"`
+	Format string `json:"format"`
 	// Constant			string `json:"constant"`
-	Dataset 			string `json:"dataset"`
+	Dataset string `json:"dataset"`
 	// Group            []Group `json:"group"`
-	MetricColumn     	string `json:"metricColumn"`
-	OrderByCol       	string/*int32*/ `json:"orderByCol"`
-	OrderBySort      	string/*int32*/ `json:"orderBySort"`
-	Partitioned      	bool   `json:"partitioned"`
-	PartitionedField 	string `json:"partitionedField"`
-	ProjectID        	string `json:"project"`
-	RawQuery         	bool   `json:"rawQuery"`
-	RawSQL           	string `json:"rawSql"`
-	RefID            	string `json:"refId"`
+	MetricColumn     string `json:"metricColumn"`
+	OrderByCol       string/*int32*/ `json:"orderByCol"`
+	OrderBySort      string/*int32*/ `json:"orderBySort"`
+	Partitioned      bool   `json:"partitioned"`
+	PartitionedField string `json:"partitionedField"`
+	ProjectID        string `json:"project"`
+	RawQuery         bool   `json:"rawQuery"`
+	RawSQL           string `json:"rawSql"`
+	RefID            string `json:"refId"`
 	// Select           []string `json:"select"`
-	Sharded        		bool   `json:"sharded"`
-	Table          		string `json:"table"`
-	TimeColumn     		string `json:"timeColumn"`
-	TimeColumnType 		string `json:"timeColumnType"`
-	Location       		string `json:"location"`
+	Sharded        bool   `json:"sharded"`
+	Table          string `json:"table"`
+	TimeColumn     string `json:"timeColumn"`
+	TimeColumnType string `json:"timeColumnType"`
+	Location       string `json:"location"`
 	// Where            []string `json:"where"`
 }
 
 // JSONData holds the req.PluginContext.DataSourceInstanceSettings.JSONData struct
 type JSONData struct {
-	AuthenticationType 	string `json:"authenticationType"`
-	ClientEmail        	string `json:"clientEmail"`
-	DefaultProject     	string `json:"defaultProject"`
-	ProcessingLocation 	string `json:"processingLocation"`
-	QueryPriority      	string `json:"queryPriority"`
-	TokenURI           	string `json:"tokenUri"`
+	AuthenticationType string `json:"authenticationType"`
+	ClientEmail        string `json:"clientEmail"`
+	DefaultProject     string `json:"defaultProject"`
+	ProcessingLocation string `json:"processingLocation"`
+	QueryPriority      string `json:"queryPriority"`
+	TokenURI           string `json:"tokenUri"`
 }
 
 // BigQueryResult represents a full resultset.
