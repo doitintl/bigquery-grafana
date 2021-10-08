@@ -97,11 +97,20 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
           label="Flat rate project"
           description="The project that the Queries will be run in if you are using a flat-rate pricing model"
         >
-          {/* @ts-ignore */}
           <Input
             className="width-30"
             value={jsonData.flatRateProject || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'flatRateProject')}
+          />
+        </Field>
+        <Field
+          label="Default dataset"
+          description="TODO"
+        >
+          <Input
+            className="width-30"
+            value={jsonData.defaultDataset || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'defaultDataset')}
           />
         </Field>
         <Field
