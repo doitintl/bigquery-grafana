@@ -162,24 +162,31 @@ export class BigQueryDatasource {
   }
   public authenticationType: string;
   public projectName: string;
-  private readonly id: any;
+  public readonly name: string;
+  public readonly id: number;
+  public readonly type: string;
+  public readonly uid: string;
+  private readonly url: string;
+  private readonly baseUrl: string;
   private jsonData: any;
   private responseParser: ResponseParser;
   private queryModel: BigQueryQuery;
-  private readonly baseUrl: string;
-  private readonly url: string;
   private runInProject: string;
   private processingLocation: string;
   private queryPriority: string;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+    this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.type = instanceSettings.type;
+    this.uid = instanceSettings.uid;
+    this.url = instanceSettings.url;
     this.jsonData = instanceSettings.jsonData;
+    this.baseUrl = `/bigquery/`;
+
     this.responseParser = new ResponseParser(this.$q);
     this.queryModel = new BigQueryQuery({});
-    this.baseUrl = `/bigquery/`;
-    this.url = instanceSettings.url;
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     (async () => {
       this.projectName = instanceSettings.jsonData.defaultProject || (await this.getDefaultProject());
