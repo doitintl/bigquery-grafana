@@ -63,7 +63,7 @@ export function QueryEditor(props: Props) {
 
   useEffect(() => {
     fetchTableSchema(queryWithDefaults);
-  });
+  }, [fetchTableSchema]);
 
   const processQuery = (q: BigQueryQueryNG) => {
     if (isQueryValid(q)) {
