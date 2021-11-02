@@ -1,12 +1,19 @@
 import { SelectableValue } from '@grafana/data';
-import { GoogleAuthType, QueryPriority } from './types';
+import { GoogleAuthType, QueryFormat, QueryPriority } from './types';
 
 export const GOOGLE_AUTH_TYPE_OPTIONS = [
   { label: 'Google JWT File', value: GoogleAuthType.JWT },
   { label: 'GCE Default Service Account', value: GoogleAuthType.GCE },
 ];
 
-export const PROCESSING_LOCATIONS = [
+export const QUERY_FORMAT_OPTIONS = [
+  { label: 'Time series', value: QueryFormat.Timeseries },
+  { label: 'Table', value: QueryFormat.Table },
+];
+
+export const DEFAULT_REGION = 'US';
+
+export const PROCESSING_LOCATIONS: Array<SelectableValue<string>> = [
   // Multi-regional locations
   { label: 'United States (US)', value: 'US' },
   { label: 'European Union (EU)', value: 'EU' },

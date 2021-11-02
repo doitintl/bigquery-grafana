@@ -57,10 +57,11 @@ export default class BigQueryQuery {
     this.groupBy = '';
     this.tmpValue = '';
 
-    target.format = target.format || 'time_series';
+    target.format = target.format || QueryFormat.Table;
+    target.location = target.location || undefined;
+
     target.orderByCol = target.orderByCol || '1';
     target.orderBySort = target.orderBySort || '1';
-    target.location = target.location || undefined;
     target.timeColumn = target.timeColumn || '-- time --';
     target.timeColumnType = target.timeColumnType || 'TIMESTAMP';
     target.metricColumn = target.metricColumn || 'none';

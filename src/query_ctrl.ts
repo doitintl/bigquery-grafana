@@ -5,9 +5,14 @@
 import appEvents from 'grafana/app/core/app_events';
 import { QueryCtrl } from 'grafana/app/plugins/sdk';
 import _ from 'lodash';
-import BigQueryQuery from './bigquery_query';
+import BigQueryQuery, { BigQueryQueryNG } from './bigquery_query';
 import sqlPart, { SqlPart } from './sql_part';
 import { getTemplateSrv } from '@grafana/runtime';
+import { getApiClient, TableFieldSchema } from './api';
+import { PROCESSING_LOCATIONS } from './constants';
+import { getSegmentsFromSchema, SegmentDefinitions } from './utils/getSegmentsFromSchema';
+import BQTypes from '@google-cloud/bigquery/build/src/types';
+import { TLSAuthSettings } from '@grafana/ui';
 
 export interface QueryMeta {
   sql: string;
@@ -24,6 +29,11 @@ WHERE
 
 export class BigQueryQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
+
+  private tableSchema: TableFieldSchema[] = [];
+  private segmentsDefinitions: SegmentDefinitions;
+  private allSegments: TableFieldSchema[] = [];
+
   formats: any[];
   orderByCols: any[];
   orderBySorts: any[];
@@ -51,6 +61,15 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.queryModel = new BigQueryQuery(this.target, this.panel.scopedVars);
+
+    if (
+      (this.target as BigQueryQueryNG).project &&
+      (this.target as BigQueryQueryNG).dataset &&
+      (this.target as BigQueryQueryNG).table
+    ) {
+      this.getTableSchema();
+    }
+
     this.updateProjection();
     this.formats = [
       { text: 'Time series', value: 'time_series' },
@@ -64,38 +83,8 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       { text: 'ASC', value: '1' },
       { text: 'DESC', value: '2' },
     ];
-    this.locations = [
-      // Multi-regional locations
-      { text: 'United States (US)', value: 'US' },
-      { text: 'European Union (EU)', value: 'EU' },
-      // Americas
-      { text: 'Oregon (us-west1)', value: 'us-west1' },
-      { text: 'Los Angeles (us-west2)', value: 'us-west2' },
-      { text: 'Salt Lake City (us-west3)', value: 'us-west3' },
-      { text: 'Las Vegas (us-west4)', value: 'us-west4' },
-      { text: 'Iowa (us-central1)', value: 'us-central1' },
-      { text: 'South Carolina (us-east1)', value: 'us-east1' },
-      { text: 'Northern Virginia (us-east4)', value: 'us-east4' },
-      { text: 'Montréal (northamerica-northeast1)', value: 'northamerica-northeast1' },
-      { text: 'São Paulo (southamerica-east1)', value: 'southamerica-east1' },
-      // Europe
-      { text: 'Belgium (europe-west1)', value: 'europe-west1' },
-      { text: 'Finland (europe-north1)', value: 'europe-north1' },
-      { text: 'Frankfurt (europe-west3)', value: 'europe-west3' },
-      { text: 'London (europe-west2)', value: 'europe-west2' },
-      { text: 'Netherlands (europe-west4)', value: 'europe-west4' },
-      { text: 'Zürich (europe-west6)', value: 'europe-west6' },
-      // Asia Pacific
-      { text: 'Hong Kong (asia-east2)', value: 'asia-east2' },
-      { text: 'Jakarta (asia-southeast2)', value: 'asia-southeast2' },
-      { text: 'Mumbai (asia-south1)', value: 'asia-south1' },
-      { text: 'Osaka (asia-northeast2)', value: 'asia-northeast2' },
-      { text: 'Seoul (asia-northeast3)', value: 'asia-northeast3' },
-      { text: 'Singapore (asia-southeast1)', value: 'asia-southeast1' },
-      { text: 'Sydney (australia-southeast1)', value: 'australia-southeast1' },
-      { text: 'Taiwan (asia-east1)', value: 'asia-east1' },
-      { text: 'Tokyo (asia-northeast1)', value: 'asia-northeast1' },
-    ];
+    this.locations = PROCESSING_LOCATIONS.map((l) => ({ text: l.label, value: l.value }));
+
     if (!this.target.rawSql) {
       // special handling when in table panel
       if (this.panelCtrl.panel.type === 'table') {
@@ -128,8 +117,12 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         })
       : uiSegmentSrv.newSegment(this.target.table);
 
-    this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
-    this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
+    if ((this.target as BigQueryQueryNG).timeColumn) {
+      this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
+    }
+    if ((this.target as BigQueryQueryNG).metricColumn) {
+      this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
+    }
 
     this.buildSelectMenu();
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
@@ -137,6 +130,26 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
   }
+
+  getTableSchema = async () => {
+    this.tableSchema = await getApiClient(this.datasource.id)?.getTableSchema(
+      this.target.project,
+      this.target.location,
+      this.target.dataset,
+      this.target.table
+    );
+
+    this.segmentsDefinitions = getSegmentsFromSchema(this.tableSchema?.schema);
+
+    // this.timeColumnSegment = this.uiSegmentSrv.transformToSegments(false)(this.segmentsDefinitions.time);
+    // this.metricColumnSegment = this.uiSegmentSrv.transformToSegments(false)(this.segmentsDefinitions.metric);
+    // this.valueColumnSegment = this.uiSegmentSrv.transformToSegments(false)(this.segmentsDefinitions.value);
+    this.allSegments = this.uiSegmentSrv.transformToSegments(false)([
+      ...this.segmentsDefinitions.time,
+      ...this.segmentsDefinitions.metric,
+      ...this.segmentsDefinitions.value,
+    ]);
+  };
 
   updateProjection() {
     this.selectParts = _.map(this.target.select, (parts: any) => {
@@ -265,12 +278,10 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
   }
 
-  getDatasetSegments() {
-    return this.datasource
-      .getDatasets(this.target.project)
-      .then(this.uiSegmentSrv.transformToSegments(false))
-      .catch(this.handleQueryError.bind(this));
-  }
+  getDatasetSegments = async () => {
+    const datasets = await getApiClient(this.datasource.id).getDatasets(this.target.project, this.target.location);
+    return this.uiSegmentSrv.transformToSegments(false)(datasets.map((d) => ({ text: d })));
+  };
 
   datasetChanged() {
     this.target.dataset = this.datasetSegment.value;
@@ -281,18 +292,28 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
   }
 
-  getTableSegments() {
-    this.tablesDataPromise = this.datasource.getTables(this.target.project, this.target.dataset);
-    return this.tablesDataPromise
-      .then(this.uiSegmentSrv.transformToSegments(false))
-      .catch(this.handleQueryError.bind(this));
-  }
+  getTableSegments = async () => {
+    const tables = await getApiClient(this.datasource.id).getTables(
+      this.target.project,
+      this.target.location,
+      this.target.dataset
+    );
 
-  tableChanged() {
+    const segments = this.uiSegmentSrv.transformToSegments(false)(tables.map((t) => ({ text: t })));
+    const result = Promise.resolve(segments);
+    this.tablesDataPromise = result;
+
+    return segments;
+  };
+
+  tableChanged = async () => {
     this.target.sharded = false;
     this.target.partitioned = false;
     this.target.partitionedField = '';
     this.target.table = this.tableSegment.value;
+
+    await this.getTableSchema();
+
     this.tablesDataPromise.then((value) => {
       value.forEach((v) => {
         if (v.text === this.target.table) {
@@ -304,7 +325,9 @@ export class BigQueryQueryCtrl extends QueryCtrl {
         }
       });
     });
+
     this.applySegment(this.timeColumnSegment, this.fakeSegment('-- time --'));
+
     const sharded = this.target.table.indexOf('_YYYYMMDD');
     if (sharded > -1) {
       this.target.table = this.target.table.substring(0, sharded + 1) + '*';
@@ -320,33 +343,33 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
 
-    const task1 = this.getTimeColumnSegments().then((result) => {
-      // check if time column is still valid
-      if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
-        this.timeColumnSegment.html = this.uiSegmentSrv.newSegment(result[0].text).html;
-        this.timeColumnSegment.value = this.uiSegmentSrv.newSegment(result[0].text).value;
+    if (this.segmentsDefinitions.time.length > 0) {
+      if (!this.segmentsDefinitions.time.find((s: any) => s.text === this.target.timeColumn)) {
+        this.timeColumnSegment.html = this.uiSegmentSrv.newSegment(this.segmentsDefinitions.time[0].text).html;
+        this.timeColumnSegment.value = this.uiSegmentSrv.newSegment(this.segmentsDefinitions.time[0].text).value;
       }
-      return this.timeColumnChanged(false);
-    });
+    }
+    this.timeColumnChanged(false);
 
-    const task2 = this.getValueColumnSegments().then((result) => {
-      if (result.length > 0) {
-        this.target.select = [[{ type: 'column', params: [result[0].text] }]];
-        this.updateProjection();
-      }
-    });
-    Promise.all([task1, task2]).then(() => {
-      this.panelCtrl.refresh();
-    });
-  }
+    if (this.segmentsDefinitions.value.length > 0) {
+      this.target.select = [[{ type: 'column', params: [this.segmentsDefinitions.value[0].text] }]];
+      this.updateProjection();
+    }
+
+    this.panelCtrl.refresh();
+  };
 
   getTimeColumnSegments() {
-    return this._getColumnSegments(['DATE', 'TIMESTAMP', 'DATETIME']);
+    return Promise.resolve(this.uiSegmentSrv.transformToSegments(false)(this.segmentsDefinitions.time));
   }
 
   getValueColumnSegments() {
-    return this._getColumnSegments(['INT64', 'NUMERIC', 'FLOAT64', 'FLOAT', 'INT', 'INTEGER']);
+    return Promise.resolve(this.uiSegmentSrv.transformToSegments(false)(this.segmentsDefinitions.value));
   }
+
+  getMetricColumnSegments = () => {
+    return Promise.resolve(this.uiSegmentSrv.transformToSegments(false)(this.segmentsDefinitions.metric));
+  };
 
   async timeColumnChanged(refresh?: boolean) {
     this.target.timeColumn = this.timeColumnSegment.value;
@@ -361,13 +384,6 @@ export class BigQueryQueryCtrl extends QueryCtrl {
     if (refresh !== false) {
       this.panelCtrl.refresh();
     }
-  }
-
-  getMetricColumnSegments() {
-    return this.datasource
-      .getTableFields(this.target.project, this.target.dataset, this.target.table, ['STRING', 'BYTES'])
-      .then(this.uiSegmentSrv.transformToSegments(false))
-      .catch(this.handleQueryError.bind(this));
   }
 
   metricColumnChanged() {
@@ -656,11 +672,13 @@ export class BigQueryQueryCtrl extends QueryCtrl {
   }
 
   _getAllFields() {
-    return this.datasource
-      .getTableFields(this.target.project, this.target.dataset, this.target.table, [])
-      .then(this.transformToSegments({}))
-      .catch(this.handleQueryError.bind(this));
+    return Promise.resolve(this.allSegments);
+    // return this.datasource
+    //   .getTableFields(this.target.project, this.target.dataset, this.target.table, [])
+    //   .then(this.transformToSegments({}))
+    //   .catch(this.handleQueryError.bind(this));
   }
+
   handleWherePartEvent(whereParts, part, evt, index) {
     switch (evt.name) {
       case 'get-param-options': {
@@ -799,24 +817,29 @@ export class BigQueryQueryCtrl extends QueryCtrl {
       this.groupParts.push(partModel);
     }
   }
-  private _getColumnSegments(filter) {
-    return this.datasource
-      .getTableFields(this.target.project, this.target.dataset, this.target.table, filter)
-      .then(this.uiSegmentSrv.transformToSegments(false))
-      .catch(this.handleQueryError.bind(this));
-  }
+  // private async _getColumnSegments(filter) {
+  //   const schema = await getApiClient(this.datasource.id)?.getTableSchema(
+  //     this.target.project,
+  //     this.target.location,
+  //     this.target.dataset,
+  //     this.target.table
+  //   );
 
-  private async _getDateFieldType() {
+  //   return this.datasource
+  //     .getTableFields(this.target.project, this.target.dataset, this.target.table, filter)
+  //     .then(this.uiSegmentSrv.transformToSegments(false))
+  //     .catch(this.handleQueryError.bind(this));
+  // }
+
+  private _getDateFieldType = async () => {
     let res = '';
-    await this.datasource
-      .getTableFields(this.target.project, this.target.dataset, this.target.table, ['DATE', 'TIMESTAMP', 'DATETIME'])
-      .then((result) => {
-        for (const f of result) {
-          if (f.text === this.target.timeColumn) {
-            res = f.value;
-          }
-        }
-      });
+
+    for (let i = 0; i < this.segmentsDefinitions.time.length; i++) {
+      if (this.segmentsDefinitions.time[i].text === this.target.timeColumn) {
+        res = this.segmentsDefinitions.time[i].fieldSchema.type;
+      }
+    }
+
     return res;
-  }
+  };
 }

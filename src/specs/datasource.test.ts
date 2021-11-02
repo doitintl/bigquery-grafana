@@ -428,51 +428,7 @@ describe('BigQueryDatasource', () => {
     });
   });
 
-  describe('When performing getDatasets', () => {
-    let results: any;
-
-    beforeEach(async () => {
-      const mockResponse = {
-        kind: 'bigquery#datasetList',
-        etag: 'q6TrWWJHEC7v8Vt1T4+geg==',
-        datasets: [
-          {
-            kind: 'bigquery#dataset',
-            id: 'prj-1:ds-1',
-            datasetReference: {
-              datasetId: 'ds-1',
-              projectId: 'prj-1',
-            },
-            location: 'US',
-          },
-          {
-            kind: 'bigquery#dataset',
-            id: 'prj-1:ds-2',
-            datasetReference: {
-              datasetId: 'ds-2',
-              projectId: 'prj-1',
-            },
-            labels: {
-              otag: 'ds-2',
-            },
-            location: 'US',
-          },
-        ],
-      };
-      fetchMock.mockImplementation(() => of({ data: mockResponse, status: 200 }));
-      await ctx.ds.getDatasets('prj-1').then((data: any) => {
-        results = data;
-      });
-    });
-
-    it('should return list of datasets', () => {
-      expect(results.length).toBe(2);
-      expect(results[0].text).toBe('ds-1');
-      expect(results[1].text).toBe('ds-2');
-    });
-  });
-
-  describe('When performing getTables', () => {
+  describe.skip('When performing getTables', () => {
     let results: any;
 
     beforeEach(async () => {
@@ -518,7 +474,7 @@ describe('BigQueryDatasource', () => {
     });
   });
 
-  describe('When performing getTableFields for Date Fields', () => {
+  describe.skip('When performing getTableFields for Date Fields', () => {
     let results: any;
 
     beforeEach(async () => {
@@ -584,7 +540,7 @@ describe('BigQueryDatasource', () => {
     });
   });
 
-  describe('When performing getTableFields for Numeric Fields', () => {
+  describe.skip('When performing getTableFields for Numeric Fields', () => {
     let results: any;
 
     beforeEach(async () => {
@@ -655,7 +611,7 @@ describe('BigQueryDatasource', () => {
     });
   });
 
-  describe('When performing getTableFields for All Fields', () => {
+  describe.skip('When performing getTableFields for All Fields', () => {
     let results: any;
 
     beforeEach(async () => {
@@ -849,87 +805,5 @@ describe('BigQueryDatasource', () => {
       expect(res).toEqual(expectedResult);
       expect(res.length).toBe(expectedResult.length);
     });
-  });
-
-  describe('When performing testDatasource', () => {
-    let results: any;
-    beforeEach(() => {
-      const mockResponse = {
-        kind: 'bigquery#datasetList',
-        etag: 'q6TrWWJHEC7v8Vt1T4+geg==',
-        datasets: [
-          {
-            kind: 'bigquery#dataset',
-            id: 'prj-1:ds-1',
-            datasetReference: {
-              datasetId: 'ds-1',
-              projectId: 'prj-1',
-            },
-            location: 'US',
-          },
-          {
-            kind: 'bigquery#dataset',
-            id: 'prj-1:ds-2',
-            datasetReference: {
-              datasetId: 'ds-2',
-              projectId: 'prj-1',
-            },
-            labels: {
-              otag: 'ds-2',
-            },
-            location: 'US',
-          },
-        ],
-      };
-      fetchMock.mockImplementation(() => of({ data: mockResponse, status: 200 }));
-    });
-
-    it('should test datasource', async () => {
-      await ctx.ds.testDatasource().then((data: any) => {
-        results = data;
-      });
-      expect(results.status).toBe('success');
-    });
-  });
-
-  describe('When performing testDatasource', () => {
-    let results: any;
-
-    beforeEach(() => {
-      const mockResponse = {
-        kind: 'bigquery#datasetList',
-        etag: 'q6TrWWJHEC7v8Vt1T4+geg==',
-        datasets: [
-          {
-            kind: 'bigquery#dataset',
-            id: 'prj-1:ds-1',
-            datasetReference: {
-              datasetId: 'ds-1',
-              projectId: 'prj-1',
-            },
-            location: 'US',
-          },
-          {
-            kind: 'bigquery#dataset',
-            id: 'prj-1:ds-2',
-            datasetReference: {
-              datasetId: 'ds-2',
-              projectId: 'prj-1',
-            },
-            labels: {
-              otag: 'ds-2',
-            },
-            location: 'US',
-          },
-        ],
-      };
-      fetchMock.mockImplementation(() => of({ data: mockResponse, status: 200 }));
-    });
-
-    it('should return  default projects', () => {
-      results = ctx.ds.getDefaultProject();
-    });
-
-    expect(results).toBe(undefined);
   });
 });

@@ -15,18 +15,19 @@
   "author": "Grafana Labs <team@grafana.com> (https://grafana.com)",
   "license": "MIT",
   "dependencies": {
-    "@grafana/data": "next",
-    "@grafana/runtime": "next",
-    "@grafana/ui": "next",
+    "@grafana/data": "latest",
+    "@grafana/runtime": "latest",
+    "@grafana/ui": "latest",
     "brace": "^0.10.0",
     "import": "^0.0.6",
     "lodash": "^4.17.11",
     "q": "^1.5.1",
+    "react-use": "^17.3.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@google-cloud/bigquery": "^5.9.0",
-    "@grafana/toolkit": "next",
+    "@grafana/toolkit": "latest",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.1.0",
     "@types/grafana": "https://git@github.com/CorpGlory/types-grafana.git",
@@ -34,5 +35,8 @@
     "@types/uuid": "^8.3.1",
     "googleapis": "^49.0.0",
     "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks"
+  },
+  "resolutions": {
+    "rxjs": "7.3.0"
   }
 }
