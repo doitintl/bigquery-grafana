@@ -434,6 +434,9 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
   applyTemplateVariables(queryModel: BigQueryQueryNG, scopedVars: ScopedVars): QueryModel {
     // TMP until we refactor Query Model
     const query = new BigQueryQuery(queryModel, scopedVars);
+    const rawSql = query.target.rawQuery ? query.target.rawSql : query.buildQuery();
+
+    const interpolatedSql = getTemplateSrv().replace(rawSql, scopedVars, this.interpolateVariable);
 
     const result = {
       refId: queryModel.refId,
@@ -441,7 +444,7 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
       key: queryModel.key,
       queryType: queryModel.queryType,
       datasource: queryModel.datasource,
-      rawSql: query.target.rawQuery ? query.target.rawSql : query.buildQuery(),
+      rawSql: interpolatedSql,
       format: queryModel.format,
       connectionArgs: {
         project: queryModel.project!,
