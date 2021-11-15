@@ -31,7 +31,7 @@
       { "name": "MIT License", "url": "https://github.com/doitintl/bigquery-grafana/blob/master/LICENSE.md" }
     ],
     "updated": "2021-06-29",
-    "version": "2.0.2"
+    "version": "2.0.3"
   },
   "routes": [
     {
