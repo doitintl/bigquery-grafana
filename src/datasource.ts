@@ -270,7 +270,7 @@ export class BigQueryDatasource {
           });
         this.queryModel.target.rawSql = query.rawSql;
         modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
-        const q = this.setUpQ(modOptions, options, query);  //  TODO hanle raw sql WHERE clause!
+        const q = this.setUpQ(modOptions, options, query);
         console.log(q);
         return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then((response) => {
           return ResponseParser.parseDataQuery(response, query.format);
@@ -426,7 +426,7 @@ export class BigQueryDatasource {
       refId: options.annotation.name,
     };
     this.queryModel.target.rawSql = query.rawSql;
-    [query.rawSql,] = this.queryModel.expend_macros(options);
+    [query.rawSql,,] = this.queryModel.expend_macros(options);
     return this.backendSrv
       .datasourceRequest({
         data: {
