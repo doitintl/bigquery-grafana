@@ -128,7 +128,7 @@ export class BigQueryDatasource {
     return copy;
   }
 
-  private static _updatePartition(q, options) {
+  private static _updatePartition(q, options, convertToUTC = false) {
     if (q.indexOf('AND _PARTITIONTIME >= ') < 1) {
       return q;
     }
@@ -137,26 +137,26 @@ export class BigQueryDatasource {
     }
     const from = q.substr(q.indexOf('AND _PARTITIONTIME >= ') + 22, 21);
 
-    const newFrom = "'" + BigQueryQuery.formatDateToString(options.range.from._d, '-', true) + "'";
+    const newFrom = "'" + BigQueryQuery.formatDateToString(options.range.from._d, convertToUTC, '-', true) + "'";
     q = q.replace(from, newFrom);
     const to = q.substr(q.indexOf('AND _PARTITIONTIME < ') + 21, 21);
-    const newTo = "'" + BigQueryQuery.formatDateToString(options.range.to._d, '-', true) + "'";
+    const newTo = "'" + BigQueryQuery.formatDateToString(options.range.to._d, convertToUTC, '-', true) + "'";
 
     q = q.replace(to, newTo) + '\n ';
     return q;
   }
 
-  private static _updateTableSuffix(q, options) {
+  private static _updateTableSuffix(q, options, convertToUTC = false) {
     const ind = q.indexOf('AND  _TABLE_SUFFIX BETWEEN ');
     if (ind < 1) {
       return q;
     }
     const from = q.substr(ind + 28, 8);
 
-    const newFrom = BigQueryQuery.formatDateToString(options.range.from._d);
+    const newFrom = BigQueryQuery.formatDateToString(options.range.from._d, convertToUTC);
     q = q.replace(from, newFrom);
     const to = q.substr(ind + 43, 8);
-    const newTo = BigQueryQuery.formatDateToString(options.range.to._d);
+    const newTo = BigQueryQuery.formatDateToString(options.range.to._d, convertToUTC);
     q = q.replace(to, newTo) + '\n ';
     return q;
   }
@@ -444,11 +444,11 @@ export class BigQueryDatasource {
       .then((data) => this.responseParser.transformAnnotationResponse(options, data));
   }
   private setUpQ(modOptions, options, query) {
-    let [q, hasMacro] = this.queryModel.expend_macros(modOptions);
+    let [q, hasMacro, convertToUTC] = this.queryModel.expend_macros(modOptions);
     if (q) {
-      q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions, hasMacro);
-      q = BigQueryDatasource._updatePartition(q, modOptions);
-      q = BigQueryDatasource._updateTableSuffix(q, modOptions);
+      q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions, hasMacro, convertToUTC);
+      q = BigQueryDatasource._updatePartition(q, modOptions, convertToUTC);
+      q = BigQueryDatasource._updateTableSuffix(q, modOptions, convertToUTC);
       if (query.refId.search(Shifted) > -1) {
         q = this._updateAlias(q, modOptions, query.refId);
       }
@@ -472,14 +472,13 @@ export class BigQueryDatasource {
    * @param partitionedField
    * @param options
    */
-  private setUpPartition(query, isPartitioned, partitionedField, options, hasMacro = false) {
+  private setUpPartition(query, isPartitioned, partitionedField, options, hasMacro = false, convertToUTC = false) {
     partitionedField = partitionedField ? partitionedField : '_PARTITIONTIME';
     const hasTimeFilter = !!(BigQueryQuery.hasDateFilter(query.split(/where/gi)[1] || "") || hasMacro);
-    if (isPartitioned && !hasTimeFilter && !query.match(new RegExp(partitionedField, "i"))) {
-      const fromD = BigQueryQuery.convertToUtc(options.range.from._d);
-      const toD = BigQueryQuery.convertToUtc(options.range.to._d);
-      const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, '-', true)}'`;
-      const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(toD, '-', true)}'`;
+    if (isPartitioned && !hasTimeFilter) {
+      const { from: { _d: fromD }, to: { _d: toD } } = options.range;
+      const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, convertToUTC, '-', true)}'`;
+      const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(toD, convertToUTC, '-', true)}'`;
       const partition = `where ${from} AND ${to} AND `;
       if (query.match(/where/i)) query = query.replace(/where/i, partition);
       else {
