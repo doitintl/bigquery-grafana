@@ -551,16 +551,20 @@ export default class BigQueryQuery {
   }
 
   public expend_macros(options) {
+    let query = "";
+    let [hasTimeFilter, hasTimeGroup, hasTimeGroupAlias] = [false, false, false];
+
     if (this.target.rawSql) {
-      let q = this.target.rawSql;
-      let hasTimeFilter, hasTimeGroup, hasTimeGroupAlias = false;
-      q = BigQueryQuery.replaceTimeShift(q);                                            //  should also block additional partition time filtering?
-      [q, hasTimeFilter] = this.replaceTimeFilters(q, options);
-      [q, hasTimeGroup] = this.replacetimeGroupAlias(q, true, options);
-      [q, hasTimeGroupAlias] = this.replacetimeGroupAlias(q, false, options);
-      return [q, hasTimeFilter || hasTimeGroup || hasTimeGroupAlias, this.target.convertToUTC];
+      query = this.target.rawSql;
+      query = BigQueryQuery.replaceTimeShift(query);                                            //  should also block additional partition time filtering?
+      [query, hasTimeFilter] = this.replaceTimeFilters(query, options);
+      [query, hasTimeGroup] = this.replacetimeGroupAlias(query, true, options);
+      [query, hasTimeGroupAlias] = this.replacetimeGroupAlias(query, false, options);
     }
+    
+    return [query, hasTimeFilter || hasTimeGroup || hasTimeGroupAlias, this.target.convertToUTC];
   }
+
   public replaceTimeFilters(q, options) {
     const { from: fromD, to: toD } = options.range;
     const from = this._getDateRangePart(fromD, this.target.convertToUTC);
