@@ -378,19 +378,44 @@ export default class BigQueryQuery {
     return query;
   }
 
+  // public getPartitionFieldType() {   // TODO - impklement if possible
+  //   // const sqlWithNoVariables = this.templateSrv.replace(tmpQ, options.scopedVars, this.interpolateVariable);
+  //   const [project, dataset, table] = BigQueryDatasource._extractFromClause(this.target.from);
+  //   const datasource = new BigQueryDatasource()
+  //   this.getDateFields(project, dataset, table)
+  //     .then(dateFields => {
+  //       const tm = BigQueryDatasource._FindTimeField(tmpQ, dateFields);
+  //       this.queryModel.target.timeColumn = tm.text;
+  //       this.queryModel.target.timeColumnType = tm.value;
+  //       this.queryModel.target.table = table;
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // }
+
+  // Detects either date or timestamp, only if not comment out
+  static hasDateFilter(whereClause) {
+    return whereClause.match(/((?<!--.*)([1-2]\d{3}-[0-1]\d-[0-3]\d)|([\D](\d{13})[\D]).*\n)/gi);
+  }
+
   public buildWhereClause() {
-    let query = '';
+    let query = '', hasMacro = false, hasDateFilter = false;
     const conditions = _.map(this.target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
+          hasMacro = true;
           return tag.name + '(' + this.target.timeColumn + ')';
         case 'expression':
-          return tag.params.join(' ');
+          const expression = tag.params.join(' ');
+          hasDateFilter = BigQueryQuery.hasDateFilter(expression) ? true : hasDateFilter;
+          return expression;
       }
     });
+    const hasTimeFilter = !!(hasMacro || hasDateFilter);
     if (this.target.partitioned) {
       const partitionedField = this.target.partitionedField ? this.target.partitionedField : '_PARTITIONTIME';
-      if (this.target.timeColumn !== partitionedField) {
+      if (this.target.timeColumn !== partitionedField && !hasTimeFilter) {
         if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
           const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(
             this.templateSrv.timeRange.from._d,
@@ -536,11 +561,12 @@ export default class BigQueryQuery {
   public expend_macros(options) {
     if (this.target.rawSql) {
       let q = this.target.rawSql;
-      q = BigQueryQuery.replaceTimeShift(q);
-      q = this.replaceTimeFilters(q, options);
-      q = this.replacetimeGroupAlias(q, true, options);
-      q = this.replacetimeGroupAlias(q, false, options);
-      return q;
+      let hasTimeFilter, hasTimeGroup, hasTimeGroupAlias = false;
+      q = BigQueryQuery.replaceTimeShift(q);  //  
+      [q, hasTimeFilter] = this.replaceTimeFilters(q, options);
+      [q, hasTimeGroup] = this.replacetimeGroupAlias(q, true, options);
+      [q, hasTimeGroupAlias] = this.replacetimeGroupAlias(q, false, options);
+      return [q, hasTimeFilter || hasTimeGroup || hasTimeGroupAlias];
     }
   }
   public replaceTimeFilters(q, options) {
@@ -564,12 +590,13 @@ export default class BigQueryQuery {
     const range = BigQueryQuery.quoteFiledName(this.target.timeColumn) + ' BETWEEN ' + from + ' AND ' + to;
     const fromRange = BigQueryQuery.quoteFiledName(this.target.timeColumn) + ' > ' + from + ' ';
     const toRange = BigQueryQuery.quoteFiledName(this.target.timeColumn) + ' < ' + to + ' ';
+    const hasMacro = q.match(/(\b__timeFilter\b)|(\b__timeFrom\b)|(\b__timeTo\b)|(\b__millisTimeTo\b)|(\b__millisTimeFrom\b)/g)
     q = q.replace(/\$__timeFilter\((.*?)\)/g, range);
     q = q.replace(/\$__timeFrom\(([\w_.]+)\)/g, fromRange);
     q = q.replace(/\$__timeTo\(([\w_.]+)\)/g, toRange);
     q = q.replace(/\$__millisTimeTo\(([\w_.]+)\)/g, to);
     q = q.replace(/\$__millisTimeFrom\(([\w_.]+)\)/g, from);
-    return q;
+    return [q, hasMacro];
   }
 
   public replacetimeGroupAlias(q, alias: boolean, options) {
@@ -577,13 +604,13 @@ export default class BigQueryQuery {
     const interval = res[0];
     const mininterval = res[1];
     if (!interval) {
-      return q;
+      return [q, false];
     }
     const intervalStr = this.getIntervalStr(interval, mininterval, options);
     if (alias) {
-      return q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
+      return [q.replace(/\$__timeGroupAlias\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr), q.match(/(\b__timeGroupAlias\b)/g)];
     } else {
-      return q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr);
+      return [q.replace(/\$__timeGroup\(([\w_.]+,+[a-zA-Z0-9_ ]+.*\))/g, intervalStr), q.match(/(\b__timeGroup\b)/g)];
     }
   }
 
@@ -599,11 +626,91 @@ export default class BigQueryQuery {
   }
   private _getDateRangePart(part) {
     if (this.target.timeColumnType === 'DATE') {
-      return "'" + BigQueryQuery.formatDateToString(part, '-') + "'";
+      return "'" + BigQueryQuery.formatDateToString(part, '-') + "'";   //  to = "'2021-01-31'"
     } else if (this.target.timeColumnType === 'DATETIME') {
-      return "'" + BigQueryQuery.formatDateToString(part, '-', true) + "'";
+      return "'" + BigQueryQuery.formatDateToString(part, '-', true) + "'"; //  "'2021-01-31 19:41:45'"
     } else {
-      return 'TIMESTAMP_MILLIS (' + part.valueOf().toString() + ')';
+      return 'TIMESTAMP_MILLIS (' + part.valueOf().toString() + ')';    //  "TIMESTAMP_MILLIS (1612056873199)"
     }
   }
 }
+
+
+
+
+/*
+//TODO remove before commit
+
+
+  // public getPartitionFieldType() {   // TODO - impklement if possible
+  //   // const sqlWithNoVariables = this.templateSrv.replace(tmpQ, options.scopedVars, this.interpolateVariable);
+  //   const [project, dataset, table] = BigQueryDatasource._extractFromClause(this.target.from);
+  //   const datasource = new BigQueryDatasource()
+  //   this.getDateFields(project, dataset, table)
+  //     .then(dateFields => {
+  //       const tm = BigQueryDatasource._FindTimeField(tmpQ, dateFields);
+  //       this.queryModel.target.timeColumn = tm.text;
+  //       this.queryModel.target.timeColumnType = tm.value;
+  //       this.queryModel.target.table = table;
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // }
+
+  // Detects either date or timestamp, only if not comment out
+  static hasDateFilter(whereClause) {
+    return whereClause.match(/((?<!--.*)([1-2]\d{3}-[0-1]\d-[0-3]\d)|([\D](\d{13})[\D]).*\n)/gi);
+  }
+
+  public buildWhereClause() {
+    let query = '', hasMacro = false, hasDateFilter = false;
+    const conditions = _.map(this.target.where, (tag, index) => {
+      switch (tag.type) {
+        case 'macro':
+          hasMacro = true;
+          return tag.name + '(' + this.target.timeColumn + ')';
+        case 'expression':
+          const expression = tag.params.join(' ');
+          hasDateFilter = BigQueryQuery.hasDateFilter(expression) ? true : hasDateFilter;
+          return expression;
+      }
+    });
+    const hasTimeFilter = !!(hasMacro || hasDateFilter);
+    if (this.target.partitioned) {
+      const partitionedField = this.target.partitionedField ? this.target.partitionedField : '_PARTITIONTIME';
+      if (this.target.timeColumn !== partitionedField && !hasTimeFilter) {
+        if (this.templateSrv.timeRange && this.templateSrv.timeRange.from) {
+          const from = `${partitionedField} >= ${this.target.timeColumnType}('${BigQueryQuery.formatDateToString(
+          // const from = `${partitionedField} >= TIMESTAMP('${BigQueryQuery.formatDateToString(
+            this.templateSrv.timeRange.from._d,
+            '-',
+            true
+          )}')`;
+          conditions.push(from);
+        }
+        if (this.templateSrv.timeRange && this.templateSrv.timeRange.to) {
+          // const to = `${partitionedField} < '${BigQueryQuery.formatDateToString(
+          const to = `${partitionedField} < TIMESTAMP('${BigQueryQuery.formatDateToString(
+            this.templateSrv.timeRange.to._d,
+            '-',
+            true
+          )}')`;
+          conditions.push(to);
+        }
+      }
+    }
+    if (this.target.sharded) {
+      const from = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.from._d);
+      const to = BigQueryQuery.formatDateToString(this.templateSrv.timeRange.to._d);
+      const sharded = "_TABLE_SUFFIX BETWEEN '" + from + "' AND '" + to + "' ";
+      conditions.push(sharded);
+    }
+    if (conditions.length > 0) {
+      query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
+    }
+    return query;
+  }
+
+
+  */

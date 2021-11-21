@@ -270,7 +270,7 @@ export class BigQueryDatasource {
           });
         this.queryModel.target.rawSql = query.rawSql;
         modOptions = BigQueryDatasource._setupTimeShiftQuery(query, options);
-        const q = this.setUpQ(modOptions, options, query);
+        const q = this.setUpQ(modOptions, options, query);  //  TODO hanle raw sql WHERE clause!
         console.log(q);
         return this.doQuery(q, options.panelId + query.refId, query.queryPriority).then((response) => {
           return ResponseParser.parseDataQuery(response, query.format);
@@ -426,7 +426,7 @@ export class BigQueryDatasource {
       refId: options.annotation.name,
     };
     this.queryModel.target.rawSql = query.rawSql;
-    query.rawSql = this.queryModel.expend_macros(options);
+    [query.rawSql,] = this.queryModel.expend_macros(options);
     return this.backendSrv
       .datasourceRequest({
         data: {
@@ -444,9 +444,9 @@ export class BigQueryDatasource {
       .then((data) => this.responseParser.transformAnnotationResponse(options, data));
   }
   private setUpQ(modOptions, options, query) {
-    let q = this.queryModel.expend_macros(modOptions);
+    let [q, hasMacro] = this.queryModel.expend_macros(modOptions);
     if (q) {
-      q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions);
+      q = this.setUpPartition(q, query.partitioned, query.partitionedField, modOptions, hasMacro);
       q = BigQueryDatasource._updatePartition(q, modOptions);
       q = BigQueryDatasource._updateTableSuffix(q, modOptions);
       if (query.refId.search(Shifted) > -1) {
@@ -466,15 +466,16 @@ export class BigQueryDatasource {
     return q;
   }
   /**
-   * Add partition to query unless it has one
+   * Add partition to query unless it has one OR already being ranged by other condition
    * @param query
    * @param isPartitioned
    * @param partitionedField
    * @param options
    */
-  private setUpPartition(query, isPartitioned, partitionedField, options) {
+  private setUpPartition(query, isPartitioned, partitionedField, options, hasMacro = false) {
     partitionedField = partitionedField ? partitionedField : '_PARTITIONTIME';
-    if (isPartitioned && !query.match(new RegExp(partitionedField, "i"))) {
+    const hasTimeFilter = !!(BigQueryQuery.hasDateFilter(query.split(/where/gi)[1] || "") || hasMacro);
+    if (isPartitioned && !hasTimeFilter && !query.match(new RegExp(partitionedField, "i"))) {
       const fromD = BigQueryQuery.convertToUtc(options.range.from._d);
       const toD = BigQueryQuery.convertToUtc(options.range.to._d);
       const from = `${partitionedField} >= '${BigQueryQuery.formatDateToString(fromD, '-', true)}'`;
