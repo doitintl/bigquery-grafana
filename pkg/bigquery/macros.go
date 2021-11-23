@@ -19,7 +19,7 @@ func macroTable(query *sqlds.Query, args []string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("`%s.%s.%s`", connArgs.Project, connArgs.Dataset, connArgs.Table), nil
+	return fmt.Sprintf("`%s.%s`", connArgs.Dataset, connArgs.Table), nil
 }
 
 // Example:

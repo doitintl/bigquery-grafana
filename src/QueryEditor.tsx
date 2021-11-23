@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { BigQueryDatasource } from './datasource';
 import { DEFAULT_REGION, PROCESSING_LOCATIONS, QUERY_FORMAT_OPTIONS } from './constants';
@@ -18,18 +18,16 @@ import { QueryEditorRaw } from './QueryEditorRaw';
 import { DatasetSelector } from './components/DatasetSelector';
 import { TableSelector } from './components/TableSelector';
 import { BigQueryQueryNG } from './bigquery_query';
-import { BigQueryOptions, GoogleAuthType, QueryFormat } from './types';
+import { BigQueryOptions, QueryFormat } from './types';
 import { getApiClient, TableSchema } from './api';
-import { ProjectSelector } from 'components/ProjectSelector';
-import { useAsyncFn } from 'react-use';
+import { useAsync, useAsyncFn } from 'react-use';
 
 type Props = QueryEditorProps<BigQueryDatasource, BigQueryQueryNG, BigQueryOptions>;
 
 function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
   const result = { ...q };
 
-  result.project = q.project || ds.jsonData.defaultProject;
-  result.dataset = q.dataset || ds.jsonData.defaultDataset;
+  result.dataset = q.dataset;
   result.location = q.location || ds.jsonData.defaultRegion || DEFAULT_REGION;
   result.format = q.format !== undefined ? q.format : QueryFormat.Table;
   result.rawSql = q.rawSql || '';
@@ -38,32 +36,43 @@ function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
 }
 
 const isQueryValid = (q: BigQueryQueryNG) => {
-  return Boolean(q.location && q.project && q.dataset && q.table && q.rawSql);
+  return Boolean(q.location && q.dataset && q.table && q.rawSql);
 };
+
 export function QueryEditor(props: Props) {
   const schemaCache = useRef(new Map<string, TableSchema>());
-  const queryWithDefaults = applyQueryDefaults(props.query, props.datasource);
-  const apiClient = useMemo(() => getApiClient(props.datasource.id), [props.datasource]);
+  const {
+    loading: apiLoading,
+    error: apiError,
+    value: apiClient,
+  } = useAsync(async () => await getApiClient(props.datasource.id), [props.datasource]);
   const [isSchemaOpen, setIsSchemaOpen] = useState(false);
   const theme: GrafanaTheme2 = useTheme2();
 
-  const [fetchTableSchemaState, fetchTableSchema] = useAsyncFn(async (q: BigQueryQueryNG) => {
-    if (!Boolean(q.location && q.project && q.dataset && q.table)) {
-      return null;
-    }
+  const queryWithDefaults = applyQueryDefaults(props.query, props.datasource);
 
-    const tablePath = `${q.project}:${q.dataset}.${q.table}`;
-    if (schemaCache.current?.has(tablePath)) {
-      return schemaCache.current?.get(tablePath);
-    }
-    const schema = await apiClient.getTableSchema(q.project!, q.location!, q.dataset!, q.table!);
-    schemaCache.current.set(tablePath, schema);
-    return schema;
-  }, []);
+  const [fetchTableSchemaState, fetchTableSchema] = useAsyncFn(
+    async (l?: string, d?: string, t?: string) => {
+      if (!Boolean(l && d && t) || !apiClient) {
+        return null;
+      }
+
+      if (schemaCache.current?.has(t!)) {
+        return schemaCache.current?.get(t!);
+      }
+      const schema = await apiClient.getTableSchema(l!, d!, t!);
+      schemaCache.current.set(t!, schema);
+      return schema;
+    },
+    [apiClient]
+  );
 
   useEffect(() => {
-    fetchTableSchema(queryWithDefaults);
-  }, [fetchTableSchema]);
+    if (!queryWithDefaults.location || !queryWithDefaults.dataset || !queryWithDefaults.table) {
+      return;
+    }
+    fetchTableSchema(queryWithDefaults.location, queryWithDefaults.dataset, queryWithDefaults.table);
+  }, [fetchTableSchema, queryWithDefaults.location, queryWithDefaults.dataset, queryWithDefaults.table]);
 
   const processQuery = (q: BigQueryQueryNG) => {
     if (isQueryValid(q)) {
@@ -81,15 +90,6 @@ export function QueryEditor(props: Props) {
     const next = { ...props.query, location: e.value || DEFAULT_REGION };
     props.onChange(next);
     processQuery(next);
-  };
-
-  const onProjectChange = (e: SelectableValue) => {
-    props.onChange({
-      ...queryWithDefaults,
-      project: e.value,
-      dataset: undefined,
-      table: undefined,
-    });
   };
 
   const onDatasetChange = (e: SelectableValue) => {
@@ -110,7 +110,7 @@ export function QueryEditor(props: Props) {
       table: e.value,
     };
     props.onChange(next);
-    fetchTableSchema(next);
+    fetchTableSchema(next.location, next.dataset, next.table);
     processQuery(next);
   };
 
@@ -128,6 +128,10 @@ export function QueryEditor(props: Props) {
     />
   );
 
+  if (apiLoading || apiError || !apiClient) {
+    return null;
+  }
+
   return (
     <>
       <HorizontalGroup>
@@ -140,22 +144,9 @@ export function QueryEditor(props: Props) {
           />
         </Field>
 
-        {props.datasource.jsonData.authenticationType === GoogleAuthType.GCE && (
-          <Field label="Project">
-            <ProjectSelector
-              apiClient={apiClient}
-              projectId={queryWithDefaults.project!}
-              location={queryWithDefaults.location!}
-              onChange={onProjectChange}
-              className="width-12"
-            />
-          </Field>
-        )}
-
         <Field label="Dataset">
           <DatasetSelector
             apiClient={apiClient}
-            projectId={queryWithDefaults.project!}
             location={queryWithDefaults.location!}
             value={queryWithDefaults.dataset}
             onChange={onDatasetChange}
@@ -166,7 +157,6 @@ export function QueryEditor(props: Props) {
         <Field label="Table">
           <TableSelector
             apiClient={apiClient}
-            projectId={queryWithDefaults.project!}
             location={queryWithDefaults.location!}
             dataset={queryWithDefaults.dataset!}
             value={queryWithDefaults.table}

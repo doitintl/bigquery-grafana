@@ -223,18 +223,18 @@ describe('BigQueryQuery', () => {
     const target = {
       select: [[{ type: 'column', params: ['value'] }]],
       table: 'table',
+      dataset: 'dataset',
       timeColumn: 't',
       where: [],
     };
-    let result =
-      '#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2 \nORDER BY 1';
+    let result = '#standardSQL\nSELECT\n `t` AS time,\n  `value`\nFROM `dataset.table`\nGROUP BY 1,2 \nORDER BY 1';
     const query = new BigQueryQuery(target as any);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = 'm';
     result =
-      '#standardSQL\nSELECT\n `t` AS time,\n  `m` AS metric,\n  `value`\nFROM `undefined.undefined.table`\nGROUP BY 1,2,3 \nORDER BY 1,2';
+      '#standardSQL\nSELECT\n `t` AS time,\n  `m` AS metric,\n  `value`\nFROM `dataset.table`\nGROUP BY 1,2,3 \nORDER BY 1,2';
     expect(query.buildQuery()).toBe(result);
   });
 
@@ -242,6 +242,7 @@ describe('BigQueryQuery', () => {
     const target = {
       select: [[{ type: 'column', params: ['value'] }]],
       table: 'table',
+      dataset: 'dataset',
       timeColumn: 't',
       where: [],
     };
@@ -254,7 +255,7 @@ describe('BigQueryQuery', () => {
       'SELECT\n' +
       ' `t` AS time,\n' +
       '  `value`\n' +
-      'FROM `undefined.undefined.table`)\n' +
+      'FROM `dataset.table`)\n' +
       'GROUP BY 1,2 ';
     expect(query.buildQuery()).toBe(result);
   });

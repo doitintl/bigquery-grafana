@@ -5,4 +5,6 @@ export const TEST_IDS = {
   pasteJwtButton: 'Paste JWT button',
   resetJwtButton: 'Reset JWT button',
   jwtForm: 'JWT form',
+  authTypeButtonJWT: 'JWT button',
+  authTypeButtonGCE: 'GCE button',
 };

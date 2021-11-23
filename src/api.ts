@@ -12,38 +12,38 @@ export interface TableSchema {
 }
 
 export interface BigQueryAPI {
-  getDatasets: (project: string, location: string) => Promise<string[]>;
-  getTables: (project: string, location: string, dataset: string) => Promise<string[]>;
-  getTableSchema: (project: string, location: string, dataset: string, table: string) => Promise<TableSchema>;
+  getDatasets: (location: string) => Promise<string[]>;
+  getTables: (location: string, dataset: string) => Promise<string[]>;
+  getTableSchema: (location: string, dataset: string, table: string) => Promise<TableSchema>;
 }
 
 class BigQueryAPIClient implements BigQueryAPI {
   private baseUrl: string;
   private resourcesUrl: string;
 
-  constructor(datasourceId: number) {
+  constructor(datasourceId: number, private defaultProject: string) {
     this.baseUrl = `/api/datasources/${datasourceId}`;
     this.resourcesUrl = `${this.baseUrl}/resources`;
   }
 
-  getDatasets = async (project: string, location: string): Promise<string[]> => {
+  getDatasets = async (location: string): Promise<string[]> => {
     return await getBackendSrv().post(this.resourcesUrl + '/datasets', {
-      project,
+      project: this.defaultProject,
       location,
     });
   };
 
-  getTables = async (project: string, location: string, dataset: string): Promise<string[]> => {
+  getTables = async (location: string, dataset: string): Promise<string[]> => {
     return await getBackendSrv().post(this.resourcesUrl + '/dataset/tables', {
-      project,
+      project: this.defaultProject,
       location,
       dataset,
     });
   };
 
-  getTableSchema = async (project: string, location: string, dataset: string, table: string): Promise<TableSchema> => {
+  getTableSchema = async (location: string, dataset: string, table: string): Promise<TableSchema> => {
     return await getBackendSrv().post(this.resourcesUrl + '/dataset/table/schema', {
-      project,
+      project: this.defaultProject,
       location,
       dataset,
       table,
@@ -53,9 +53,10 @@ class BigQueryAPIClient implements BigQueryAPI {
 
 const apis: Map<number, BigQueryAPI> = new Map();
 
-export function getApiClient(datasourceId: number) {
+export async function getApiClient(datasourceId: number) {
   if (!apis.has(datasourceId)) {
-    apis.set(datasourceId, new BigQueryAPIClient(datasourceId));
+    const defaultProject = await getBackendSrv().post(`/api/datasources/${datasourceId}/resources/defaultProjects`, {});
+    apis.set(datasourceId, new BigQueryAPIClient(datasourceId, defaultProject));
   }
 
   return apis.get(datasourceId)!;

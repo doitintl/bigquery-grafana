@@ -1,4 +1,4 @@
-package bigquery
+package driver
 
 import (
 	"encoding/json"

@@ -63,6 +63,13 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
     // this.queryPriority = this.jsonData.queryPriority;
   }
 
+  filterQuery(query: BigQueryQueryNG) {
+    if (!query.dataset || !query.table || !query.rawSql) {
+      return false;
+    }
+    return true;
+  }
+
   async metricFindQuery(query: string, optionalOptions: any) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
@@ -447,7 +454,6 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
       rawSql: interpolatedSql,
       format: queryModel.format,
       connectionArgs: {
-        project: queryModel.project!,
         dataset: queryModel.dataset!,
         table: queryModel.table!,
         location: queryModel.location!,

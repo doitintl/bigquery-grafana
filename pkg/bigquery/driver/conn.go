@@ -1,4 +1,4 @@
-package bigquery
+package driver
 
 import (
 	"context"
@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
+	bq "cloud.google.com/go/bigquery"
+	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
 
 type Dataset interface {
@@ -50,18 +51,9 @@ type Dataset interface {
 	Routines(ctx context.Context) *bigquery.RoutineIterator
 }
 
-type Config struct {
-	ProjectID   string
-	Location    string
-	DatasetID   string
-	ApiKey      string
-	Credentials string
-}
-
 type Conn struct {
-	cfg    *Config
+	cfg    *types.ConnectionSettings
 	client *bigquery.Client
-	ds     Dataset
 	bad    bool
 	closed bool
 }
@@ -131,8 +123,8 @@ func (c *Conn) execContext(ctx context.Context, query string, args []driver.Valu
 	}
 
 	q := c.client.Query(query)
-	q.DefaultProjectID = c.cfg.ProjectID // allows omitting project in table reference
-	q.DefaultDatasetID = c.cfg.DatasetID // allows omitting dataset in table reference
+	q.DefaultProjectID = c.cfg.Project // allows omitting project in table reference
+	q.DefaultDatasetID = c.cfg.Dataset // allows omitting dataset in table reference
 
 	it, err := q.Read(ctx)
 	if err != nil {
@@ -158,64 +150,60 @@ func (c *Conn) execContext(ctx context.Context, query string, args []driver.Valu
 }
 
 // NewConn returns a connection for this Config
-func NewConn(ctx context.Context, cfg *Config) (c *Conn, err error) {
+func NewConn(ctx context.Context, cfg types.ConnectionSettings, client *bq.Client) (c *Conn, err error) {
 	c = &Conn{
-		cfg: cfg,
+		cfg: &cfg,
 	}
-	if cfg.ApiKey != "" {
-		c.client, err = bigquery.NewClient(ctx, cfg.ProjectID, option.WithAPIKey(cfg.ApiKey))
-	} else if cfg.Credentials != "" {
-		credentialsJSON, _err := base64.StdEncoding.DecodeString(cfg.Credentials)
-		if _err != nil {
-			return nil, _err
-		}
-		c.client, err = bigquery.NewClient(ctx, cfg.ProjectID, option.WithCredentialsJSON([]byte(credentialsJSON)))
-	} else {
-		c.client, err = bigquery.NewClient(ctx, cfg.ProjectID)
-	}
-	if err != nil {
-		return nil, err
-	}
-	c.ds = c.client.Dataset(c.cfg.DatasetID)
 
+	// c.client, err = bigquery.NewClient(ctx, cfg.Project, option.WithHTTPClient(client))
+	c.client = client
+
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return
 }
 
-type Connector struct {
-	Info             map[string]string
-	Client           *bigquery.Client
-	connectionString string
+type BigQueryConnector struct {
+	Info       map[string]string
+	Client     *bigquery.Client
+	settings   types.ConnectionSettings
+	connection *Conn
+	bqClient   *bq.Client
 }
 
-func NewConnector(connectionString string) *Connector {
-	return &Connector{connectionString: connectionString}
+func NewConnector(settings types.ConnectionSettings, client *bq.Client) *BigQueryConnector {
+	return &BigQueryConnector{settings: settings, bqClient: client}
 }
 
-func (c *Connector) Connect(ctx context.Context) (driver.Conn, error) {
-	cfg, err := ConfigFromConnString(c.connectionString)
-	log.DefaultLogger.Info("cfg", cfg)
+func (c *BigQueryConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	conn, err := NewConn(ctx, c.settings, c.bqClient)
+
 	if err != nil {
 		return nil, err
 	}
-	return NewConn(ctx, cfg)
+	c.connection = conn
+
+	return conn, nil
 }
 
-func (c *Connector) Driver() driver.Driver {
+func (c *BigQueryConnector) Driver() driver.Driver {
 	return &Driver{}
 }
 
 // Ping the BigQuery service and make sure it's reachable
 func (c *Conn) Ping(ctx context.Context) (err error) {
-	if c.ds == nil {
-		c.ds = c.client.Dataset(c.cfg.DatasetID)
-	}
-	var md *bigquery.DatasetMetadata
-	md, err = c.ds.Metadata(ctx)
+	q := c.client.Query("SELECT 1")
+
+	q.QueryConfig.DryRun = true
+	job, err := q.Run(ctx)
+
 	if err != nil {
-		log.DefaultLogger.Info("Failed Ping Dataset: %s", c.cfg.DatasetID)
+		log.DefaultLogger.Info("Failed to connect with BigQuery")
 		return
 	}
-	log.DefaultLogger.Info("Successful Ping: %s", md.FullID)
+
+	log.DefaultLogger.Info("Successful Ping", job.LastStatus().State)
 	return
 }
 
@@ -236,8 +224,8 @@ func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 func (c *Conn) queryContext(ctx context.Context, query string, args []driver.Value) (driver.Rows, error) {
 	q := c.client.Query(query)
 
-	q.DefaultProjectID = c.cfg.ProjectID // allows omitting project in table reference
-	q.DefaultDatasetID = c.cfg.DatasetID // allows omitting dataset in table reference
+	q.DefaultProjectID = c.cfg.Project // allows omitting project in table reference
+	q.DefaultDatasetID = c.cfg.Dataset // allows omitting dataset in table reference
 
 	rowsIterator, err := q.Read(ctx)
 	if err != nil {

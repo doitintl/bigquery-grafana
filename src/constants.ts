@@ -1,9 +1,10 @@
 import { SelectableValue } from '@grafana/data';
+import { TEST_IDS } from 'utils/testIds';
 import { GoogleAuthType, QueryFormat, QueryPriority } from './types';
 
 export const GOOGLE_AUTH_TYPE_OPTIONS = [
-  { label: 'Google JWT File', value: GoogleAuthType.JWT },
-  { label: 'GCE Default Service Account', value: GoogleAuthType.GCE },
+  { label: 'Google JWT File', value: GoogleAuthType.JWT, ariaLabel: TEST_IDS.authTypeButtonJWT },
+  { label: 'GCE Default Service Account', value: GoogleAuthType.GCE, ariaLabel: TEST_IDS.authTypeButtonGCE },
 ];
 
 export const QUERY_FORMAT_OPTIONS = [

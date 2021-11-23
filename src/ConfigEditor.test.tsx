@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BigQueryConfigEditor } from './ConfigEditor';
-import { BigQueryOptions, BigQuerySecureJsonData } from './types';
+import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType } from './types';
 import { TEST_IDS } from './utils/testIds';
 
 const TOKEN_MOCK = `{
@@ -151,6 +151,34 @@ describe('ConfigEditor', () => {
     expect(screen.queryByTestId(TEST_IDS.jwtForm)).toBeInTheDocument();
     expect(screen.queryByTestId(TEST_IDS.pasteArea)).not.toBeInTheDocument();
     expect(screen.queryByTestId(TEST_IDS.dropZone)).not.toBeInTheDocument();
+  });
+
+  it('resets service account credentials when changing auth type', () => {
+    const onOptionsChangeSpy = jest.fn();
+
+    const { getByLabelText } = render(
+      <BigQueryConfigEditor
+        options={
+          {
+            jsonData: {
+              authenticationType: GoogleAuthType.JWT,
+              clientEmail: 'test@grafana.com',
+              tokenUri: 'https://accounts.google.com/o/oauth2/token',
+              defaultProject: 'test-project',
+            },
+          } as unknown as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
+        }
+        onOptionsChange={onOptionsChangeSpy}
+      />
+    );
+
+    const gceAuthButton = getByLabelText(TEST_IDS.authTypeButtonGCE);
+    fireEvent.click(gceAuthButton);
+
+    expect(onOptionsChangeSpy).toHaveBeenCalledWith({
+      jsonData: { authenticationType: GoogleAuthType.GCE },
+      secureJsonData: {},
+    });
   });
 });
 

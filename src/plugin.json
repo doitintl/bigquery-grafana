@@ -9,7 +9,7 @@
   "annotations": true,
   "alerting": true,
   "backend": true,
-  "executable": "grafana-bigquery-datasource",
+  "executable": "grafana-bq-ds",
   "dependencies": {
     "grafanaDependency": "7.x || 8.x"
   },

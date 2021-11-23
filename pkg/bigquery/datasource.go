@@ -9,67 +9,130 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/api"
-	_ "github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/driver"
+	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/driver"
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/sqlds/v2"
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 )
 
+var PluginConfigFromContext = httpadapter.PluginConfigFromContext
+
 type BigqueryDatasourceIface interface {
 	sqlds.Driver
-	Datasets(ctx context.Context, options sqlds.Options) ([]string, error)
-	Tables(ctx context.Context, options sqlds.Options) ([]string, error)
-	TableSchema(ctx context.Context, options sqlds.Options) (*types.TableMetadataResponse, error)
+	GetGCEDefaultProject(ctx context.Context) (string, error)
+	Datasets(ctx context.Context, args DatasetsArgs) ([]string, error)
+	Tables(ctx context.Context, args TablesArgs) ([]string, error)
+	TableSchema(ctx context.Context, args TableSchemaArgs) (*types.TableMetadataResponse, error)
 }
 
+type conn struct {
+	db     *sql.DB
+	driver *driver.Driver
+}
+
+type bqServiceFactory func(ctx context.Context, projectID string, opts ...option.ClientOption) (*bq.Client, error)
+
 type BigQueryDatasource struct {
-	apiClients sync.Map
-	config     sync.Map
+	connections sync.Map
+	apiClients  sync.Map
+	bqFactory   bqServiceFactory
 }
 
 type ConnectionArgs struct {
-	Project  string `json:"project,omitempty"`
 	Dataset  string `json:"dataset,omitempty"`
 	Table    string `json:"table,omitempty"`
 	Location string `json:"location,omitempty"`
 }
 
 func New() *BigQueryDatasource {
-	return &BigQueryDatasource{}
+	return &BigQueryDatasource{
+		bqFactory: bq.NewClient,
+	}
 }
 
 func (s *BigQueryDatasource) Connect(config backend.DataSourceInstanceSettings, queryArgs json.RawMessage) (*sql.DB, error) {
-	log.DefaultLogger.Info("Connecting to BigQuery")
-	settings, err := LoadSettings(config)
+	log.DefaultLogger.Debug("Connecting to BigQuery")
+
+	settings, err := LoadSettings(&config)
 	if err != nil {
 		return nil, err
 	}
-	s.config.Store(config.ID, settings)
 
 	args, err := parseConnectionArgs(queryArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	connectionString, err := getDSN(settings, args)
+	connectionSettings := getConnectionSettings(settings, args)
 
-	if err != nil {
-		return nil, err
+	if settings.AuthenticationType == "gce" {
+		defaultProject, err := s.GetGCEDefaultProject(context.Background())
+		if err != nil {
+			return nil, errors.WithMessage(err, "Failed to retrieve default GCE project")
+		}
+		connectionSettings.Project = defaultProject
 	}
 
-	db, err := sql.Open("bigquery", connectionString)
+	connectionKey := fmt.Sprintf("%d/%s:%s", config.ID, connectionSettings.Location, connectionSettings.Project)
 
-	if err != nil {
-		return nil, errors.WithMessage(err, "Failed to connect to database. Is the hostname and port correct?")
+	c, exists := s.connections.Load(connectionKey)
+
+	if exists {
+		connection := c.(conn)
+		if !connection.driver.Closed() {
+			log.DefaultLogger.Debug("Reusing existing connection to BigQuery")
+			return connection.db, nil
+		}
+	} else {
+		log.DefaultLogger.Debug("Creating new connection to BigQuery")
 	}
 
-	return db, nil
+	aC, exists := s.apiClients.Load(connectionKey)
+
+	// If we have already instantiated API client for given connection details then reuse it's underlying big query
+	// client for db connection.
+	if exists {
+		dr, db, err := driver.Open(connectionSettings, aC.(*api.API).Client)
+		if err != nil {
+			return nil, errors.WithMessage(err, "Failed to connect to database")
+		}
+		s.connections.Store(connectionKey, conn{db: db, driver: dr})
+		return db, nil
+	} else {
+		client, err := newHTTPClient(settings, httpclient.Options{})
+		if err != nil {
+			return nil, errors.WithMessage(err, "Failed to crate http client")
+		}
+
+		bqClient, err := s.bqFactory(context.Background(), connectionSettings.Project, option.WithHTTPClient(client))
+		if err != nil {
+			return nil, errors.WithMessage(err, "Failed to crate BigQuery client")
+		}
+
+		dr, db, err := driver.Open(connectionSettings, bqClient)
+
+		if err != nil {
+			return nil, errors.WithMessage(err, "Failed to connect to database")
+		}
+		s.connections.Store(connectionKey, conn{db: db, driver: dr})
+
+		apiInstance := api.New(bqClient)
+		apiInstance.SetLocation(connectionSettings.Location)
+
+		if err != nil {
+			return nil, errors.WithMessage(err, "Failed to create BigQuery API client")
+		}
+		s.apiClients.Store(connectionKey, apiInstance)
+		return db, nil
+	}
 
 }
 
@@ -91,9 +154,29 @@ func (s *BigQueryDatasource) Settings(_ backend.DataSourceInstanceSettings) sqld
 	}
 }
 
-func (s *BigQueryDatasource) Datasets(ctx context.Context, options sqlds.Options) ([]string, error) {
-	project, location := options["project"], options["location"]
-	apiClient, err := s.getApi(ctx, project, location)
+func (s *BigQueryDatasource) GetGCEDefaultProject(ctx context.Context) (string, error) {
+	defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/bigquery")
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
+	}
+	token, err := defaultCredentials.TokenSource.Token()
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve GCP credential token: %w", err)
+	}
+	if !token.Valid() {
+		return "", errors.New("failed to validate GCP credentials")
+	}
+
+	return defaultCredentials.ProjectID, nil
+}
+
+type DatasetsArgs struct {
+	Project  string `json:"project"`
+	Location string `json:"location"`
+}
+
+func (s *BigQueryDatasource) Datasets(ctx context.Context, options DatasetsArgs) ([]string, error) {
+	apiClient, err := s.getApi(ctx, options.Project, options.Location)
 	if err != nil {
 		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
 	}
@@ -101,82 +184,81 @@ func (s *BigQueryDatasource) Datasets(ctx context.Context, options sqlds.Options
 	return apiClient.ListDatasets(ctx)
 }
 
-func (s *BigQueryDatasource) Tables(ctx context.Context, options sqlds.Options) ([]string, error) {
-	project, dataset, location := options["project"], options["dataset"], options["location"]
-	apiClient, err := s.getApi(ctx, project, location)
-
-	if err != nil {
-		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
-	}
-
-	return apiClient.ListTables(ctx, dataset)
+type TablesArgs struct {
+	Project  string `json:"project"`
+	Location string `json:"location"`
+	Dataset  string `json:"dataset"`
 }
 
-func (s *BigQueryDatasource) TableSchema(ctx context.Context, options sqlds.Options) (*types.TableMetadataResponse, error) {
-	project, dataset, table, location := options["project"], options["dataset"], options["table"], options["location"]
-	apiClient, err := s.getApi(ctx, project, location)
+func (s *BigQueryDatasource) Tables(ctx context.Context, args TablesArgs) ([]string, error) {
+	apiClient, err := s.getApi(ctx, args.Project, args.Location)
+
 	if err != nil {
 		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
 	}
 
-	return apiClient.GetTableSchema(ctx, dataset, table)
+	return apiClient.ListTables(ctx, args.Dataset)
+}
+
+type TableSchemaArgs struct {
+	Project  string `json:"project"`
+	Location string `json:"location"`
+	Dataset  string `json:"dataset"`
+	Table    string `json:"table"`
+}
+
+func (s *BigQueryDatasource) TableSchema(ctx context.Context, args TableSchemaArgs) (*types.TableMetadataResponse, error) {
+	apiClient, err := s.getApi(ctx, args.Project, args.Location)
+	if err != nil {
+		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
+	}
+
+	return apiClient.GetTableSchema(ctx, args.Dataset, args.Table)
 
 }
 
 func (s *BigQueryDatasource) getApi(ctx context.Context, project, location string) (*api.API, error) {
-	datasourceID := getDatasourceID(ctx)
-	clientId := fmt.Sprintf("%d/%s", datasourceID, project)
-	settings, exists := s.config.Load(datasourceID)
-
-	if !exists {
-		return nil, fmt.Errorf("no settings for datasource: %d", datasourceID)
-	}
-
-	client, exists := s.apiClients.Load(clientId)
+	datasourceSettings := getDatasourceSettings(ctx)
+	connectionKey := fmt.Sprintf("%d/%s:%s", datasourceSettings.ID, location, project)
+	cClient, exists := s.apiClients.Load(connectionKey)
 
 	if exists {
-		if location != "" {
-			client.(*api.API).SetLocation(location)
-		} else {
-			client.(*api.API).SetLocation(settings.(BigQuerySettings).ProcessingLocation)
-		}
-		return client.(*api.API), nil
+		log.DefaultLogger.Debug("Reusing existing BigQuery API client")
+		return cClient.(*api.API), nil
 	}
 
-	credentials := Credentials{
-		Type:        "service_account",
-		ClientEmail: settings.(BigQuerySettings).ClientEmail,
-		PrivateKey:  settings.(BigQuerySettings).PrivateKey,
-		TokenURI:    settings.(BigQuerySettings).TokenUri,
-		ProjectID:   project,
+	settings, err := LoadSettings(datasourceSettings)
+	if err != nil {
+		return nil, err
 	}
-	creds, err := json.Marshal(credentials)
+
+	httpClient, err := newHTTPClient(settings, httpclient.Options{})
 
 	if err != nil {
-		return nil, errors.WithMessage(err, "Invalid service account")
+		return nil, errors.WithMessage(err, "Failed to crate http client")
 	}
 
-	client, err = bq.NewClient(ctx, project, option.WithCredentialsJSON([]byte(creds)))
-
+	client, err := s.bqFactory(ctx, project, option.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, errors.WithMessage(err, "Failed to initialize BigQuery client")
 	}
-	apiInstance := api.New(client.(*bq.Client))
+	apiInstance := api.New(client)
 
 	if location != "" {
 		apiInstance.SetLocation(location)
 	} else {
-		apiInstance.SetLocation(settings.(BigQuerySettings).ProcessingLocation)
+		apiInstance.SetLocation(settings.ProcessingLocation)
 	}
-	s.apiClients.Store(clientId, apiInstance)
+
+	s.apiClients.Store(connectionKey, apiInstance)
 
 	return apiInstance, nil
 
 }
 
-func getDatasourceID(ctx context.Context) int64 {
-	plugin := httpadapter.PluginConfigFromContext(ctx)
-	return plugin.DataSourceInstanceSettings.ID
+func getDatasourceSettings(ctx context.Context) *backend.DataSourceInstanceSettings {
+	plugin := PluginConfigFromContext(ctx)
+	return plugin.DataSourceInstanceSettings
 }
 
 func parseConnectionArgs(queryArgs json.RawMessage) (*ConnectionArgs, error) {

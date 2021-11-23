@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/sqlds/v2"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
 type ResourceHandler struct {
@@ -16,23 +16,42 @@ type ResourceHandler struct {
 }
 
 func New(ds *bigquery.BigQueryDatasource) *ResourceHandler {
-	log.DefaultLogger.Info("NEW RESOURCE HANDLER")
 	return &ResourceHandler{ds: ds}
 }
 
+func (r *ResourceHandler) defaultProjects(rw http.ResponseWriter, req *http.Request) {
+	p := httpadapter.PluginConfigFromContext(req.Context())
+	s, err := bigquery.LoadSettings(p.DataSourceInstanceSettings)
+
+	if err != nil {
+		sendResponse(nil, err, rw)
+	}
+
+	if s.AuthenticationType == "gce" {
+		res, err := r.ds.GetGCEDefaultProject(req.Context())
+		sendResponse(res, err, rw)
+	} else {
+		sendResponse(s.DefaultProject, nil, rw)
+	}
+}
+
 func (r *ResourceHandler) datasets(rw http.ResponseWriter, req *http.Request) {
-	reqBody, err := parseBody(req.Body)
+	result := bigquery.DatasetsArgs{}
+	err := parseBody(req.Body, &result)
+
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		write(rw, []byte(err.Error()))
 		return
 	}
-	res, err := r.ds.Datasets(req.Context(), reqBody)
+	res, err := r.ds.Datasets(req.Context(), result)
+
 	sendResponse(res, err, rw)
 }
 
 func (r *ResourceHandler) tables(rw http.ResponseWriter, req *http.Request) {
-	reqBody, err := parseBody(req.Body)
+	result := bigquery.TablesArgs{}
+	err := parseBody(req.Body, &result)
 
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -40,42 +59,43 @@ func (r *ResourceHandler) tables(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res, err := r.ds.Tables(req.Context(), reqBody)
+	res, err := r.ds.Tables(req.Context(), result)
 	sendResponse(res, err, rw)
 }
 
 func (r *ResourceHandler) tableSchema(rw http.ResponseWriter, req *http.Request) {
-	reqBody, err := parseBody(req.Body)
+	result := bigquery.TableSchemaArgs{}
+	err := parseBody(req.Body, &result)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		write(rw, []byte(err.Error()))
 		return
 	}
 
-	res, err := r.ds.TableSchema(req.Context(), reqBody)
+	res, err := r.ds.TableSchema(req.Context(), result)
 	rw.Header().Set("Content-Type", "application/json")
 	sendResponse(res, err, rw)
 }
 
 func (r *ResourceHandler) Routes() map[string]func(http.ResponseWriter, *http.Request) {
 	return map[string]func(http.ResponseWriter, *http.Request){
+		"/defaultProjects":      r.defaultProjects,
 		"/datasets":             r.datasets,
 		"/dataset/tables":       r.tables,
 		"/dataset/table/schema": r.tableSchema,
 	}
 }
 
-func parseBody(body io.ReadCloser) (sqlds.Options, error) {
-	reqBody := sqlds.Options{}
+func parseBody(body io.ReadCloser, reqBody interface{}) error {
 	b, err := ioutil.ReadAll(body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = json.Unmarshal(b, &reqBody)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return reqBody, nil
+	return nil
 }
 
 func write(rw http.ResponseWriter, b []byte) {

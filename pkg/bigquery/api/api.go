@@ -20,6 +20,7 @@ func New(client *bq.Client) *API {
 }
 
 func (a *API) ListDatasets(ctx context.Context) ([]string, error) {
+
 	result := []string{}
 
 	it := a.Client.Datasets(ctx)
@@ -40,7 +41,6 @@ func (a *API) ListDatasets(ctx context.Context) ([]string, error) {
 
 func (a *API) ListTables(ctx context.Context, dataset string) ([]string, error) {
 	datasetRef := a.Client.Dataset(dataset)
-
 	result := []string{}
 
 	it := datasetRef.Tables(ctx)

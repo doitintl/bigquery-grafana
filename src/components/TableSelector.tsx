@@ -14,21 +14,18 @@ interface TableSelectorProps extends ResourceSelectorProps {
 export const TableSelector: React.FC<TableSelectorProps> = ({
   apiClient,
   location,
-  projectId,
   value,
   dataset,
-  applyDefault,
-  disabled,
   className,
   onChange,
 }) => {
   const state = useAsync(async () => {
-    if (dataset === undefined) {
+    if (!dataset) {
       return [];
     }
-    const tables = await apiClient.getTables(projectId, location, dataset);
+    const tables = await apiClient.getTables(location, dataset);
     return tables.map<SelectableValue<string>>((d) => ({ label: d, value: d }));
-  }, [projectId, location, dataset]);
+  }, [location, dataset]);
 
   return (
     <Select

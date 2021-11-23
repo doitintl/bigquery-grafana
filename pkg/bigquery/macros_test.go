@@ -30,13 +30,12 @@ func Test_macros(t *testing.T) {
 			"table",
 			&sqlds.Query{ConnectionArgs: []byte(
 				`{
-					"project" : "project",
 					"dataset" : "dataset",
 					"table" : "table"
 				}`,
 			)},
 			[]string{},
-			"`project.dataset.table`",
+			"`dataset.table`",
 			nil,
 		},
 		{

@@ -1,4 +1,4 @@
-package bigquery
+package driver
 
 import "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 

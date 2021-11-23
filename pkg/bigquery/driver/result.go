@@ -1,4 +1,4 @@
-package bigquery
+package driver
 
 type result struct {
 	lastInsertID int64
