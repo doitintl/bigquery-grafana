@@ -19,6 +19,7 @@ func main() {
 
 	s := bigquery.New()
 	ds := sqlds.NewDatasource(s)
+	ds.Completable = s
 	ds.EnableMultipleConnections = true
 	ds.CustomRoutes = routes.New(s).Routes()
 	if err := datasource.Manage(

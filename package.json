@@ -17,7 +17,7 @@
   "dependencies": {
     "@grafana/data": "latest",
     "@grafana/runtime": "latest",
-    "@grafana/ui": "latest",
+    "@grafana/ui": "canary",
     "brace": "^0.10.0",
     "import": "^0.0.6",
     "lodash": "^4.17.11",
