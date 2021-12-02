@@ -29,7 +29,6 @@ type BigqueryDatasourceIface interface {
 	sqlds.Driver
 	GetGCEDefaultProject(ctx context.Context) (string, error)
 	Datasets(ctx context.Context, args DatasetsArgs) ([]string, error)
-	Tables(ctx context.Context, args TablesArgs) ([]string, error)
 	TableSchema(ctx context.Context, args TableSchemaArgs) (*types.TableMetadataResponse, error)
 }
 
@@ -190,7 +189,23 @@ type TablesArgs struct {
 	Dataset  string `json:"dataset"`
 }
 
-func (s *BigQueryDatasource) Tables(ctx context.Context, args TablesArgs) ([]string, error) {
+// sqlds.Completable interface
+func (s *BigQueryDatasource) Schemas(ctx context.Context, options sqlds.Options) ([]string, error) {
+	return nil, nil
+}
+
+// sqlds.Completable interface
+func (s *BigQueryDatasource) Tables(ctx context.Context, options sqlds.Options) ([]string, error) {
+	args := TablesArgs{
+		Project:  options["project"],
+		Dataset:  options["dataset"],
+		Location: options["location"],
+	}
+
+	if args.Project == "" || args.Dataset == "" || args.Location == "" {
+		return nil, errors.New("project, dataset and location must be specified")
+	}
+
 	apiClient, err := s.getApi(ctx, args.Project, args.Location)
 
 	if err != nil {
@@ -198,6 +213,28 @@ func (s *BigQueryDatasource) Tables(ctx context.Context, args TablesArgs) ([]str
 	}
 
 	return apiClient.ListTables(ctx, args.Dataset)
+}
+
+// sqlds.Completable interface
+func (s *BigQueryDatasource) Columns(ctx context.Context, options sqlds.Options) ([]string, error) {
+	args := TableSchemaArgs{
+		Project:  options["project"],
+		Dataset:  options["dataset"],
+		Table:    options["table"],
+		Location: options["location"],
+	}
+
+	if args.Project == "" || args.Dataset == "" || args.Location == "" || args.Table == "" {
+		return nil, errors.New("missing required arguments")
+	}
+
+	apiClient, err := s.getApi(ctx, args.Project, args.Location)
+
+	if err != nil {
+		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
+	}
+
+	return apiClient.ListColumns(ctx, args.Dataset, args.Table)
 }
 
 type TableSchemaArgs struct {

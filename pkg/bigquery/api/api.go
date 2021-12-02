@@ -7,6 +7,7 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/types"
+	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/utils"
 	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
 )
@@ -57,6 +58,18 @@ func (a *API) ListTables(ctx context.Context, dataset string) ([]string, error) 
 	}
 
 	return result, nil
+}
+
+func (a *API) ListColumns(ctx context.Context, dataset string, table string) ([]string, error) {
+	tableMeta, err := a.Client.Dataset(dataset).Table(table).Metadata(ctx)
+
+	if err != nil {
+		return nil, errors.WithMessage(err, fmt.Sprintf("Failed to retrieve %s table columns", table))
+	}
+
+	result := utils.ColumnsFromTableSchema(tableMeta.Schema)
+	return result, nil
+
 }
 
 func (a *API) GetTableSchema(ctx context.Context, dataset, table string) (*types.TableMetadataResponse, error) {

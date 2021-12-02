@@ -15,6 +15,7 @@ export interface BigQueryAPI {
   getDatasets: (location: string) => Promise<string[]>;
   getTables: (location: string, dataset: string) => Promise<string[]>;
   getTableSchema: (location: string, dataset: string, table: string) => Promise<TableSchema>;
+  getColumns: (location: string, dataset: string, table: string) => Promise<string[]>;
 }
 
 class BigQueryAPIClient implements BigQueryAPI {
@@ -34,10 +35,19 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   getTables = async (location: string, dataset: string): Promise<string[]> => {
-    return await getBackendSrv().post(this.resourcesUrl + '/dataset/tables', {
+    return await getBackendSrv().post(this.resourcesUrl + '/tables', {
       project: this.defaultProject,
       location,
       dataset,
+    });
+  };
+
+  getColumns = async (location: string, dataset: string, table: string): Promise<string[]> => {
+    return await getBackendSrv().post(this.resourcesUrl + '/columns', {
+      project: this.defaultProject,
+      location,
+      dataset,
+      table,
     });
   };
 
