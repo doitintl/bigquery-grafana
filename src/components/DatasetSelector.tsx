@@ -54,6 +54,7 @@ export const DatasetSelector: React.FC<DatasetSelectorProps> = ({
       onChange={onChange}
       disabled={disabled}
       isLoading={state.loading}
+      menuShouldPortal={true}
     />
   );
 };

@@ -7,7 +7,6 @@ const standard = require('@grafana/toolkit/src/config/jest.plugin.config');
 // This process will use the same config that `yarn test` is using
 config = standard.jestConfig();
 config.setupFilesAfterEnv = ['<rootDir>/config/setupTests.ts'];
-
 config.globalSetup = '<rootDir>/config/globalSetup.ts';
 
 module.exports = config;

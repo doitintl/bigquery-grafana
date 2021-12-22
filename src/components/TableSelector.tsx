@@ -35,6 +35,7 @@ export const TableSelector: React.FC<TableSelectorProps> = ({
       onChange={onChange}
       disabled={!Boolean(dataset) || state.loading}
       isLoading={state.loading}
+      menuShouldPortal={true}
     />
   );
 };

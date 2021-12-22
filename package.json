@@ -8,6 +8,7 @@
     "build": "rm -rf dist && grafana-toolkit plugin:build  && mage -v buildAll",
     "sign": "grafana-toolkit plugin:sign",
     "test": "grafana-toolkit plugin:test",
+    "test:jest": "jest --config jest.config.js",
     "test:watch": "grafana-toolkit plugin:test  --watch",
     "test:codecov": "jest --config jest.config.js && codecov",
     "build:sign": "yarn run build:prod && yarn run sign"
@@ -15,9 +16,10 @@
   "author": "Grafana Labs <team@grafana.com> (https://grafana.com)",
   "license": "MIT",
   "dependencies": {
-    "@grafana/data": "latest",
-    "@grafana/runtime": "latest",
+    "@grafana/data": "canary",
+    "@grafana/runtime": "canary",
     "@grafana/ui": "canary",
+    "@grafana/experimental": "0.0.2-canary.9",
     "brace": "^0.10.0",
     "import": "^0.0.6",
     "lodash": "^4.17.11",
@@ -27,7 +29,7 @@
   },
   "devDependencies": {
     "@google-cloud/bigquery": "^5.9.0",
-    "@grafana/toolkit": "latest",
+    "@grafana/toolkit": "canary",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.1.0",
     "@types/grafana": "https://git@github.com/CorpGlory/types-grafana.git",

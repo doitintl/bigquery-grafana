@@ -1,159 +1,111 @@
 import _ from 'lodash';
 import BigQueryQuery, { BigQueryQueryNG } from './bigquery_query';
-import { map } from 'rxjs/operators';
-import ResponseParser, { ResultFormat } from './ResponseParser';
-import { BigQueryOptions, GoogleAuthType, QueryFormat, QueryModel, QueryPriority } from './types';
+import { BigQueryOptions, GoogleAuthType, QueryModel } from './types';
 import { v4 as generateID } from 'uuid';
 import { DataSourceInstanceSettings, ScopedVars, VariableModel } from '@grafana/data';
-import { DataSourceWithBackend, FetchResponse, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import {
-  formatBigqueryError,
-  handleError,
-  quoteLiteral,
-  // updatePartition,
-  // updateTableSuffix,
-  // SHIFTED,
-} from 'utils';
+import { DataSourceWithBackend, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { formatBigqueryError, quoteLiteral } from 'utils';
 import BQTypes from '@google-cloud/bigquery/build/src/types';
 
-function sleep(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
 export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, BigQueryOptions> {
-  private readonly baseUrl: string;
+  // private readonly baseUrl: string;
   private readonly url?: string;
 
-  private runInProject: string;
-  private responseParser: ResponseParser;
-  private queryModel: BigQueryQuery;
-  private processingLocation?: string;
-  private queryPriority?: QueryPriority;
+  // private queryModel: BigQueryQuery;
+  // private processingLocation?: string;
+  // private queryPriority?: QueryPriority;
   jsonData: BigQueryOptions;
 
   authenticationType: string;
-  projectName = '';
 
   constructor(instanceSettings: DataSourceInstanceSettings<BigQueryOptions>) {
     super(instanceSettings);
-    this.baseUrl = `/bigquery/`;
+    // this.baseUrl = `/bigquery/`;
     this.url = instanceSettings.url;
-    this.responseParser = new ResponseParser();
-    this.queryModel = new BigQueryQuery({} as any);
+    // this.responseParser = new ResponseParser();
+    // this.queryModel = new BigQueryQuery({} as any);
 
     this.jsonData = instanceSettings.jsonData;
     this.authenticationType = instanceSettings.jsonData.authenticationType || GoogleAuthType.JWT;
 
-    (async () => {
-      this.projectName = instanceSettings.jsonData.defaultProject || (await this.getDefaultProject());
-    })();
-
-    this.runInProject =
-      this.jsonData.flatRateProject && this.jsonData.flatRateProject.length
-        ? this.jsonData.flatRateProject
-        : this.projectName;
-
-    this.processingLocation =
-      this.jsonData.processingLocation && this.jsonData.processingLocation.length
-        ? this.jsonData.processingLocation
-        : undefined;
+    // this.processingLocation =
+    //   this.jsonData.processingLocation && this.jsonData.processingLocation.length
+    //     ? this.jsonData.processingLocation
+    //     : undefined;
 
     // this.queryPriority = this.jsonData.queryPriority;
   }
 
   filterQuery(query: BigQueryQueryNG) {
-    if (!query.dataset || !query.table || !query.rawSql) {
+    if (
+      // !query.dataset || !query.table ||
+      !query.rawSql
+    ) {
       return false;
     }
     return true;
   }
 
   async metricFindQuery(query: string, optionalOptions: any) {
-    let refId = 'tempvar';
-    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-      refId = optionalOptions.variable.name;
-    }
+    // let refId = 'tempvar';
+    // if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
+    //   refId = optionalOptions.variable.name;
+    // }
 
-    const interpolatedQuery = {
-      datasourceId: this.id,
-      format: 'table',
-      rawSql: getTemplateSrv().replace(query, {}, this.interpolateVariable),
-      refId,
-    };
+    // const interpolatedQuery = {
+    //   datasourceId: this.id,
+    //   format: 'table',
+    //   rawSql: getTemplateSrv().replace(query, {}, this.interpolateVariable),
+    //   refId,
+    // };
 
-    return await this.doQuery(interpolatedQuery.rawSql, refId).then((metricData) => {
-      if (!metricData) {
-        return [];
-      }
-      return ResponseParser.toVar(metricData);
-    });
-  }
+    return [];
 
-  async getProjects(): Promise<ResultFormat[]> {
-    const path = `v2/projects`;
-    const data = await this.paginatedResults(path, 'projects');
-    return ResponseParser.parseProjects(data);
-  }
-
-  async getDefaultProject() {
-    try {
-      if (this.authenticationType === 'gce' || !this.projectName) {
-        const data = await this.getProjects();
-        this.projectName = data[0].value;
-        if (!this.runInProject) {
-          this.runInProject = this.projectName;
-        }
-        return data[0].value;
-      } else {
-        return this.projectName;
-      }
-    } catch (error) {
-      return (this.projectName = '');
-    }
+    // return await this.doQuery(interpolatedQuery.rawSql, refId).then((metricData) => {
+    //   if (!metricData) {
+    //     return [];
+    //   }
+    //   return ResponseParser.toVar(metricData);
+    // });
   }
 
   async annotationQuery(options: any): Promise<any> {
-    const path = `v2/projects/${this.runInProject}/queries`;
-    const url = this.url + `${this.baseUrl}${path}`;
-    if (!options.annotation.rawQuery) {
-      return Promise.reject({
-        message: 'Query missing in annotation definition',
-      });
-    }
-    const rawSql = getTemplateSrv().replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable);
-
-    const query = {
-      // datasourceId: this.id,
-      format: QueryFormat.Table,
-      rawSql,
-      refId: options.annotation.name,
-    } as BigQueryQueryNG;
-
-    this.queryModel.target.rawSql = query.rawSql;
-    query.rawSql = this.queryModel.expend_macros(options);
-
-    return getBackendSrv()
-      .fetch({
-        data: {
-          priority: this.queryPriority,
-          from: options.range.from.valueOf().toString(),
-          query: query.rawSql,
-          to: options.range.to.valueOf().toString(),
-          useLegacySql: false,
-          useQueryCache: true,
-        },
-        method: 'POST',
-        requestId: options.annotation.name,
-        url,
-      })
-      .pipe(
-        map(async (res: FetchResponse) => {
-          return await this.responseParser.transformAnnotationResponse(options, res);
-        })
-      )
-      .toPromise();
+    // const path = `v2/projects/${this.runInProject}/queries`;
+    // const url = this.url + `${this.baseUrl}${path}`;
+    // if (!options.annotation.rawQuery) {
+    //   return Promise.reject({
+    //     message: 'Query missing in annotation definition',
+    //   });
+    // }
+    // const rawSql = getTemplateSrv().replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable);
+    // const query = {
+    //   // datasourceId: this.id,
+    //   format: QueryFormat.Table,
+    //   rawSql,
+    //   refId: options.annotation.name,
+    // } as BigQueryQueryNG;
+    // this.queryModel.target.rawSql = query.rawSql;
+    // query.rawSql = this.queryModel.expend_macros(options);
+    // return getBackendSrv()
+    //   .fetch({
+    //     data: {
+    //       priority: this.queryPriority,
+    //       from: options.range.from.valueOf().toString(),
+    //       query: query.rawSql,
+    //       to: options.range.to.valueOf().toString(),
+    //       useLegacySql: false,
+    //       useQueryCache: true,
+    //     },
+    //     method: 'POST',
+    //     requestId: options.annotation.name,
+    //     url,
+    //   })
+    //   .pipe(
+    //     map(async (res: FetchResponse) => {
+    //       return await this.responseParser.transformAnnotationResponse(options, res);
+    //     })
+    //   )
+    //   .toPromise();
   }
 
   // private setUpQ(modOptions: any, options: DataQueryRequest<BigQueryQueryNG>, query: BigQueryQueryNG) {
@@ -251,126 +203,66 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
   }
 
   // @ts-ignore
-  private async doQueryRequest(query: string, requestId: string, priority: QueryPriority, maxRetries = 3) {
-    const location = this.queryModel.target.location || this.processingLocation || 'US';
-    let data,
-      queryiesOrJobs = 'queries';
-    data = { priority, location, query, useLegacySql: false, useQueryCache: true }; //ExternalDataConfiguration
+  // private async doQueryRequest(query: string, requestId: string, priority: QueryPriority, maxRetries = 3) {
+  //   const location = this.queryModel.target.location || this.processingLocation || 'US';
+  //   let data,
+  //     queryiesOrJobs = 'queries';
+  //   data = { priority, location, query, useLegacySql: false, useQueryCache: true }; //ExternalDataConfiguration
 
-    if (priority.toUpperCase() === 'BATCH') {
-      queryiesOrJobs = 'jobs';
-      data = { configuration: { query: { query, priority } } };
-    }
+  //   if (priority.toUpperCase() === 'BATCH') {
+  //     queryiesOrJobs = 'jobs';
+  //     data = { configuration: { query: { query, priority } } };
+  //   }
 
-    const path = `v2/projects/${this.runInProject}/${queryiesOrJobs}`;
-    const url = this.url + `${this.baseUrl}${path}`;
+  //   const path = `v2/projects/${this.runInProject}/${queryiesOrJobs}`;
+  //   const url = this.url + `${this.baseUrl}${path}`;
 
-    return getBackendSrv()
-      .fetch<BQTypes.IQueryResponse>({
-        data: data,
-        method: 'POST',
-        requestId,
-        url,
-        retry: 3,
-      })
-      .toPromise()
-      .then((result) => {
-        if (result?.status !== 200) {
-          if (result && result.status >= 500 && maxRetries > 0) {
-            return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
-          }
-          throw formatBigqueryError((result?.data as any).error);
-        }
-        return result;
-      })
-      .catch((error) => {
-        if (error.status === 500 && maxRetries > 0) {
-          return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
-        }
+  //   return getBackendSrv()
+  //     .fetch<BQTypes.IQueryResponse>({
+  //       data: data,
+  //       method: 'POST',
+  //       requestId,
+  //       url,
+  //       retry: 3,
+  //     })
+  //     .toPromise()
+  //     .then((result) => {
+  //       if (result?.status !== 200) {
+  //         if (result && result.status >= 500 && maxRetries > 0) {
+  //           return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
+  //         }
+  //         throw formatBigqueryError((result?.data as any).error);
+  //       }
+  //       return result;
+  //     })
+  //     .catch((error) => {
+  //       if (error.status === 500 && maxRetries > 0) {
+  //         return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
+  //       }
 
-        if (error.cancelled === true) {
-          return [];
-        }
-        return handleError(error);
-      });
-  }
+  //       if (error.cancelled === true) {
+  //         return [];
+  //       }
+  //       return handleError(error);
+  //     });
+  // }
 
-  private async _waitForJobComplete(
-    queryResults: FetchResponse<BQTypes.IQueryResponse>,
-    requestId: string,
-    jobId: string
-  ) {
-    let sleepTimeMs = 100;
+  // private async _waitForJobComplete(
+  //   queryResults: FetchResponse<BQTypes.IQueryResponse>,
+  //   requestId: string,
+  //   jobId: string
+  // ) {
+  //   let sleepTimeMs = 100;
 
-    const location = this.queryModel.target.location || this.processingLocation || 'US';
-    const path = `v2/projects/${this.runInProject}/queries/` + jobId + '?location=' + location;
-    while (!queryResults.data.jobComplete) {
-      await sleep(sleepTimeMs);
-      sleepTimeMs *= 2;
-      queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
-    }
-    return queryResults;
-  }
-
-  private async _getQueryResults(
-    queryResults: FetchResponse<BQTypes.IQueryResponse>,
-    requestId: string,
-    jobId: string
-  ) {
-    while (queryResults.data.pageToken) {
-      const location = this.queryModel.target.location || this.processingLocation || 'US';
-
-      const path =
-        `v2/projects/${this.runInProject}/queries/` +
-        jobId +
-        '?pageToken=' +
-        queryResults.data.pageToken +
-        '&location=' +
-        location;
-
-      const nextResult = await this.doRequest(`${this.baseUrl}${path}`, requestId);
-
-      queryResults.data.pageToken = nextResult.data.pageToken;
-      if (nextResult.data.rows?.length === 0) {
-        return queryResults;
-      }
-
-      queryResults.data.rows = queryResults.data.rows
-        ? queryResults.data.rows.concat(nextResult.data.rows)
-        : nextResult.data.rows;
-    }
-
-    return queryResults;
-  }
-
-  private async doQuery(
-    query: string,
-    requestId: string,
-    priority = QueryPriority.Interactive
-  ): Promise<FetchResponse<BQTypes.IQueryResponse> | null> {
-    if (!query) {
-      return null;
-    }
-
-    let notReady = false;
-
-    ['-- time --', '-- value --'].forEach((element) => {
-      if (query.indexOf(element) !== -1) {
-        notReady = true;
-      }
-    });
-
-    if (notReady) {
-      return null;
-    }
-
-    let queryResults = await this.doQueryRequest(query, requestId, priority);
-
-    const jobId = queryResults.data.jobReference.jobId;
-    queryResults = await this._waitForJobComplete(queryResults, requestId, jobId);
-
-    return await this._getQueryResults(queryResults, requestId, jobId);
-  }
+  //   const location = this.queryModel.target.location || this.processingLocation || 'US';
+  //   const path = `v2/projects/${this.runInProject}/queries/` + jobId + '?location=' + location;
+  //   while (!queryResults.data.jobComplete) {
+  //     await sleep(sleepTimeMs);
+  //     sleepTimeMs *= 2;
+  //     queryResults = await this.doRequest(`${this.baseUrl}${path}`, requestId);
+  //   }
+  //   return queryResults;
+  // }
 
   private interpolateVariable = (value: any, variable: VariableModel) => {
     if (typeof value === 'string') {
@@ -392,29 +284,29 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
     return quotedValues.join(',');
   };
 
-  private async paginatedResults(path: string, dataName: string) {
-    let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
-    let data = queryResults.data;
+  // private async paginatedResults(path: string, dataName: string) {
+  //   let queryResults = await this.doRequest(`${this.baseUrl}${path}`);
+  //   let data = queryResults.data;
 
-    if (!data) {
-      return data;
-    }
+  //   if (!data) {
+  //     return data;
+  //   }
 
-    const dataList = dataName.split('.');
-    dataList.forEach((element) => {
-      if (data && data[element]) {
-        data = data[element];
-      }
-    });
+  //   const dataList = dataName.split('.');
+  //   dataList.forEach((element) => {
+  //     if (data && data[element]) {
+  //       data = data[element];
+  //     }
+  //   });
 
-    while (queryResults && queryResults.data && queryResults.data.nextPageToken) {
-      queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
-      dataList.forEach((element) => {
-        data = data.concat(queryResults.data[element]);
-      });
-    }
-    return data;
-  }
+  //   while (queryResults && queryResults.data && queryResults.data.nextPageToken) {
+  //     queryResults = await this.doRequest(`${this.baseUrl}${path}` + '?pageToken=' + queryResults.data.nextPageToken);
+  //     dataList.forEach((element) => {
+  //       data = data.concat(queryResults.data[element]);
+  //     });
+  //   }
+  //   return data;
+  // }
 
   // private _updateAlias(q: string, options: any, shiftstr: string) {
   //   if (shiftstr !== undefined) {
@@ -444,7 +336,6 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
     const rawSql = query.target.rawQuery ? query.target.rawSql : query.buildQuery();
 
     const interpolatedSql = getTemplateSrv().replace(rawSql, scopedVars, this.interpolateVariable);
-
     const result = {
       refId: queryModel.refId,
       hide: queryModel.hide,

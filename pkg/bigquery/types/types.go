@@ -31,6 +31,7 @@ type TableFieldSchema struct {
 	Name        string       `json:"name"`
 	Description string       `json:"description,omitempty"`
 	Type        bq.FieldType `json:"type"`
+	Repeated    bool         `json:"repeated"`
 	Schema      TableSchema  `json:"schema,omitempty"`
 }
 

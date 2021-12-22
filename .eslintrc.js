@@ -1,3 +1,3 @@
 module.exports = {
-  ...require('@grafana/toolkit/src/config/eslint.plugin.json'),
+  ...require('@grafana/toolkit/src/config/eslint.plugin.js'),
 };

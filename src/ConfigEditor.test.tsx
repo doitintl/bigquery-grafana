@@ -99,7 +99,7 @@ describe('ConfigEditor', () => {
     const { getByTestId } = render(
       <WrapInState
         defaultOptions={
-          {
+          ({
             jsonData: {
               clientEmail: 'test@grafana.com',
               tokenUri: 'https://accounts.google.com/o/oauth2/token',
@@ -108,7 +108,7 @@ describe('ConfigEditor', () => {
             secureJsonFields: {
               privateKey: true,
             },
-          } as unknown as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
+          } as unknown) as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
         }
       >
         {({ options, setOptions }) => {
@@ -133,7 +133,7 @@ describe('ConfigEditor', () => {
     render(
       <BigQueryConfigEditor
         options={
-          {
+          ({
             jsonData: {
               clientEmail: 'test@grafana.com',
               tokenUri: 'https://accounts.google.com/o/oauth2/token',
@@ -142,7 +142,7 @@ describe('ConfigEditor', () => {
             secureJsonFields: {
               privateKey: true,
             },
-          } as unknown as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
+          } as unknown) as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
         }
         onOptionsChange={() => {}}
       />
@@ -159,14 +159,14 @@ describe('ConfigEditor', () => {
     const { getByLabelText } = render(
       <BigQueryConfigEditor
         options={
-          {
+          ({
             jsonData: {
               authenticationType: GoogleAuthType.JWT,
               clientEmail: 'test@grafana.com',
               tokenUri: 'https://accounts.google.com/o/oauth2/token',
               defaultProject: 'test-project',
             },
-          } as unknown as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
+          } as unknown) as DataSourceSettings<BigQueryOptions, BigQuerySecureJsonData>
         }
         onOptionsChange={onOptionsChangeSpy}
       />
