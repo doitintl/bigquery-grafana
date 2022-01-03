@@ -10,6 +10,7 @@ const ENABLE_NG = true;
 
 const plugin = new DataSourcePlugin<any, any, BigQueryOptions>(BigQueryDatasource)
   .setConfigEditor(BigQueryConfigEditor)
+  .setVariableQueryEditor(QueryEditor)
   .setAnnotationQueryCtrl(BigQueryAnnotationsQueryCtrl);
 
 if (ENABLE_NG) {

@@ -16,7 +16,6 @@ type Props = QueryEditorProps<BigQueryDatasource, BigQueryQueryNG, BigQueryOptio
 function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
   const result = { ...q };
 
-  // result.dataset = q.dataset;
   result.location = q.location || ds.jsonData.defaultRegion || DEFAULT_REGION;
   result.format = q.format !== undefined ? q.format : QueryFormat.Table;
   result.rawSql = q.rawSql || '';
@@ -105,7 +104,7 @@ export function QueryEditor(props: Props) {
 
   const processQuery = useCallback(
     (q: BigQueryQueryNG) => {
-      if (isQueryValid(q)) {
+      if (isQueryValid(q) && onRunQuery) {
         onRunQuery();
       }
     },
@@ -113,7 +112,7 @@ export function QueryEditor(props: Props) {
   );
 
   const onFormatChange = (e: SelectableValue) => {
-    const next = { ...props.query, format: e.value || QueryFormat.Timeseries };
+    const next = { ...props.query, format: e.value !== undefined ? e.value : QueryFormat.Table };
     props.onChange(next);
     processQuery(next);
   };
@@ -123,18 +122,6 @@ export function QueryEditor(props: Props) {
     props.onChange(next);
     processQuery(next);
   };
-
-  // const onDatasetChange = (e: SelectableValue) => {
-  //   const next = {
-  //     ...queryWithDefaults,
-  //     dataset: e.value,
-  //     table: undefined,
-  //   };
-
-  //   setIsSchemaOpen(false);
-  //   props.onChange(next);
-  //   processQuery(next);
-  // };
 
   const onRawQueryChange = useCallback(
     (q: BigQueryQueryNG) => {
@@ -149,7 +136,7 @@ export function QueryEditor(props: Props) {
   }
 
   return (
-    <>
+    <div>
       <HorizontalGroup>
         <Field label="Processing location">
           <Select
@@ -160,16 +147,6 @@ export function QueryEditor(props: Props) {
             menuShouldPortal={true}
           />
         </Field>
-
-        {/* <Field label="Dataset">
-          <DatasetSelector
-            apiClient={apiClient}
-            location={queryWithDefaults.location!}
-            value={queryWithDefaults.dataset}
-            onChange={onDatasetChange}
-            className="width-12"
-          />
-        </Field> */}
 
         <Field label="Format as">
           <Select
@@ -189,6 +166,6 @@ export function QueryEditor(props: Props) {
         onChange={onRawQueryChange}
         onRunQuery={props.onRunQuery}
       />
-    </>
+    </div>
   );
 }
