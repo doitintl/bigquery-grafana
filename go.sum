@@ -256,6 +256,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.119.0 h1:FRmfzdjlVWIxDLQvcKpEcf1kmdLbk662YpmXrqg+GAM=
 github.com/grafana/grafana-plugin-sdk-go v0.119.0/go.mod h1:Mhy+5mC6rSqEhnzop1wEh//n/fgkzNK5pRgg3DfCp4g=
+github.com/grafana/grafana-plugin-sdk-go v0.121.0 h1:4+dXoezL9L40iu7ym4u7ZJ4OE57NaVc4WSHlbxtCtGM=
+github.com/grafana/grafana-plugin-sdk-go v0.121.0/go.mod h1:Mhy+5mC6rSqEhnzop1wEh//n/fgkzNK5pRgg3DfCp4g=
 github.com/grafana/sqlds/v2 v2.3.2 h1:HiMPTn/g4CXPXjWYLc22KwKSK5yR2DyG0wr95M7giZM=
 github.com/grafana/sqlds/v2 v2.3.2/go.mod h1:34uyqPBWsEvg4V/xxh6V4uIqwu1qLfOfsmScll/ukrk=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=

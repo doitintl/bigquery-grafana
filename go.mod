@@ -9,7 +9,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.119.0
+	github.com/grafana/grafana-plugin-sdk-go v0.121.0
 	github.com/grafana/sqlds/v2 v2.3.2
 	github.com/hashicorp/go-hclog v0.16.2 // indirect
 	github.com/hashicorp/go-plugin v1.4.3 // indirect

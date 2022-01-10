@@ -7,6 +7,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/pkg/main.go",
+            "output": "${workspaceFolder}/pkg/__debug_bin",
             "env": {},
             "args": [
                 "--standalone=true",
