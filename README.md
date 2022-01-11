@@ -1,203 +1,126 @@
-[![GitHub stars](https://img.shields.io/github/stars/doitintl/bigquery-grafana.svg?style=svg)](https://github.com/doitintl/bigquery-grafana/stargazers)
-![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=svg)
-[![Automated Release Notes by gren](https://img.shields.io/badge/%F0%9F%A4%96-release%20notes-00B2EE.svg)](https://github-tools.github.io/github-release-notes/)
+# Google BigQuery data source for Grafana
 
-## Status: Production Ready
+The Google BigQuery data source plugin allows you to query and visualize Google BigQuery data from within Grafana.
 
-# BigQuery DataSource for Grafana
+## Beta
 
-A BigQuery DataSource plugin provides support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.
+This plugin is currently in Beta development and subject to change.
 
-### Quick Start
+## Install the plugin
 
-There are multiple ways to install bigquery-grafana. See [INSTALL](https://doitintl.github.io/bigquery-grafana/INSTALL) for more information.
+1. Navigate to [BigQuery](https://grafana.com/grafana/plugins/grafana-bigquery-datasource/) plugin homepage.
+2. From the left-hand menu, click the **Install plugin** button.
 
-### Features:
+   The **Installation** tab is displayed.
 
-- Query setup
-- Raw SQL editor
-- Query builder
-- Macros support
-- Additional functions
-- Table view
-- Annotations
-- BQ queries in variables
-- Sharded tables (`tablename_YYYYMMDD`)
-- Partitioned Tables
-- Granular slot allocation (Running queries in a project with flat-rate pricing)
+### Verify that the plugin is installed
 
-**Plugin Demo:**
+1. In Grafana, navigate to **Configuration** > **Data sources**.
+2. From the top-right corner, click the **Add data source** button.
+3. Search for Google BigQuery in the search field, and hover over the Google BigQuery search result.
+4. Click the **Select** button for Google BigQuery. If you can click the **Select** button, then it is installed.
 
-![plugin demo](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/grafana-bigquery-demo.gif)
+## Configure the Google BigQuery data source in Grafana
 
-## Adding the DataSource to Grafana
+Follow [these instructions](https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/) to add a new Google BigQuery data source, and enter configuration options:
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under `Dashboards` you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select `BigQuery` from the _Type_ dropdown.
-5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
+### Authentication
 
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+Google BigQuery datasource provides two ways of authentication:
 
-| Name                  | Description                                                                         |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| _Name_                | The datasource name. This is how you refer to the datasource in panels & queries.   |
-| _Default_             | Default datasource means that it will be pre-selected for new panels.               |
-| _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it. |
+- By uploading Google Service Account key
+- By automatically retrieving credentials from the Google Metadata Server (only available when running Grafana on a GCE virtual machine)
 
-### Set query priority
+#### Google Service Account authentication
 
-You can now set query priority "INTERACTIVE" or "BATCH" per datasouce
-![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryPriority.png)
+[Create a Google Cloud Platform (GCP) Service Account](https://cloud.google.com/iam/docs/creating-managing-service-accounts). The BigQuery Data Viewer role and the Job User role provide all the permissions that Grafana needs. [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.googleapis.com) has to be enabled on GCP for the data source to work.
 
-### Example of Provisioning a File
+#### Google metadata server
 
-You can manage DataSource via [provisioning system](https://grafana.com/docs/administration/provisioning/#datasources). See the example below of a configuration file.
+When Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for the Google BigQuery datasource to automatically retrieve the default project id and authentication token from the metadata server. For this to work, you need to make sure that you have a service account that is setup as the default account for the virtual machine and that the service account has been given read access to the BigQuery API.
 
-```
+### Provisioning
+
+It is possible to configure data sources using configuration files with Grafana’s provisioning system. To read about how it works, including and all the settings that you can set for this data source, refer to [Provisioning Grafana data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources).
+
+Below you will find some provisioning examples
+
+#### Using service account
+
+```yaml
+# config file version
 apiVersion: 1
 
 datasources:
-- name: <Datasource Name>
-  type: grafana-bigquery-datasource
-  access: proxy
-  isDefault: true
-  jsonData:
-       authenticationType: jwt
-       clientEmail: <Service Account Email>
-       defaultProject: <Default Project Name>
-       tokenUri: https://oauth2.googleapis.com/token
-  secureJsonData:
-       privateKey: |
-          -----BEGIN PRIVATE KEY-----
-           <Content of the Private Key>
-          -----END PRIVATE KEY-----
-  version: 2
-  readOnly: false
+  - name: BigQuery DS
+    type: grafana-bigquery-datasource
+    editable: true
+    enabled: true
+    jsonData:
+      authenticationType: jwt
+      clientEmail: your-client-email
+      defaultProject: your-default-bigquery-project
+      tokenUri: https://oauth2.googleapis.com/token
+    secureJsonData:
+      privateKey: your-private-key
 ```
 
-## Authentication
+#### Using Google Metadata Server
 
-There are two ways to authenticate the BigQuery plugin - either by uploading a Google JWT file, or by automatically retrieving credentials from Google's metadata server. The latter is only available when running Grafana on a GCE virtual machine.
+```yaml
+# config file version
+apiVersion: 1
 
-### Using a Google Service Account Key File
-
-To authenticate with the BigQuery API, you need to create a Google Cloud Platform (GCP) Service Account for the Project you want to show data for. A Grafana datasource integrates with one GCP Project. If you want to visualize data from multiple GCP Projects then you can give the service account permissions in each project or create one datasource per GCP Project.
-
-#### Enable APIs
-
-Go to [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.googleapis.com) and `Enable` the API:
-
-![Enable GCP APIs](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bigquery_enable_api.png)
-
-#### Create a GCP Service Account for a Project
-
-1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
-2. Click on `Create credentials` and choose `Service account key`.
-
-   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/createserviceaccountbutton.png)
-
-3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
-
-   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/newserviceaccount.png)
-
-4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `BigQuery Data Viewer` and `BigQuery Job User` roles from the `Role` dropdown:
-
-   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_service_account_choose_role.png)
-
-5. Click the `Create` button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your BigQuery data.
-6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
-
-   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq__grafana_upload_key.png)
-
-7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
-
-   ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/bq_grafana_key_uploaded.png)
-
-### Using GCE Default Service Account
-
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that need to be met.
-
-1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. See detailed instructions on how to do that [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
-2. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
-3. Allow access to the `BigQuery API` scope. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#changeserviceaccountandscopes).
-
-Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
-
-### Using the Query Builder
-
-The query builder provides a simple yet a user-friendly interface to help you quickly compose a query. The builder enables you to define the basic parts of your query, The common ones are:
-
-1. The table you want to query from
-2. The time field and metric field
-3. WHERE clause - Either use one of the pre-defined macros, to speed your writing time, or set up your own expression. Existing supported Macros are:
-
-   a. Macro \$\_\_timeFiler with last 7 days example:
-
-```
-  WHERE `createDate` BETWEEN TIMESTAMP_MILLIS (1592147699012) AND TIMESTAMP_MILLIS (1592752499012) AND _PARTITIONTIME >= '2020-06-14 18:14:59' AND _PARTITIONTIME < '2020-06-21 18:14:59'
+datasources:
+  - name: BigQuery DS
+    type: grafana-bigquery-datasource
+    editable: true
+    enabled: true
+    jsonData:
+      authenticationType: gce
 ```
 
-b. Macro \$\_\_timeFrom with last 7 days example:
+## Query the data source
 
-```
-  WHERE `createDate` > TIMESTAMP_MILLIS (1592223758609)  AND _PARTITIONTIME >= '2020-06-15 15:22:38' AND _PARTITIONTIME < '2020-06-22 15:22:38'
-```
+The query editor allows you to query Google BigQuery datasource. Queries can contain macros which simplify syntax and allow for dynamic parts.
 
-c. Macro \$\_\_timeTo with last 7 days example:
+### Query as time series
 
-```
-  WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
-```
+Time series visualization options are selectable after adding [`TIMESTAMP`](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#timestamp_type) field to your query. This field will be used as the timestamp. You can select time series visualization using the visualization options. Grafana interprets timestamp rows without explicit time zone as UTC. Any column except time is treated as a value column.
 
-You can now use timeFilter macro in raw sql mode
+### Query as table
 
-4. GROUP BY option - You can use a pre-defined macro or use one of the fields from your query
-   a. time (\$\_\_interval,none)
-5. ORDER BY option
+Table visualizations will always be available for any valid Google BigQuery query.
 
-Note: If your processing location is not the Default US one set your location from the processing Location drop-down at the top right bottom of the query builder
+### Macros
 
-### Troubleshooting
+To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
 
-Viewing your Query
+Here is an example of a query with a macro that will use Grafana's time filter:
 
-1.  Use The Query Inspector located at the top of the query builder
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryInspector.png)
-2.  The query Inspector enables you to see the clean query and troubleshoot SQL errors
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/InspectPanel.png)  
-     The Query builder comes with a set of defaults which are control from the top of the Query Builder
-    ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryBuilder.png)
-
-![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryOptions.png)
-
-### Build
-
-The build works with Yarn:
-
-#### Development Build
-
-```
-yarn dev
+```sql
+SELECT
+      time_column,
+      value_column,
+FROM project.dataset.table
+WHERE $__timeFilter(time_column)
 ```
 
-#### Production Build
+| Macro example                 | Description                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| _$\_\_timeFilter(timeColumn)_ | Will be replaced by a time range filter using the specified name.                  |
+| _$\_\_from_                   | Will be replaced by the start of the currently active time range filter selection. |
+| _$\_\_to_                     | Will be replaced by the end of the currently active time range filter selection.   |
 
-```
-yarn run build:prod
-```
+### Templates and variables
 
-Tests can be run with Jest:
+To add a new Google BigQuery query variable, refer to [Add a query variable](https://grafana.com/docs/grafana/latest/variables/variable-types/add-query-variable/).
 
-```
-yarn run test
-```
+After creating a variable, you can use it in your Google BigQuery queries by using [Variable syntax](https://grafana.com/docs/grafana/latest/variables/syntax/). For more information about variables, refer to [Templates and variables](https://grafana.com/docs/grafana/latest/variables/).
 
-## Contributing
+## Learn more
 
-See the [Contribution Guide](https://doitintl.github.io/bigquery-grafana/CONTRIBUTING).
-
-## License
-
-See the [License File](https://doitintl.github.io/bigquery-grafana/LICENSE).
+- Add [Annotations](https://grafana.com/docs/grafana/latest/dashboards/annotations/).
+- Configure and use [Templates and variables](https://grafana.com/docs/grafana/latest/variables/).
+- Add [Transformations](https://grafana.com/docs/grafana/latest/panels/transformations/).
+- Set up alerting; refer to [Alerts overview](https://grafana.com/docs/grafana/latest/alerting/).

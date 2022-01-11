@@ -1,61 +1,98 @@
-# Contributing Guide
+# Building and releasing
 
-Thank you for taking the time to contribute! :tada::+1:
+## How to build the Google BigQuery data source plugin locally
 
-The following is a set of guidelines for contributing to BigQuery Plugin for Grafana. These are guidelines, not rules, please use your best judgement and feel free to propose changes to this document in a pull request.
+## Dependencies
 
----
-:star: If you already here and love the project, please make sure to press the Star button. :star:
+Make sure you have the following dependencies installed first:
 
----
+- [Git](https://git-scm.com/)
+- [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
+- [Mage](https://magefile.org/)
+- [Node.js (Long Term Support)](https://nodejs.org)
+- [Yarn](https://yarnpkg.com)
 
-## Table of Contents
+## Frontend
 
-[How can I contribute?](#how-can-i-contribute)
+1. Install dependencies
 
-- [Reporting Bugs](#reporting-bugs)
-- [Suggesting Enhancements / Feature Requests](#suggesting-enhancements--feature-requests)
-- [Pull Requests](#pull-requests)
-- [Documentation](#documentation)
-- Design?
+   ```bash
+   yarn install --pure-lockfile
+   ```
 
-[Additional Notes](#additional-notes)
+2. Build plugin in development mode or run in watch mode
 
-- [Release Method](#release-method)
-- [Code of Conduct](#code-of-conduct)
+   ```bash
+   yarn dev
+   ```
 
-## How can I contribute?
+   or
 
-### Reporting Bugs
+   ```bash
+   yarn watch
+   ```
 
-When creating a new bug report, please make sure to:
+3. Build plugin in production mode
 
-- Search for existing issues first. If you find a previous report of your issue, please update the existing issue with additional information instead of creating a new one.
-- If you still decide to open an issue, please review the template and guidelines and include as much details as possible.
+   ```bash
+   yarn build
+   ```
 
-### Suggesting Enhancements / Feature Requests
+## Backend
 
-If you would like to suggest an enhancement or ask for a new feature:
+1. Build the backend binaries
 
-- Please check [the forum](https://feedback.doit-intl.com/forums/933776-grafana-bigquery-plugin) for existing threads about what you want to suggest/ask. If there is, feel free to upvote it to signal interest or add your comments.
-- If there is no open thread, you're welcome to start one to have a discussion about what you want to suggest. Try to provide as much details and context as possible and include information about *the problem you want to solve* rather only *your proposed solution*.
+   ```bash
+   mage -v
+   ```
 
-### Pull Requests
+## Build a release for the Google BigQuery data source plugin
 
-- **Code contributions are welcomed**. For big changes or significant features, it's usually better to reach out first and discuss what you want to implement and how (we recommend reading: [Pull Request First](https://medium.com/practical-blend/pull-request-first-f6bb667a9b6#.ozlqxvj36)). This to make sure that what you want to implement is aligned with our goals for the project and that no one else is already working on it.
-- Include screenshots and animated GIFs in your pull request whenever possible.
-- Please add [documentation](#documentation) for new features or changes in functionality along with the code.
-  
-### Documentation
+You need to have commit rights to the GitHub repository to publish a release.
 
-The project's documentation can be found at [https://github.com/doitintl/bigquery-grafana/blob/master/README.md). To contribute edits, you can use GitHub's interface. Click the "Edit on GitHub" link on the documentation page to quickly open the edit interface.
+1. Update the version number in the `package.json` file.
+2. Update the `CHANGELOG.md` with the changes contained in the release.
+3. Commit the changes to `main` branch and push to GitHub.
+4. Create a tag locally that follows the convention v(major).(minor).x, leaving the patch as `x`. For example:
 
-## Additional Notes
+   ```bash
+   git tag v3.3.0
+   ```
 
-### Release Method
+5. Push the new tag to GitHub
 
-We publish a stable release every ~3-4 months, although the goal is to get to a stable release every month. 
+   ```bash
+   git push origin main --tags
+   ```
 
-## Code of Conduct
+6. Follow the Drone release process that you can find [here](https://github.com/grafana/integrations-team/wiki/Plugin-Release-Process#drone-release-process)
 
-This project adheres to the Contributor Covenant [code of conduct](https://github.com/doitintl/bigquery-grafana/blob/master/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to abuse@doit-intl.com
+# Plugin Technical Documentation
+
+## Authentication
+
+The [grafana-google-sdk-go](https://github.com/grafana/grafana-google-sdk-go) package is currently used by Google BigQuery data source plugin to provide a unified authentication for Google data sources.
+
+## Architecture
+
+The idiomatic way to use a SQL, or SQL-like, database in Go is through the [database/sql package](https://golang.org/pkg/database/sql/). The sql package provides a generic interface around SQL databases. One main benefit of using this pattern for data fetching is that we are reusing building blocks from other SQL-like data source plugins in Grafana.
+
+### grafana/sqlds and sqlutil
+
+From the [sqlds](https://github.com/grafana/sqlds) readme:
+
+_sqlds stands for SQL Datasource._
+
+_Most SQL-driven datasources, like Postgres, MySQL, and MSSQL share extremely similar codebases._
+
+_The sqlds package is intended to remove the repetition of these datasources and centralize the datasource logic. The only thing that the datasources themselves should have to define is connecting to the database, and what driver to use, and the plugin frontend._
+
+Furthermore, sqlds allows each datasource to implement its own fillmode, macros and string converters.
+
+Internally, sqlds is using [sqlutil](https://github.com/grafana/grafana-plugin-sdk-go/tree/master/data/sqlutil) which is a package in `grafana-plugin-sdk-go`. `sqlutil` exposes utility functions for converting database/sql rows into data frames.
+
+### Google BigQuery driver
+
+The database/sql package can only be used in conjunction with a database driver.
+
+This plugin implements our own sql driver based on https://github.com/solcates/go-sql-bigquery driver.
