@@ -1292,10 +1292,10 @@
     prettier "2.2.1"
     typescript "4.3.4"
 
-"@grafana/experimental@0.0.2-canary.11":
-  version "0.0.2-canary.11"
-  resolved "https://registry.yarnpkg.com/@grafana/experimental/-/experimental-0.0.2-canary.11.tgz#69942fe43e2664a436dc745f5d18a7ef1b58680d"
-  integrity sha512-bp3wpnJIWIQGcAh057twfX8pyn+5cjy5uDFovU7puxHHpOmW1kOwxTV3YZMvWy6eNBJBG4N0cVl5Ol/s5uj2ow==
+"@grafana/experimental@0.0.2-canary.14":
+  version "0.0.2-canary.14"
+  resolved "https://registry.yarnpkg.com/@grafana/experimental/-/experimental-0.0.2-canary.14.tgz#376bcf69bdbea1616b76c426656ede0c7dacd413"
+  integrity sha512-iytvIHrwiSHU6VhmtXe8TIWy5Jxq2AcQ2bOBrCnTYSs/ngTsprrNrnsdw4KzRzi12edZlvnY/Xcvpdl4dNYgOw==
   dependencies:
     "@types/uuid" "^8.3.3"
     uuid "^8.3.2"
