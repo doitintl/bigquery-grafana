@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BigQueryConfigEditor } from './ConfigEditor';
-import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType } from './types';
-import { TEST_IDS } from './utils/testIds';
+import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType } from '../types';
+import { TEST_IDS } from '../utils/testIds';
 
 const TOKEN_MOCK = `{
   "type": "service_account",
@@ -11,7 +11,7 @@ const TOKEN_MOCK = `{
   "private_key_id": "private_key_id",
   "private_key": "private_key",
   "client_email": "test@grafana.com",
-  "client_id": "id",
+  "client_id": "id", 
   "auth_uri": "url",
   "token_uri": "url",
   "auth_provider_x509_cert_url": "url",

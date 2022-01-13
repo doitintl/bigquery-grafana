@@ -1,13 +1,13 @@
 import React, { useEffect, useCallback } from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { BigQueryDatasource } from './datasource';
-import { DEFAULT_REGION, PROCESSING_LOCATIONS, QUERY_FORMAT_OPTIONS } from './constants';
+import { BigQueryDatasource } from '../datasource';
+import { DEFAULT_REGION, PROCESSING_LOCATIONS, QUERY_FORMAT_OPTIONS } from '../constants';
 import { Field, HorizontalGroup, Select } from '@grafana/ui';
-import { QueryEditorRaw } from './components/query-editor-raw/QueryEditorRaw';
+import { QueryEditorRaw } from './query-editor-raw/QueryEditorRaw';
 // import { DatasetSelector } from './components/DatasetSelector';
-import { BigQueryQueryNG } from './bigquery_query';
-import { BigQueryOptions, QueryFormat } from './types';
-import { getApiClient } from './api';
+import { BigQueryQueryNG } from '../bigquery_query';
+import { BigQueryOptions, QueryFormat } from '../types';
+import { getApiClient } from '../api';
 import { getColumnInfoFromSchema } from 'utils/getColumnInfoFromSchema';
 import { useAsync } from 'react-use';
 

@@ -6,11 +6,11 @@ import {
 import { Field, FieldSet, Input, RadioButtonGroup, Select } from '@grafana/ui';
 
 import React from 'react';
-import { JWTConfigEditor } from './components/JWTConfigEditor';
-import { JWTForm } from './components/JWTForm';
-import { ConfigurationHelp } from './components/ConfigurationHelp';
-import { GOOGLE_AUTH_TYPE_OPTIONS, PROCESSING_LOCATIONS, QUERY_PRIORITIES } from './constants';
-import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType, QueryPriority } from './types';
+import { JWTConfigEditor } from './JWTConfigEditor';
+import { JWTForm } from './JWTForm';
+import { ConfigurationHelp } from './/ConfigurationHelp';
+import { GOOGLE_AUTH_TYPE_OPTIONS, PROCESSING_LOCATIONS, QUERY_PRIORITIES } from '../constants';
+import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType, QueryPriority } from '../types';
 
 export type BigQueryConfigEditorProps = DataSourcePluginOptionsEditorProps<BigQueryOptions, BigQuerySecureJsonData>;
 

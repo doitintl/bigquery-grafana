@@ -1,7 +1,6 @@
 import _ from 'lodash';
-import BigQueryQuery, { BigQueryQueryNG } from './bigquery_query';
+import { BigQueryQueryNG } from './bigquery_query';
 import { BigQueryOptions, GoogleAuthType, QueryModel } from './types';
-import { v4 as generateID } from 'uuid';
 import {
   DataFrame,
   DataQueryRequest,
@@ -11,19 +10,16 @@ import {
   VariableModel,
   vectorator,
 } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import { formatBigqueryError, quoteLiteral } from 'utils';
-import BQTypes from '@google-cloud/bigquery/build/src/types';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { quoteLiteral } from 'utils';
 
 export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, BigQueryOptions> {
-  private readonly url?: string;
   jsonData: BigQueryOptions;
 
   authenticationType: string;
 
   constructor(instanceSettings: DataSourceInstanceSettings<BigQueryOptions>) {
     super(instanceSettings);
-    this.url = instanceSettings.url;
 
     this.jsonData = instanceSettings.jsonData;
     this.authenticationType = instanceSettings.jsonData.authenticationType || GoogleAuthType.JWT;
@@ -66,29 +62,6 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
     });
   }
 
-  async annotationQuery(options: any): Promise<any> {}
-
-  // @ts-ignore
-  private async doRequest(url: string, requestId = 'requestId', maxRetries = 3) {
-    return getBackendSrv()
-      .fetch<BQTypes.IQueryResponse>({
-        method: 'GET',
-        requestId: generateID(),
-        url: this.url + url,
-      })
-      .toPromise()
-      .then((result) => {
-        if (result?.status !== 200) {
-          if (result && result.status >= 500 && maxRetries > 0) {
-            return this.doRequest(url, requestId, maxRetries - 1);
-          }
-          throw formatBigqueryError((result?.data as any).error);
-        }
-
-        return result;
-      });
-  }
-
   private interpolateVariable = (value: any, variable: VariableModel) => {
     if (typeof value === 'string') {
       // @ts-ignore
@@ -110,10 +83,7 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
   };
 
   applyTemplateVariables(queryModel: BigQueryQueryNG, scopedVars: ScopedVars): QueryModel {
-    // TMP until we refactor Query Model
-    const query = new BigQueryQuery(queryModel, scopedVars);
-    const rawSql = query.target.rawQuery ? query.target.rawSql : query.buildQuery();
-    const interpolatedSql = getTemplateSrv().replace(rawSql, scopedVars, this.interpolateVariable);
+    const interpolatedSql = getTemplateSrv().replace(queryModel.rawSql, scopedVars, this.interpolateVariable);
 
     const result = {
       refId: queryModel.refId,
