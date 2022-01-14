@@ -82,7 +82,7 @@ export function QueryEditor(props: Props) {
       let datasets = [];
       if (!d) {
         datasets = await apiClient.getDatasets(queryWithDefaults.location);
-        return datasets.map((d) => ({ name: d, completion: `${apiClient.getDefaultProject()}.${d}.` }));
+        return datasets.map((d) => ({ name: d, completion: `\`${apiClient.getDefaultProject()}.${d}.` }));
       } else {
         const path = d.split('.').filter((s) => s);
         if (path.length > 2) {
@@ -90,7 +90,7 @@ export function QueryEditor(props: Props) {
         }
         if (path[0] && path[1]) {
           const tables = await apiClient.getTables(queryWithDefaults.location, path[1]);
-          return tables.map((t) => ({ name: t }));
+          return tables.map((t) => ({ name: t, completion: `${t}\`` }));
         } else if (path[0]) {
           datasets = await apiClient.getDatasets(queryWithDefaults.location);
           return datasets.map((d) => ({ name: d, completion: `${d}` }));

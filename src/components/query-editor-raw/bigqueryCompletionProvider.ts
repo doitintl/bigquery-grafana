@@ -4,6 +4,7 @@ import {
   LanguageCompletionProvider,
   LinkedToken,
   StatementPlacementProvider,
+  StatementPosition,
   SuggestionKindProvider,
   TableDefinition,
   TokenType,
@@ -28,10 +29,16 @@ export const getBigQueryCompletionProvider: (args: CompletionProviderGetterArgs)
     parseName: (token: LinkedToken) => {
       let processedToken = token;
       let tablePath = processedToken.value;
-      while (processedToken.next && !processedToken?.next?.isKeyword() && !processedToken?.next?.isParenthesis()) {
+
+      while (processedToken.next && processedToken?.next?.value !== '`') {
         tablePath += processedToken.next.value;
         processedToken = processedToken.next;
       }
+
+      if (tablePath.trim().startsWith('`')) {
+        return tablePath.slice(1);
+      }
+
       return tablePath;
     },
   },
@@ -60,9 +67,16 @@ export const customStatementPlacement: StatementPlacementProvider = () => [
     id: CustomStatementPlacement.AfterDataset,
     resolve: (currentToken, previousKeyword) => {
       return Boolean(
-        previousKeyword?.value.toLowerCase() === 'from' &&
-          (currentToken?.is(TokenType.Delimiter, '.') || currentToken?.previous?.is(TokenType.Delimiter, '.'))
+        currentToken?.is(TokenType.Delimiter, '.') ||
+          (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.'))
       );
+    },
+  },
+  {
+    id: StatementPosition.AfterTable,
+    resolve: (currentToken, previousKeyword, previousNonWhiteSpace, previousIsSlash) => {
+      // A naive simplification
+      return Boolean(previousNonWhiteSpace?.value === '`');
     },
   },
 ];
