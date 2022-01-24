@@ -3,11 +3,11 @@ package driver
 import (
 	"database/sql/driver"
 	"fmt"
+	"math/big"
 
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/civil"
 )
-
 
 // Converts an arbitrary bigquery.Value to a driver.Value
 func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (driver.Value, error) {
@@ -43,6 +43,9 @@ func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (dr
 			return nil, err
 		}
 		return res, nil
+	case "NUMERIC":
+		conv, _ := v.(*big.Rat).Float64()
+		return conv, nil
 	default:
 		return v, nil
 	}

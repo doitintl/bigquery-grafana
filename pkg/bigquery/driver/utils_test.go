@@ -3,6 +3,7 @@ package driver
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"testing"
 
 	"cloud.google.com/go/bigquery"
@@ -12,6 +13,8 @@ import (
 )
 
 func Test_ConvertColumnValue(t *testing.T) {
+	bigRatFromString, _ := new(big.Rat).SetString("11.111111111")
+
 	tests := []struct {
 		name          string
 		columnType    string
@@ -76,6 +79,30 @@ func Test_ConvertColumnValue(t *testing.T) {
 			schema:        &bigquery.FieldSchema{Type: "FLOAT64"},
 			expectedType:  "float64",
 			expectedValue: "1.99999",
+		},
+		{
+			name:          "numeric type NUMERIC",
+			value:         bigquery.Value((&big.Rat{}).SetInt64(2)),
+			columnType:    "NUMERIC",
+			schema:        &bigquery.FieldSchema{Type: "NUMERIC"},
+			expectedType:  "float64",
+			expectedValue: "2",
+		},
+		{
+			name:          "numeric type NUMERIC",
+			value:         bigquery.Value((&big.Rat{}).SetFloat64(1.99999)),
+			columnType:    "NUMERIC",
+			schema:        &bigquery.FieldSchema{Type: "NUMERIC"},
+			expectedType:  "float64",
+			expectedValue: "1.99999",
+		},
+		{
+			name:          "numeric type NUMERIC",
+			value:         bigquery.Value(bigRatFromString),
+			columnType:    "NUMERIC",
+			schema:        &bigquery.FieldSchema{Type: "NUMERIC"},
+			expectedType:  "float64",
+			expectedValue: "11.111111111",
 		},
 		{
 			name:          "DATE",
