@@ -17,7 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "@grafana/data": "canary",
-    "@grafana/experimental": "0.0.2-canary.15",
+    "@grafana/experimental": "0.0.2-canary.17",
     "@grafana/runtime": "canary",
     "@grafana/ui": "canary",
     "brace": "^0.10.0",

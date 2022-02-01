@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { DataQuery, ScopedVars, VariableModel } from '@grafana/data';
+import { ScopedVars, VariableModel } from '@grafana/data';
 import _ from 'lodash';
 import {
   getShiftPeriod,
@@ -34,32 +34,7 @@ import {
   convertToUtc,
   getInterval,
 } from 'utils';
-import { GroupType, QueryFormat, QueryPriority } from 'types';
-
-export interface BigQueryQueryNG extends DataQuery {
-  dataset?: string;
-  table?: string;
-
-  format: QueryFormat;
-  rawQuery?: boolean;
-  rawSql: string;
-  location?: string;
-
-  orderByCol?: string;
-  orderBySort?: string;
-  timeColumn?: string;
-  timeColumnType?: 'TIMESTAMP' | 'DATE' | 'DATETIME' | 'int4';
-  metricColumn?: string;
-  group?: Array<{ type: GroupType; params: string[] }>;
-  where?: any[];
-  select?: any[];
-  partitioned?: boolean;
-  partitionedField?: string;
-  convertToUTC?: boolean;
-  sharded?: boolean;
-  queryPriority?: QueryPriority;
-  timeShift?: string;
-}
+import { BigQueryQueryNG, GroupType, QueryFormat } from 'types';
 
 export default class BigQueryQuery {
   target: BigQueryQueryNG;

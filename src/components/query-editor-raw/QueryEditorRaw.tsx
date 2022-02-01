@@ -1,8 +1,8 @@
 import React, { useMemo, useRef, useEffect } from 'react';
-import { BigQueryQueryNG } from '../../bigquery_query';
 import { TableSchema } from 'api';
 import { getBigQueryCompletionProvider } from './bigqueryCompletionProvider';
 import { ColumnDefinition, SQLEditor, TableDefinition } from '@grafana/experimental';
+import { BigQueryQueryNG } from '../../types';
 
 type Props = {
   query: BigQueryQueryNG;

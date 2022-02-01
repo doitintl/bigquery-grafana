@@ -1,6 +1,5 @@
 import _ from 'lodash';
-import { BigQueryQueryNG } from './bigquery_query';
-import { BigQueryOptions, GoogleAuthType, QueryModel } from './types';
+import { BigQueryOptions, BigQueryQueryNG, GoogleAuthType, QueryModel } from './types';
 import {
   DataFrame,
   DataQueryRequest,

@@ -1,5 +1,7 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { EditorMode } from '@grafana/experimental';
 import { BigQueryAPI } from 'api';
+import { applyQueryDefaults } from 'utils';
 
 export enum GoogleAuthType {
   JWT = 'jwt',
@@ -52,3 +54,32 @@ export interface ResourceSelectorProps {
   className?: string;
   applyDefault?: boolean;
 }
+
+export interface BigQueryQueryNG extends DataQuery {
+  dataset?: string;
+  table?: string;
+
+  format: QueryFormat;
+  rawQuery?: boolean;
+  rawSql: string;
+  location?: string;
+
+  orderByCol?: string;
+  orderBySort?: string;
+  timeColumn?: string;
+  timeColumnType?: 'TIMESTAMP' | 'DATE' | 'DATETIME' | 'int4';
+  metricColumn?: string;
+  group?: Array<{ type: GroupType; params: string[] }>;
+  where?: any[];
+  select?: any[];
+  partitioned?: boolean;
+  partitionedField?: string;
+  convertToUTC?: boolean;
+  sharded?: boolean;
+  queryPriority?: QueryPriority;
+  timeShift?: string;
+
+  editorMode?: EditorMode;
+}
+
+export type QueryWithDefaults = ReturnType<typeof applyQueryDefaults>;
