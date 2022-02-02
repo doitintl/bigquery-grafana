@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- **Autocomplete**: Deduplicate logical operators
+- **Code editor**: Do not run query on blur, improve query header component
+
 ## 0.1.2
 
 - **Data types support**: Handle NUMERIC data type
