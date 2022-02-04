@@ -1,8 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
-
 import React, { useEffect } from 'react';
-
 import { useAsync } from 'react-use';
 import { ResourceSelectorProps } from 'types';
 
@@ -24,7 +22,7 @@ export const DatasetSelector: React.FC<DatasetSelectorProps> = ({
 }) => {
   const state = useAsync(async () => {
     const datasets = await apiClient.getDatasets(location);
-    return datasets.map<SelectableValue<string>>((d) => ({ label: d, value: d }));
+    return datasets.map(toOption);
   }, [location]);
 
   useEffect(() => {
@@ -49,6 +47,7 @@ export const DatasetSelector: React.FC<DatasetSelectorProps> = ({
   return (
     <Select
       className={className}
+      aria-label="Dataset selector"
       value={value}
       options={state.value}
       onChange={onChange}

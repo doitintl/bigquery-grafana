@@ -1,6 +1,12 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import { BigQueryAPI } from 'api';
+import {
+  QueryEditorFunctionExpression,
+  QueryEditorGroupByExpression,
+  QueryEditorPropertyExpression,
+} from 'expressions';
+import { JsonTree } from 'react-awesome-query-builder';
 import { applyQueryDefaults } from 'utils';
 
 export enum GoogleAuthType {
@@ -11,6 +17,13 @@ export enum GoogleAuthType {
 export enum QueryPriority {
   Interactive = 'INTERACTIVE',
   Batch = 'BATCH',
+}
+
+export interface QueryRowFilter {
+  filter: boolean;
+  group: boolean;
+  order: boolean;
+  preview: boolean;
 }
 
 export interface BigQueryOptions extends DataSourceJsonData {
@@ -47,6 +60,19 @@ export interface QueryModel extends DataQuery {
   };
 }
 
+export interface SQLExpression {
+  columns?: QueryEditorFunctionExpression[];
+  from?: string;
+  whereJsonTree?: JsonTree;
+  whereString?: string;
+  groupBy?: QueryEditorGroupByExpression[];
+  // TODO: Maybe change this to array in the future
+  orderBy?: QueryEditorPropertyExpression;
+  orderByDirection?: 'ASC' | 'DESC';
+  limit?: number;
+  offset?: number;
+}
+
 export interface ResourceSelectorProps {
   apiClient: BigQueryAPI;
   location: string;
@@ -54,7 +80,6 @@ export interface ResourceSelectorProps {
   className?: string;
   applyDefault?: boolean;
 }
-
 export interface BigQueryQueryNG extends DataQuery {
   dataset?: string;
   table?: string;
@@ -64,22 +89,20 @@ export interface BigQueryQueryNG extends DataQuery {
   rawSql: string;
   location?: string;
 
-  orderByCol?: string;
-  orderBySort?: string;
-  timeColumn?: string;
-  timeColumnType?: 'TIMESTAMP' | 'DATE' | 'DATETIME' | 'int4';
-  metricColumn?: string;
-  group?: Array<{ type: GroupType; params: string[] }>;
-  where?: any[];
-  select?: any[];
   partitioned?: boolean;
   partitionedField?: string;
   convertToUTC?: boolean;
   sharded?: boolean;
   queryPriority?: QueryPriority;
   timeShift?: string;
-
   editorMode?: EditorMode;
+  sql?: SQLExpression;
 }
 
 export type QueryWithDefaults = ReturnType<typeof applyQueryDefaults>;
+
+export interface QueryEditorProps {
+  apiClient: BigQueryAPI;
+  query: QueryWithDefaults;
+  onChange: (query: BigQueryQueryNG) => void;
+}

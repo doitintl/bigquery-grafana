@@ -21,11 +21,12 @@
 // SOFTWARE.
 
 import { DataQueryRequest, dateTime, DurationUnit } from '@grafana/data';
-import { DEFAULT_REGION } from './constants';
-import { BigQueryDatasource } from './datasource';
-import SqlParser from 'sql_parser';
-import { BigQueryQueryNG, QueryFormat } from './types';
 import { EditorMode } from '@grafana/experimental';
+import { BigQueryDatasource } from 'datasource';
+import SqlParser from 'sql_parser';
+import { BigQueryQueryNG, QueryFormat } from 'types';
+import { createFunctionField, setGroupByField } from 'utils/sql.utils';
+import { DEFAULT_REGION } from './constants';
 
 export const SHIFTED = '_shifted';
 
@@ -283,7 +284,11 @@ export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
     location: q.location || ds.jsonData.defaultRegion || DEFAULT_REGION,
     format: q.format !== undefined ? q.format : QueryFormat.Table,
     rawSql: q.rawSql || '',
-    editorMode: q.editorMode || EditorMode.Code,
+    editorMode: q.editorMode || EditorMode.Builder,
+    sql: q.sql || {
+      columns: [createFunctionField()],
+      groupBy: [setGroupByField()],
+    },
   };
 
   return result;
@@ -292,3 +297,13 @@ export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
 export const isQueryValid = (q: BigQueryQueryNG) => {
   return Boolean(q.location && q.rawSql);
 };
+
+let datasourceId: number;
+
+export function setDatasourceId(instance: number) {
+  datasourceId = instance;
+}
+
+export function getDatasourceId(): number {
+  return datasourceId;
+}

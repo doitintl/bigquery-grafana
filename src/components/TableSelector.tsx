@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import React from 'react';
 import { useAsync } from 'react-use';
@@ -8,7 +8,6 @@ interface TableSelectorProps extends ResourceSelectorProps {
   dataset?: string;
   value?: string;
   onChange: (v: SelectableValue) => void;
-  disabled?: boolean;
 }
 
 export const TableSelector: React.FC<TableSelectorProps> = ({
@@ -24,16 +23,16 @@ export const TableSelector: React.FC<TableSelectorProps> = ({
       return [];
     }
     const tables = await apiClient.getTables(location, dataset);
-    return tables.map<SelectableValue<string>>((d) => ({ label: d, value: d }));
+    return tables.map(toOption);
   }, [location, dataset]);
 
   return (
     <Select
       className={className}
+      aria-label="Table selector"
       value={value}
       options={state.value}
       onChange={onChange}
-      disabled={!Boolean(dataset) || state.loading}
       isLoading={state.loading}
       menuShouldPortal={true}
     />

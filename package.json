@@ -16,6 +16,7 @@
   "author": "Grafana Labs <team@grafana.com> (https://grafana.com)",
   "license": "MIT",
   "dependencies": {
+    "@emotion/css": "11.1.3",
     "@grafana/data": "canary",
     "@grafana/experimental": "0.0.2-canary.17",
     "@grafana/runtime": "canary",
@@ -24,6 +25,7 @@
     "import": "^0.0.6",
     "lodash": "^4.17.11",
     "q": "^1.5.1",
+    "react-awesome-query-builder": "^4.8.0",
     "react-use": "^17.3.1",
     "uuid": "^8.3.2"
   },
@@ -37,8 +39,5 @@
     "@types/uuid": "^8.3.1",
     "googleapis": "^49.0.0",
     "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks"
-  },
-  "resolutions": {
-    "rxjs": "7.3.0"
   }
 }

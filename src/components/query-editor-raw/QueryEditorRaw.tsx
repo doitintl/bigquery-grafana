@@ -1,8 +1,8 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
+import { BigQueryQueryNG } from '../../types';
 import { TableSchema } from 'api';
 import { getBigQueryCompletionProvider } from './bigqueryCompletionProvider';
 import { ColumnDefinition, SQLEditor, TableDefinition } from '@grafana/experimental';
-import { BigQueryQueryNG } from '../../types';
 
 type Props = {
   query: BigQueryQueryNG;
@@ -13,26 +13,35 @@ type Props = {
   onRunQuery: () => void;
 };
 
-export function QueryEditorRaw(props: Props) {
-  const getColumns = useRef<Props['getColumns']>(props.getColumns);
-  const getTables = useRef<Props['getTables']>(props.getTables);
+export function QueryEditorRaw({
+  getColumns: apiGetColumns,
+  getTables: apiGetTables,
+  onChange,
+  onRunQuery,
+  query,
+}: Props) {
+  const getColumns = useRef<Props['getColumns']>(apiGetColumns);
+  const getTables = useRef<Props['getTables']>(apiGetTables);
   const completionProvider = useMemo(() => getBigQueryCompletionProvider({ getColumns, getTables }), []);
 
   useEffect(() => {
-    getColumns.current = props.getColumns;
-    getTables.current = props.getTables;
-  }, [props.getColumns, props.getTables]);
+    getColumns.current = apiGetColumns;
+    getTables.current = apiGetTables;
+  }, [apiGetColumns, apiGetTables]);
 
-  const onRawSqlChange = (rawSql: string) => {
-    const query = {
-      ...props.query,
-      rawQuery: true,
-      rawSql,
-    };
-    props.onChange(query);
-  };
+  const onRawQueryChange = useCallback(
+    (rawSql: string) => {
+      const newQuery = {
+        ...query,
+        rawQuery: true,
+        rawSql,
+      };
+      onChange(newQuery);
+    },
+    [onChange, query]
+  );
 
   return (
-    <SQLEditor query={props.query.rawSql} onChange={onRawSqlChange} language={{ id: 'bigquery', completionProvider }} />
+    <SQLEditor query={query.rawSql} onChange={onRawQueryChange} language={{ id: 'bigquery', completionProvider }} />
   );
 }

@@ -12,22 +12,41 @@ import (
 	"github.com/grafana/sqlds/v2"
 )
 
-func ColumnsFromTableSchema(schema bq.Schema) []string {
+func ColumnsFromTableSchema(schema bq.Schema, isOrderable bool) []string {
 	result := []string{}
 
 	for _, field := range schema {
 		if field.Schema != nil {
-			nestedSchema := ColumnsFromTableSchema(field.Schema)
+			nestedSchema := ColumnsFromTableSchema(field.Schema, isOrderable)
 			result = append(result, field.Name)
 			for _, nestedField := range nestedSchema {
-				result = append(result, fmt.Sprintf("%s.%s", field.Name, nestedField))
+				if isOrderable {
+					if isFieldOrderable(field) {
+						result = append(result, fmt.Sprintf("%s.%s", field.Name, nestedField))
+					}
+				} else {
+					result = append(result, fmt.Sprintf("%s.%s", field.Name, nestedField))
+
+				}
 			}
 		} else {
-			result = append(result, field.Name)
+			if isOrderable {
+				if isFieldOrderable(field) {
+					result = append(result, field.Name)
+				}
+			} else {
+				result = append(result, field.Name)
+			}
 		}
 	}
 
 	return result
+}
+
+// Filters out fields that are not orderable GEOGRAPHY, ARRAY, STRUCT, RECORD
+// See https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#orderable_data_types
+func isFieldOrderable(f *bq.FieldSchema) bool {
+	return f.Type != bq.GeographyFieldType && f.Type != bq.RecordFieldType
 }
 
 func ParseBody(body io.ReadCloser) (sqlds.Options, error) {

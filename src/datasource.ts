@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { BigQueryOptions, BigQueryQueryNG, GoogleAuthType, QueryModel } from './types';
+import { BigQueryQueryNG, BigQueryOptions, GoogleAuthType, QueryModel } from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -11,7 +11,6 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { quoteLiteral } from 'utils';
-
 export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, BigQueryOptions> {
   jsonData: BigQueryOptions;
 

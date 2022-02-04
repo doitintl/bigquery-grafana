@@ -60,14 +60,14 @@ func (a *API) ListTables(ctx context.Context, dataset string) ([]string, error) 
 	return result, nil
 }
 
-func (a *API) ListColumns(ctx context.Context, dataset string, table string) ([]string, error) {
+func (a *API) ListColumns(ctx context.Context, dataset string, table string, isOrderable bool) ([]string, error) {
 	tableMeta, err := a.Client.Dataset(dataset).Table(table).Metadata(ctx)
 
 	if err != nil {
 		return nil, errors.WithMessage(err, fmt.Sprintf("Failed to retrieve %s table columns", table))
 	}
 
-	result := utils.ColumnsFromTableSchema(tableMeta.Schema)
+	result := utils.ColumnsFromTableSchema(tableMeta.Schema, isOrderable)
 	return result, nil
 
 }

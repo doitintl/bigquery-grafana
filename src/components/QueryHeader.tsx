@@ -1,73 +1,75 @@
 import { SelectableValue } from '@grafana/data';
-import { EditorHeader, EditorMode, FlexItem, InlineSelect } from '@grafana/experimental';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { Button, InlineSwitch, RadioButtonGroup } from '@grafana/ui';
 import { BigQueryAPI } from 'api';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
+import { toRawSql } from 'utils/sql.utils';
 import { DEFAULT_REGION, PROCESSING_LOCATIONS, QUERY_FORMAT_OPTIONS } from '../constants';
-import { BigQueryQueryNG, QueryFormat, QueryWithDefaults } from '../types';
-// import { DatasetSelector } from './DatasetSelector';
-// import { TableSelector } from './TableSelector';
+import { BigQueryQueryNG, QueryFormat, QueryRowFilter, QueryWithDefaults } from '../types';
+import { ConfirmModal } from './ConfirmModal';
+import { DatasetSelector } from './DatasetSelector';
+import { TableSelector } from './TableSelector';
 
 interface QueryHeaderProps {
   query: QueryWithDefaults;
   onChange: (query: BigQueryQueryNG) => void;
   onRunQuery: () => void;
-  //   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
-  //   queryRowFilter: QueryRowFilter;
-  sqlCodeEditorIsDirty: boolean;
+  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
+  queryRowFilter: QueryRowFilter;
   apiClient: BigQueryAPI;
 }
 
-// const editorModes = [
-//   { label: 'Builder', value: EditorMode.Builder },
-//   { label: 'Code', value: EditorMode.Code },
-// ];
+const editorModes = [
+  { label: 'Builder', value: EditorMode.Builder },
+  { label: 'Code', value: EditorMode.Code },
+];
 
 export function QueryHeader({
   query,
-  //   sqlCodeEditorIsDirty,
-  //   queryRowFilter,
+  queryRowFilter,
   onChange,
   onRunQuery,
-  //   onQueryRowChange,
+  onQueryRowChange,
   apiClient,
 }: QueryHeaderProps) {
   const { location, editorMode } = query;
+  const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  //   const onEditorModeChange = useCallback(
-  //     (newEditorMode: EditorMode) => {
-  //       if (sqlCodeEditorIsDirty && editorMode === EditorMode.Code) {
-  //         setShowConfirm(true);
-  //         return;
-  //       }
-  //       onChange({ ...query, editorMode: newEditorMode });
-  //     },
-  //     [sqlCodeEditorIsDirty, editorMode, onChange, query]
-  //   );
+  const onEditorModeChange = useCallback(
+    (newEditorMode: EditorMode) => {
+      if (editorMode === EditorMode.Code) {
+        setShowConfirm(true);
+        return;
+      }
+      onChange({ ...query, editorMode: newEditorMode });
+    },
+    [editorMode, onChange, query]
+  );
 
   const onFormatChange = (e: SelectableValue) => {
     const next = { ...query, format: e.value !== undefined ? e.value : QueryFormat.Table };
     onChange(next);
   };
 
-  //   const onDatasetChange = (e: SelectableValue) => {
-  //     const next = {
-  //       ...query,
-  //       dataset: e.value,
-  //       table: undefined,
-  //     };
+  const onDatasetChange = (e: SelectableValue) => {
+    const next = {
+      ...query,
+      dataset: e.value,
+      table: undefined,
+    };
 
-  //     onChange(next);
-  //   };
+    onChange(next);
+  };
 
-  //   const onTableChange = (e: SelectableValue) => {
-  //     const next = {
-  //       ...query,
-  //       table: e.value,
-  //     };
-  //     onChange(next);
-  //   };
+  const onTableChange = (e: SelectableValue) => {
+    const next = {
+      ...query,
+      table: e.value,
+    };
+    onChange(next);
+  };
 
   return (
     <>
@@ -81,6 +83,7 @@ export function QueryHeader({
           onChange={({ value }) => value && onChange({ ...query, location: value || DEFAULT_REGION })}
           options={PROCESSING_LOCATIONS}
         />
+
         <InlineSelect
           label="Format"
           value={query.format}
@@ -90,7 +93,7 @@ export function QueryHeader({
           options={QUERY_FORMAT_OPTIONS}
         />
 
-        {/* {editorMode === EditorMode.Builder && (
+        {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
               id="bq-filter"
@@ -140,7 +143,7 @@ export function QueryHeader({
               }
             />
           </>
-        )} */}
+        )}
 
         <FlexItem grow={1} />
 
@@ -150,38 +153,36 @@ export function QueryHeader({
           </Button>
         )}
 
-        {/* <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} /> */}
+        <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
 
         <ConfirmModal
           isOpen={showConfirm}
-          title="Are you sure?"
-          body="You will lose manual changes done to the query if you go back to the visual builder."
-          confirmText="Yes, I am sure."
-          dismissText="No, continue editing the query manually."
-          icon="exclamation-triangle"
-          onConfirm={() => {
+          onCopy={() => {
             setShowConfirm(false);
-            onChange({ ...query, editorMode: EditorMode.Builder });
+            copyToClipboard(query.rawSql);
+            onChange({
+              ...query,
+              rawSql: toRawSql(query, apiClient.getDefaultProject()),
+              editorMode: EditorMode.Builder,
+            });
           }}
-          onDismiss={() => setShowConfirm(false)}
+          onDiscard={() => {
+            setShowConfirm(false);
+            onChange({
+              ...query,
+              rawSql: toRawSql(query, apiClient.getDefaultProject()),
+              editorMode: EditorMode.Builder,
+            });
+          }}
+          onCancel={() => setShowConfirm(false)}
         />
       </EditorHeader>
 
-      {/* {editorMode === EditorMode.Builder && (
+      {editorMode === EditorMode.Builder && (
         <>
           <Space v={0.5} />
 
           <EditorRow>
-            <EditorField label="Format" width={25}>
-              <Select
-                inputId={`bq-format-${query.refId}`}
-                options={QUERY_FORMAT_OPTIONS}
-                menuShouldPortal
-                value={query.format}
-                onChange={onFormatChange}
-              />
-            </EditorField>
-
             <EditorField label="Dataset" width={25}>
               <DatasetSelector
                 apiClient={apiClient}
@@ -203,7 +204,7 @@ export function QueryHeader({
             </EditorField>
           </EditorRow>
         </>
-      )} */}
+      )}
     </>
   );
 }

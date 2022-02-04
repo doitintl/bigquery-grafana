@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync"
 
 	bq "cloud.google.com/go/bigquery"
@@ -234,7 +235,14 @@ func (s *BigQueryDatasource) Columns(ctx context.Context, options sqlds.Options)
 		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
 	}
 
-	return apiClient.ListColumns(ctx, args.Dataset, args.Table)
+	isOrderableString := options["isOrderable"]
+	isOrderable, err := strconv.ParseBool(isOrderableString)
+
+	if err != nil {
+		return nil, errors.WithMessage(err, "Failed to parse isOrderable")
+	}
+
+	return apiClient.ListColumns(ctx, args.Dataset, args.Table, isOrderable)
 }
 
 type TableSchemaArgs struct {

@@ -18,7 +18,7 @@ export interface BigQueryAPI {
   getDatasets: (location: string) => Promise<string[]>;
   getTables: (location: string, dataset: string) => Promise<string[]>;
   getTableSchema: (location: string, dataset: string, table: string) => Promise<TableSchema>;
-  getColumns: (location: string, dataset: string, table: string) => Promise<string[]>;
+  getColumns: (location: string, dataset: string, table: string, isOrderable?: boolean) => Promise<string[]>;
   dispose: () => void;
 }
 
@@ -59,16 +59,22 @@ class BigQueryAPIClient implements BigQueryAPI {
     });
   };
 
-  getColumns = async (location: string, dataset: string, table: string): Promise<string[]> => {
-    return this.fromCache('columns', this._getColumns)(location, dataset, table);
+  getColumns = async (location: string, dataset: string, table: string, isOrderable?: boolean): Promise<string[]> => {
+    return this.fromCache('columns', this._getColumns)(location, dataset, table, isOrderable);
   };
 
-  private _getColumns = async (location: string, dataset: string, table: string): Promise<string[]> => {
+  private _getColumns = async (
+    location: string,
+    dataset: string,
+    table: string,
+    isOrderable?: boolean
+  ): Promise<string[]> => {
     return await getBackendSrv().post(this.resourcesUrl + '/columns', {
       project: this.defaultProject,
       location,
       dataset,
       table,
+      isOrderable: isOrderable ? 'true' : 'false',
     });
   };
 
