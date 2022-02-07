@@ -48,7 +48,7 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorP
       let datasets = [];
       if (!d) {
         datasets = await apiClient.getDatasets(query.location);
-        return datasets.map((d) => ({ name: d, completion: `${apiClient.getDefaultProject()}.${d}.` }));
+        return datasets.map((d) => ({ name: d, completion: `\`${apiClient.getDefaultProject()}.${d}.` }));
       } else {
         const path = d.split('.').filter((s) => s);
         if (path.length > 2) {
@@ -56,7 +56,7 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorP
         }
         if (path[0] && path[1]) {
           const tables = await apiClient.getTables(query.location, path[1]);
-          return tables.map((t) => ({ name: t }));
+          return tables.map((t) => ({ name: t, completion: `${t}\`` }));
         } else if (path[0]) {
           datasets = await apiClient.getDatasets(query.location);
           return datasets.map((d) => ({ name: d, completion: `${d}` }));

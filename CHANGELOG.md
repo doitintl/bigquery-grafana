@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- **Autocomplete**: Fixed the broken dataset/table suggestions.
+
 ## 0.1.4
 
 - **Visual Query Builder**: Introducing visual query builder.
