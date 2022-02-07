@@ -31,6 +31,7 @@ type BigqueryDatasourceIface interface {
 	GetGCEDefaultProject(ctx context.Context) (string, error)
 	Datasets(ctx context.Context, args DatasetsArgs) ([]string, error)
 	TableSchema(ctx context.Context, args TableSchemaArgs) (*types.TableMetadataResponse, error)
+	ValidateQuery(ctx context.Context, args ValidateQueryArgs) (*api.ValidateQueryResponse, error)
 }
 
 type conn struct {
@@ -243,6 +244,22 @@ func (s *BigQueryDatasource) Columns(ctx context.Context, options sqlds.Options)
 	}
 
 	return apiClient.ListColumns(ctx, args.Dataset, args.Table, isOrderable)
+}
+
+type ValidateQueryArgs struct {
+	Project  string `json:"project"`
+	Location string `json:"location"`
+	Query    string `json:"query"`
+}
+
+func (s *BigQueryDatasource) ValidateQuery(ctx context.Context, options ValidateQueryArgs) (*api.ValidateQueryResponse, error) {
+	apiClient, err := s.getApi(ctx, options.Project, options.Location)
+
+	if err != nil {
+		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
+	}
+
+	return apiClient.ValidateQuery(ctx, options.Query), nil
 }
 
 type TableSchemaArgs struct {

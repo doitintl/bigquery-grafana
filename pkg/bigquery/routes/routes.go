@@ -60,10 +60,24 @@ func (r *ResourceHandler) tableSchema(rw http.ResponseWriter, req *http.Request)
 	utils.SendResponse(res, err, rw)
 }
 
+func (r *ResourceHandler) validateQuery(rw http.ResponseWriter, req *http.Request) {
+	result := bigquery.ValidateQueryArgs{}
+	err := utils.UnmarshalBody(req.Body, &result)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		utils.WriteResponse(rw, []byte(err.Error()))
+		return
+	}
+
+	res, err := r.ds.ValidateQuery(req.Context(), result)
+	utils.SendResponse(res, err, rw)
+}
+
 func (r *ResourceHandler) Routes() map[string]func(http.ResponseWriter, *http.Request) {
 	return map[string]func(http.ResponseWriter, *http.Request){
 		"/defaultProjects":      r.defaultProjects,
 		"/datasets":             r.datasets,
 		"/dataset/table/schema": r.tableSchema,
+		"/validateQuery":        r.validateQuery,
 	}
 }

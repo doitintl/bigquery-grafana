@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, InlineSwitch, RadioButtonGroup } from '@grafana/ui';
+import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 import { BigQueryAPI } from 'api';
 import React, { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
@@ -18,6 +18,7 @@ interface QueryHeaderProps {
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
   queryRowFilter: QueryRowFilter;
   apiClient: BigQueryAPI;
+  isQueryRunnable: boolean;
 }
 
 const editorModes = [
@@ -32,6 +33,7 @@ export function QueryHeader({
   onRunQuery,
   onQueryRowChange,
   apiClient,
+  isQueryRunnable,
 }: QueryHeaderProps) {
   const { location, editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -147,11 +149,18 @@ export function QueryHeader({
 
         <FlexItem grow={1} />
 
-        {editorMode === EditorMode.Code && (
-          <Button variant="secondary" size="sm" onClick={() => onRunQuery()}>
-            Run query
-          </Button>
-        )}
+        {editorMode === EditorMode.Code &&
+          (isQueryRunnable ? (
+            <Button icon="play" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+              Run query
+            </Button>
+          ) : (
+            <Tooltip theme="error" content="Your query is invalid. Check below for details." placement="top">
+              <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+                Run query
+              </Button>
+            </Tooltip>
+          ))}
 
         <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
 

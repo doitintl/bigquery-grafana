@@ -8,6 +8,7 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/types"
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/utils"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
 )
@@ -90,4 +91,31 @@ func (a *API) GetTableSchema(ctx context.Context, dataset, table string) (*types
 
 func (a *API) SetLocation(location string) {
 	a.Client.Location = location
+}
+
+type ValidateQueryResponse struct {
+	IsValid    bool              `json:"isValid"`
+	IsError    bool              `json:"isError"`
+	Error      string            `json:"error"`
+	Statistics *bq.JobStatistics `json:"statistics"`
+}
+
+func (a *API) ValidateQuery(ctx context.Context, query string) *ValidateQueryResponse {
+	q := a.Client.Query(query)
+	q.DryRun = true
+	job, err := q.Run(ctx)
+	response := &ValidateQueryResponse{}
+
+	backend.Logger.Debug("Validating query", "job", job, "err", err, "query", query)
+
+	if err != nil {
+		response.IsError = true
+		response.Error = err.Error()
+	} else {
+		status := job.LastStatus()
+		response.IsValid = true
+		response.Statistics = status.Statistics
+	}
+
+	return response
 }

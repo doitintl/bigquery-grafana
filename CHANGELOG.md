@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- **Code editor**: Add validation with query dry run.
+
 ## 0.1.5
 
 - **Autocomplete**: Fixed the broken dataset/table suggestions.

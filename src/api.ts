@@ -13,12 +13,22 @@ export interface TableSchema {
   schema?: TableFieldSchema[];
 }
 
+export interface ValidationResults {
+  error: string;
+  isError: boolean;
+  isValid: boolean;
+  statistics: {
+    TotalBytesProcessed: number;
+  } | null;
+}
+
 export interface BigQueryAPI {
   getDefaultProject: () => string;
   getDatasets: (location: string) => Promise<string[]>;
   getTables: (location: string, dataset: string) => Promise<string[]>;
   getTableSchema: (location: string, dataset: string, table: string) => Promise<TableSchema>;
   getColumns: (location: string, dataset: string, table: string, isOrderable?: boolean) => Promise<string[]>;
+  validateQuery: (location: string, query: string) => Promise<ValidationResults>;
   dispose: () => void;
 }
 
@@ -56,6 +66,14 @@ class BigQueryAPIClient implements BigQueryAPI {
       project: this.defaultProject,
       location,
       dataset,
+    });
+  };
+
+  validateQuery = async (location: string, query: string): Promise<ValidationResults> => {
+    return await getBackendSrv().post(this.resourcesUrl + '/validateQuery', {
+      project: this.defaultProject,
+      location,
+      query,
     });
   };
 
