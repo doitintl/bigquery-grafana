@@ -1,13 +1,18 @@
 # Changelog
 
+## 0.1.4
+
+- **Visual Query Builder**: Introducing visual query builder.
+- **Code editor**: Make raw query editor work in Grafana < 8.2.x.
+
 ## 0.1.3
 
-- **Autocomplete**: Deduplicate logical operators
-- **Code editor**: Do not run query on blur, improve query header component
+- **Autocomplete**: Deduplicate logical operators.
+- **Code editor**: Do not run query on blur, improve query header component.
 
 ## 0.1.2
 
-- **Data types support**: Handle NUMERIC data type
+- **Data types support**: Handle NUMERIC data type.
 
 ## 0.1.1
 

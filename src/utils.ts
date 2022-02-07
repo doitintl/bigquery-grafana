@@ -278,13 +278,20 @@ export function convertToUtc(d: Date) {
 }
 
 export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
+  let editorMode = q.editorMode || EditorMode.Builder;
+
+  // Switching to code editor if the query was created before visual query builder was introduced.
+  if (q.editorMode === undefined && q.rawSql !== undefined) {
+    editorMode = EditorMode.Code;
+  }
+
   const result = {
     ...q,
     dataset: q.dataset || '',
     location: q.location || ds.jsonData.defaultRegion || DEFAULT_REGION,
     format: q.format !== undefined ? q.format : QueryFormat.Table,
     rawSql: q.rawSql || '',
-    editorMode: q.editorMode || EditorMode.Builder,
+    editorMode,
     sql: q.sql || {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
