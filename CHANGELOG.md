@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7
+
+- **Autocomplete**: Add suggestions for ingestion-time partitioned table filters.
+- **Code editor**: Make autocomplete case insentive for keywords and operators.
+- **Code editor**: Make query bytes estimate more user friendly.
+
 ## 0.1.6
 
 - **Code editor**: Add validation with query dry run.
