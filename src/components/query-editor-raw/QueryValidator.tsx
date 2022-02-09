@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { shallowCompare } from '@grafana/data';
+import { formattedValueToString, getValueFormat, shallowCompare } from '@grafana/data';
 import { Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { BigQueryAPI, ValidationResults } from 'api';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -17,6 +17,8 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
   const [validationResult, setValidationResult] = useState<ValidationResults | null>();
   const theme = useTheme2();
   const prevQuery = usePrevious(query);
+  const valueFormatter = useMemo(() => getValueFormat('bytes'), []);
+
   const styles = useMemo(() => {
     return {
       container: css`
@@ -91,7 +93,8 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
             {state.value.isValid && state.value.statistics && (
               <div className={styles.valid}>
                 <Icon name="check" /> This query will process{' '}
-                <strong>{state.value.statistics.TotalBytesProcessed}B</strong> when run.
+                <strong>{formattedValueToString(valueFormatter(state.value.statistics.TotalBytesProcessed))}</strong>{' '}
+                when run.
               </div>
             )}
           </>
