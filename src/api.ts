@@ -8,9 +8,19 @@ export interface TableFieldSchema {
   schema: TableFieldSchema[];
 }
 
+export enum PartitioningType {
+  Day = 'DAY',
+  Hour = 'HOUR',
+}
+
 export interface TableSchema {
   name?: string;
   schema?: TableFieldSchema[];
+  timePartitioning?: {
+    type?: PartitioningType;
+    field?: string;
+  };
+  rangePartitioning?: any;
 }
 
 export interface ValidationResults {

@@ -67,11 +67,23 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorP
     },
     [apiClient, query.location]
   );
+
+  const getTableSchema = useCallback(
+    async (location: string, dataset: string, table: string) => {
+      if (!apiClient) {
+        return null;
+      }
+
+      return apiClient.getTableSchema(location, dataset, table);
+    },
+    [apiClient]
+  );
   return (
     <>
       <QueryEditorRaw
         getTables={getTables}
         getColumns={getColumns}
+        getTableSchema={getTableSchema}
         query={query}
         onChange={onChange}
         onRunQuery={onRunQuery}

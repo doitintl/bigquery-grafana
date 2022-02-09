@@ -8,7 +8,7 @@ type Props = {
   query: BigQueryQueryNG;
   getTables: (d?: string) => Promise<TableDefinition[]>;
   getColumns: (t: string) => Promise<ColumnDefinition[]>;
-  getSchema?: () => TableSchema | null;
+  getTableSchema: (l: string, d: string, t: string) => Promise<TableSchema | null>;
   onChange: (value: BigQueryQueryNG) => void;
   onRunQuery: () => void;
 };
@@ -16,13 +16,18 @@ type Props = {
 export function QueryEditorRaw({
   getColumns: apiGetColumns,
   getTables: apiGetTables,
+  getTableSchema: apiGetTableSchema,
   onChange,
   onRunQuery,
   query,
 }: Props) {
   const getColumns = useRef<Props['getColumns']>(apiGetColumns);
   const getTables = useRef<Props['getTables']>(apiGetTables);
-  const completionProvider = useMemo(() => getBigQueryCompletionProvider({ getColumns, getTables }), []);
+  const getTableSchema = useRef<Props['getTableSchema']>(apiGetTableSchema);
+  const completionProvider = useMemo(
+    () => getBigQueryCompletionProvider({ getColumns, getTables, getTableSchema }),
+    []
+  );
 
   useEffect(() => {
     getColumns.current = apiGetColumns;

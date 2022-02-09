@@ -276,7 +276,6 @@ func (s *BigQueryDatasource) TableSchema(ctx context.Context, args TableSchemaAr
 	}
 
 	return apiClient.GetTableSchema(ctx, args.Dataset, args.Table)
-
 }
 
 func (s *BigQueryDatasource) getApi(ctx context.Context, project, location string) (*api.API, error) {
