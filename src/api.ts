@@ -1,4 +1,5 @@
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { lastValueFrom } from 'rxjs';
 import { BigQueryQueryNG } from 'types';
 
 export interface TableFieldSchema {
@@ -115,12 +116,22 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   private _getTableSchema = async (location: string, dataset: string, table: string): Promise<TableSchema> => {
-    return await getBackendSrv().post(this.resourcesUrl + '/dataset/table/schema', {
-      project: this.defaultProject,
-      location,
-      dataset,
-      table,
-    });
+    const result = await lastValueFrom(
+      getBackendSrv().fetch<TableSchema>({
+        method: 'POST',
+        showErrorAlert: false,
+        showSuccessAlert: false,
+        url: this.resourcesUrl + '/dataset/table/schema',
+        data: {
+          project: this.defaultProject,
+          location,
+          dataset,
+          table,
+        },
+      })
+    );
+
+    return result.data;
   };
 
   private fromCache = <T>(scope: string, fn: (...args: any[]) => Promise<T>) => async (...args: any[]): Promise<T> => {

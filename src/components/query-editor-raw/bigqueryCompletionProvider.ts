@@ -74,16 +74,27 @@ export const customStatementPlacement: StatementPlacementProvider = () => [
     resolve: (currentToken, previousKeyword) => {
       return Boolean(
         currentToken?.is(TokenType.Delimiter, '.') ||
-          (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.'))
+          (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
+          (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
+          (currentToken?.value === '`' && isTypingTableIn(currentToken))
       );
     },
   },
+  // Overriding default befaviour of AfterFrom resolver
   {
-    id: StatementPosition.AfterTable,
-    resolve: (currentToken, previousKeyword, previousNonWhiteSpace, previousIsSlash) => {
-      // A naive simplification
+    id: StatementPosition.AfterFrom,
+    overrideDefault: true,
+    resolve: (currentToken) => {
+      const untilFrom = currentToken?.getPreviousUntil(TokenType.Keyword, [], 'from');
+      if (!untilFrom) {
+        return false;
+      }
+      let q = '';
+      for (let i = untilFrom?.length - 1; i >= 0; i--) {
+        q += untilFrom[i].value;
+      }
 
-      return Boolean(previousNonWhiteSpace?.value === '`');
+      return q.startsWith('`') && q.endsWith('`');
     },
   },
 ];
@@ -103,6 +114,7 @@ export const customSuggestionKinds: (
         label: table.name,
         insertText: table.completion ?? table.name,
         kind: CompletionItemKind.Field,
+        sortText: CompletionItemPriority.High,
         range: {
           ...ctx.range,
           startColumn: ctx.range.endColumn,
@@ -114,7 +126,7 @@ export const customSuggestionKinds: (
 
   {
     id: CustomSuggestionKind.Partition,
-    applyTo: [StatementPosition.AfterTable],
+    applyTo: [StatementPosition.AfterFrom],
     suggestionsResolver: async (ctx) => {
       const tablePath = ctx.currentToken ? getTablePath(ctx.currentToken) : '';
       const path = tablePath.split('.').filter((s) => s);
@@ -122,12 +134,15 @@ export const customSuggestionKinds: (
 
       if (path.length === 3) {
         const schema = await getTableSchema.current(path[0], path[1], path[2]);
+
         if (schema) {
           const timePartitioningSetup = schema.timePartitioning;
           if (timePartitioningSetup) {
             if (timePartitioningSetup.field) {
               // TODO: add suport for field partitioning
-            } else {
+            }
+
+            if (timePartitioningSetup.type) {
               // Ingestion-time partition
               // https://cloud.google.com/bigquery/docs/querying-partitioned-tables#query_an_ingestion-time_partitioned_table
               suggestions.push({
@@ -188,4 +203,25 @@ function getTablePath(token: LinkedToken) {
   }
 
   return tablePath;
+}
+
+function isTypingTableIn(token: LinkedToken | null, l?: boolean) {
+  if (!token) {
+    return false;
+  }
+  const tokens = token.getPreviousUntil(TokenType.Keyword, [], 'from');
+  if (!tokens) {
+    return false;
+  }
+
+  let path = '';
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    path += tokens[i].value;
+  }
+
+  if (path.startsWith('`')) {
+    path = path.slice(1);
+  }
+
+  return path.split('.').length === 2;
 }

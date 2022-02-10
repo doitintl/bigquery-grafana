@@ -1,13 +1,11 @@
 import { setBackendSrv } from '@grafana/runtime';
+import { of } from 'rxjs';
 import { getApiClient } from './api';
 
 describe('api', () => {
   const datasourceId = 1;
   const mockResponse = {
-    status: 200,
-    data: {
-      message: 'Hello World',
-    },
+    message: 'Hello World',
   };
 
   let defaultProjectSpy = jest.fn();
@@ -24,6 +22,10 @@ describe('api', () => {
         }
 
         return null;
+      },
+      fetch: () => {
+        spy();
+        return of({ data: mockResponse });
       },
     } as any);
   };

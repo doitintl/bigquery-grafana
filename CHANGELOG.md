@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.8
+
+- **Autocomplete**: Improve tables suggestions.
+- **Query validation**: Interpolate template variables and macros before performing dry run.
+
 ## 0.1.7
 
 - **Autocomplete**: Add suggestions for ingestion-time partitioned table filters.
