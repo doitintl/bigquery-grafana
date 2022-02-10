@@ -48,7 +48,8 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
       if (!q.location || q.rawSql.trim() === '') {
         return null;
       }
-      return await apiClient.validateQuery(q.location, q.rawSql);
+
+      return await apiClient.validateQuery(q);
     },
     [apiClient]
   );

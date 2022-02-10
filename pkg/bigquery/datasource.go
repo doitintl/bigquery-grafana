@@ -247,9 +247,9 @@ func (s *BigQueryDatasource) Columns(ctx context.Context, options sqlds.Options)
 }
 
 type ValidateQueryArgs struct {
-	Project  string `json:"project"`
-	Location string `json:"location"`
-	Query    string `json:"query"`
+	Project  string      `json:"project"`
+	Location string      `json:"location"`
+	Query    sqlds.Query `json:"query"`
 }
 
 func (s *BigQueryDatasource) ValidateQuery(ctx context.Context, options ValidateQueryArgs) (*api.ValidateQueryResponse, error) {
@@ -259,7 +259,12 @@ func (s *BigQueryDatasource) ValidateQuery(ctx context.Context, options Validate
 		return nil, errors.WithMessage(err, "Failed to retrieve BigQuery API client")
 	}
 
-	return apiClient.ValidateQuery(ctx, options.Query), nil
+	query, err := sqlds.Interpolate(s, &options.Query)
+	if err != nil {
+		return nil, errors.WithMessage(err, "Could not apply macros")
+	}
+
+	return apiClient.ValidateQuery(ctx, query), nil
 }
 
 type TableSchemaArgs struct {
