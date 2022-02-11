@@ -27,6 +27,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     order: !!queryWithDefaults.sql.orderBy?.property.name,
     preview: true,
   });
+  const [queryToValidate, setQueryToValidate] = useState(queryWithDefaults);
 
   useEffect(() => {
     return () => {
@@ -43,9 +44,13 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     [onRunQuery]
   );
 
-  const onQueryChange = (q: BigQueryQueryNG) => {
+  const onQueryChange = (q: BigQueryQueryNG, process = true) => {
+    setQueryToValidate(q as any);
     onChange(q);
-    processQuery(q);
+
+    if (process) {
+      processQuery(q);
+    }
   };
 
   if (apiLoading || apiError || !apiClient) {
@@ -77,8 +82,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
       {queryWithDefaults.editorMode === EditorMode.Code && (
         <>
-          <RawEditor apiClient={apiClient} query={queryWithDefaults} onChange={onChange} onRunQuery={onRunQuery} />
-          <QueryValidator apiClient={apiClient} query={queryWithDefaults} onValidate={setIsQueryRunnable} />
+          <RawEditor apiClient={apiClient} query={queryWithDefaults} onChange={onQueryChange} onRunQuery={onRunQuery} />
+          <QueryValidator apiClient={apiClient} query={queryToValidate} onValidate={setIsQueryRunnable} />
         </>
       )}
     </>

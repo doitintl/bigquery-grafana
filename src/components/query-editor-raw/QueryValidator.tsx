@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { formattedValueToString, getValueFormat, shallowCompare } from '@grafana/data';
+import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { BigQueryAPI, ValidationResults } from 'api';
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAsyncFn, usePrevious } from 'react-use';
+import { useAsyncFn } from 'react-use';
 import useDebounce from 'react-use/lib/useDebounce';
 import { BigQueryQueryNG } from 'types';
 
@@ -16,7 +16,6 @@ interface QueryValidatorProps {
 export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorProps) {
   const [validationResult, setValidationResult] = useState<ValidationResults | null>();
   const theme = useTheme2();
-  const prevQuery = usePrevious(query);
   const valueFormatter = useMemo(() => getValueFormat('bytes'), []);
 
   const styles = useMemo(() => {
@@ -40,6 +39,10 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
       info: css`
         color: ${theme.colors.text.secondary};
       `,
+      hint: css`
+        color: ${theme.colors.text.disabled};
+        white-space: nowrap;
+      `,
     };
   }, [theme]);
 
@@ -56,15 +59,14 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
 
   const [,] = useDebounce(
     async () => {
-      if ((prevQuery && !shallowCompare(query, prevQuery)) || !validationResult) {
-        const result = await validateQuery(query);
-        if (result) {
-          setValidationResult(result);
-        }
+      const result = await validateQuery(query);
+      if (result) {
+        setValidationResult(result);
       }
+
       return null;
     },
-    200,
+    1000,
     [query, validateQuery]
   );
 
@@ -81,28 +83,33 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
     return null;
   }
 
+  const error = state.value?.error ? state.value.error.split(':').slice(2).join(':') : '';
+
   return (
     <div className={styles.container}>
-      {state.loading && (
-        <div className={styles.info}>
-          <Spinner inline={true} size={12} /> Validating query...
-        </div>
-      )}
-      {!state.loading && state.value && (
-        <>
+      <div>
+        {state.loading && (
+          <div className={styles.info}>
+            <Spinner inline={true} size={12} /> Validating query...
+          </div>
+        )}
+        {!state.loading && state.value && (
           <>
-            {state.value.isValid && state.value.statistics && (
-              <div className={styles.valid}>
-                <Icon name="check" /> This query will process{' '}
-                <strong>{formattedValueToString(valueFormatter(state.value.statistics.TotalBytesProcessed))}</strong>{' '}
-                when run.
-              </div>
-            )}
-          </>
+            <>
+              {state.value.isValid && state.value.statistics && (
+                <div className={styles.valid}>
+                  <Icon name="check" /> This query will process{' '}
+                  <strong>{formattedValueToString(valueFormatter(state.value.statistics.TotalBytesProcessed))}</strong>{' '}
+                  when run.
+                </div>
+              )}
+            </>
 
-          <>{state.value.isError && <div className={styles.error}>{state.value.error}</div>}</>
-        </>
-      )}
+            <>{state.value.isError && <div className={styles.error}>{error}</div>}</>
+          </>
+        )}
+      </div>
+      <div className={styles.hint}>Hit CTRL/CMD+Return to run query</div>
     </div>
   );
 }

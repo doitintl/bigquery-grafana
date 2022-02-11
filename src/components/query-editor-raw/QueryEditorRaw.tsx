@@ -9,8 +9,7 @@ type Props = {
   getTables: (d?: string) => Promise<TableDefinition[]>;
   getColumns: (t: string) => Promise<ColumnDefinition[]>;
   getTableSchema: (l: string, d: string, t: string) => Promise<TableSchema | null>;
-  onChange: (value: BigQueryQueryNG) => void;
-  onRunQuery: () => void;
+  onChange: (value: BigQueryQueryNG, processQuery: boolean) => void;
 };
 
 export function QueryEditorRaw({
@@ -18,7 +17,6 @@ export function QueryEditorRaw({
   getTables: apiGetTables,
   getTableSchema: apiGetTableSchema,
   onChange,
-  onRunQuery,
   query,
 }: Props) {
   const getColumns = useRef<Props['getColumns']>(apiGetColumns);
@@ -35,18 +33,23 @@ export function QueryEditorRaw({
   }, [apiGetColumns, apiGetTables]);
 
   const onRawQueryChange = useCallback(
-    (rawSql: string) => {
+    (processQuery: boolean) => (rawSql: string) => {
       const newQuery = {
         ...query,
         rawQuery: true,
         rawSql,
       };
-      onChange(newQuery);
+      onChange(newQuery, processQuery);
     },
     [onChange, query]
   );
 
   return (
-    <SQLEditor query={query.rawSql} onChange={onRawQueryChange} language={{ id: 'bigquery', completionProvider }} />
+    <SQLEditor
+      query={query.rawSql}
+      onBlur={onRawQueryChange(true)}
+      onChange={onRawQueryChange(false)}
+      language={{ id: 'bigquery', completionProvider }}
+    />
   );
 }

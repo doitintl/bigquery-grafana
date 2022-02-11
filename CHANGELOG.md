@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+- **Autocomplete**: Add suggestions for columns in WHERE clause.
+- **Query validation**: Actively run query validation on query change rather than on blur.
+- **Code editor**: Run query when CTRL/CMD+Return is pressed.
+
 ## 0.1.8
 
 - **Autocomplete**: Improve tables suggestions.

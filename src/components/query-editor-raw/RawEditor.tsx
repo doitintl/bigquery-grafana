@@ -1,10 +1,11 @@
 import { QueryEditorRaw } from './QueryEditorRaw';
 import React, { useCallback } from 'react';
 import { getColumnInfoFromSchema } from 'utils/getColumnInfoFromSchema';
-import { QueryEditorProps } from 'types';
+import { BigQueryQueryNG, QueryEditorProps } from 'types';
 
-interface RawEditorProps extends QueryEditorProps {
+interface RawEditorProps extends Omit<QueryEditorProps, 'onChange'> {
   onRunQuery: () => void;
+  onChange: (q: BigQueryQueryNG, processQuery: boolean) => void;
 }
 
 export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorProps) {
@@ -86,7 +87,6 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorP
         getTableSchema={getTableSchema}
         query={query}
         onChange={onChange}
-        onRunQuery={onRunQuery}
       />
     </>
   );
