@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formattedValueToString, getValueFormat } from '@grafana/data';
-import { Icon, Spinner, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, Spinner, useTheme2, HorizontalGroup, Tooltip } from '@grafana/ui';
 import { BigQueryAPI, ValidationResults } from 'api';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
@@ -11,9 +11,10 @@ interface QueryValidatorProps {
   apiClient: BigQueryAPI;
   query: BigQueryQueryNG;
   onValidate: (isValid: boolean) => void;
+  onFormatCode: () => void;
 }
 
-export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorProps) {
+export function QueryValidator({ apiClient, query, onValidate, onFormatCode }: QueryValidatorProps) {
   const [validationResult, setValidationResult] = useState<ValidationResults | null>();
   const theme = useTheme2();
   const valueFormatter = useMemo(() => getValueFormat('bytes'), []);
@@ -42,6 +43,7 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
       hint: css`
         color: ${theme.colors.text.disabled};
         white-space: nowrap;
+        cursor: help;
       `,
     };
   }, [theme]);
@@ -109,7 +111,14 @@ export function QueryValidator({ apiClient, query, onValidate }: QueryValidatorP
           </>
         )}
       </div>
-      <div className={styles.hint}>Hit CTRL/CMD+Return to run query</div>
+      <div>
+        <HorizontalGroup spacing="sm">
+          <IconButton onClick={onFormatCode} name="brackets-curly" size="xs" tooltip="Format query" />
+          <Tooltip content="Hit CTRL/CMD+Return to run query">
+            <Icon className={styles.hint} name="keyboard" />
+          </Tooltip>
+        </HorizontalGroup>
+      </div>
     </div>
   );
 }

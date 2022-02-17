@@ -8,7 +8,6 @@ import { getApiClient } from '../api';
 import { QueryHeader } from '../components/QueryHeader';
 import { BigQueryDatasource } from '../datasource';
 import { BigQueryOptions, BigQueryQueryNG, QueryRowFilter } from '../types';
-import { QueryValidator } from './query-editor-raw/QueryValidator';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 type Props = QueryEditorProps<BigQueryDatasource, BigQueryQueryNG, BigQueryOptions>;
@@ -82,8 +81,14 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
       {queryWithDefaults.editorMode === EditorMode.Code && (
         <>
-          <RawEditor apiClient={apiClient} query={queryWithDefaults} onChange={onQueryChange} onRunQuery={onRunQuery} />
-          <QueryValidator apiClient={apiClient} query={queryToValidate} onValidate={setIsQueryRunnable} />
+          <RawEditor
+            apiClient={apiClient}
+            query={queryWithDefaults}
+            queryToValidate={queryToValidate}
+            onChange={onQueryChange}
+            onRunQuery={onRunQuery}
+            onValidate={setIsQueryRunnable}
+          />
         </>
       )}
     </>

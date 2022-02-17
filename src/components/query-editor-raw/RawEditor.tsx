@@ -2,13 +2,16 @@ import { QueryEditorRaw } from './QueryEditorRaw';
 import React, { useCallback } from 'react';
 import { getColumnInfoFromSchema } from 'utils/getColumnInfoFromSchema';
 import { BigQueryQueryNG, QueryEditorProps } from 'types';
+import { QueryValidator } from './QueryValidator';
 
 interface RawEditorProps extends Omit<QueryEditorProps, 'onChange'> {
   onRunQuery: () => void;
   onChange: (q: BigQueryQueryNG, processQuery: boolean) => void;
+  onValidate: (isValid: boolean) => void;
+  queryToValidate: BigQueryQueryNG;
 }
 
-export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorProps) {
+export function RawEditor({ apiClient, query, onChange, onRunQuery, onValidate, queryToValidate }: RawEditorProps) {
   const getColumns = useCallback(
     // expects fully qualified table name: <project-id>.<dataset-id>.<table-id>
     async (t: string) => {
@@ -87,7 +90,18 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery }: RawEditorP
         getTableSchema={getTableSchema}
         query={query}
         onChange={onChange}
-      />
+      >
+        {({ formatQuery }) => {
+          return (
+            <QueryValidator
+              apiClient={apiClient}
+              query={queryToValidate}
+              onValidate={onValidate}
+              onFormatCode={formatQuery}
+            />
+          );
+        }}
+      </QueryEditorRaw>
     </>
   );
 }

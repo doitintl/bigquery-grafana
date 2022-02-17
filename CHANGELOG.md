@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+- **Code editor**: Add option to format the query.
+- **Code editor**: Do not run the query when user blurs the code editor.
+- **Query validation**: Do not re-validate query if it hasn's changed.
+
 ## 0.1.9
 
 - **Autocomplete**: Add suggestions for columns in WHERE clause.

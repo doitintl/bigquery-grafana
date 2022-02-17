@@ -26,6 +26,7 @@ export interface TableSchema {
 }
 
 export interface ValidationResults {
+  query: string;
   error: string;
   isError: boolean;
   isValid: boolean;
@@ -48,6 +49,7 @@ class BigQueryAPIClient implements BigQueryAPI {
   private RESULTS_CACHE = new Map<string, any>();
   private baseUrl: string;
   private resourcesUrl: string;
+  private lastValidation: ValidationResults | null = null;
 
   constructor(datasourceId: number, private defaultProject: string) {
     this.baseUrl = `/api/datasources/${datasourceId}`;
@@ -82,14 +84,26 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   validateQuery = async (query: BigQueryQueryNG): Promise<ValidationResults> => {
-    return await getBackendSrv().post(this.resourcesUrl + '/validateQuery', {
+    const rawSql = getTemplateSrv().replace(query.rawSql);
+
+    if (this.lastValidation && rawSql === this.lastValidation.query) {
+      return this.lastValidation;
+    }
+
+    const validationResults = await getBackendSrv().post(this.resourcesUrl + '/validateQuery', {
       project: this.defaultProject,
       location: query.location,
       query: {
         ...query,
-        rawSql: getTemplateSrv().replace(query.rawSql),
+        rawSql,
       },
     });
+
+    this.lastValidation = {
+      query: rawSql,
+      ...validationResults,
+    };
+    return this.lastValidation!;
   };
 
   getColumns = async (location: string, dataset: string, table: string, isOrderable?: boolean): Promise<string[]> => {

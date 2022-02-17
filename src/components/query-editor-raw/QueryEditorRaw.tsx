@@ -3,6 +3,7 @@ import { BigQueryQueryNG } from '../../types';
 import { TableSchema } from 'api';
 import { getBigQueryCompletionProvider } from './bigqueryCompletionProvider';
 import { ColumnDefinition, SQLEditor, TableDefinition } from '@grafana/experimental';
+import sqlFormatter from 'sql-formatter-plus';
 
 type Props = {
   query: BigQueryQueryNG;
@@ -10,9 +11,11 @@ type Props = {
   getColumns: (t: string) => Promise<ColumnDefinition[]>;
   getTableSchema: (l: string, d: string, t: string) => Promise<TableSchema | null>;
   onChange: (value: BigQueryQueryNG, processQuery: boolean) => void;
+  children?: (props: { formatQuery: () => void }) => React.ReactNode;
 };
 
 export function QueryEditorRaw({
+  children,
   getColumns: apiGetColumns,
   getTables: apiGetTables,
   getTableSchema: apiGetTableSchema,
@@ -33,7 +36,7 @@ export function QueryEditorRaw({
   }, [apiGetColumns, apiGetTables]);
 
   const onRawQueryChange = useCallback(
-    (processQuery: boolean) => (rawSql: string) => {
+    (rawSql: string, processQuery: boolean) => {
       const newQuery = {
         ...query,
         rawQuery: true,
@@ -47,9 +50,10 @@ export function QueryEditorRaw({
   return (
     <SQLEditor
       query={query.rawSql}
-      onBlur={onRawQueryChange(true)}
-      onChange={onRawQueryChange(false)}
-      language={{ id: 'bigquery', completionProvider }}
-    />
+      onChange={onRawQueryChange}
+      language={{ id: 'bigquery', completionProvider, formatter: sqlFormatter.format }}
+    >
+      {children}
+    </SQLEditor>
   );
 }
