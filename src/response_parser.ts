@@ -218,13 +218,20 @@ export default class ResponseParser {
 
   private static _toVar(results) {
     const res = [];
-    for (const row of results.rows) {
-      res.push(row.f[0].v);
-    }
+    const textIndex = results.schema.fields.findIndex((f) => f.name === '__text');
+    const valueIndex = results.schema.fields.findIndex((f) => f.name === '__value');
 
-    return _.map(res, value => {
-      return { text: value };
-    });
+    if (textIndex !== -1 && valueIndex !== -1) {
+      for (const row of results.rows) {
+        res.push({ text: row.f[textIndex].v, value: row.f[valueIndex].v });
+      }
+    } else {
+      for (const row of results.rows) {
+        res.push({ text: row.f[0].v });
+      }
+    }
+    
+    return _.uniqBy(res, 'text');
   }
 
   constructor(private $q) {}

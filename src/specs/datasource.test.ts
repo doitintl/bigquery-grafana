@@ -1138,69 +1138,163 @@ describe('BigQueryDatasource', () => {
   });
   describe('When performing parseDataQuery for vars', () => {
     let results;
-    const response = {
-      kind: 'bigquery#queryResponse',
-      schema: {
-        fields: [
+
+    describe('With text/value', () => {
+      const response = {
+        kind: 'bigquery#queryResponse',
+        schema: {
+          fields: [
+            {
+              name: '__value',
+              type: 'STRING',
+              mode: 'NULLABLE',
+            },
+            {
+              name: '__text',
+              type: 'STRING',
+              mode: 'NULLABLE',
+            },
+          ],
+        },
+        jobReference: {
+          projectId: 'proj-1',
+          jobId: 'job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5',
+          location: 'US',
+        },
+        totalRows: '3',
+        rows: [
           {
-            name: 'time',
-            type: 'TIMESTAMP',
-            mode: 'NULLABLE',
+            f: [
+              {
+                v: 'Value 1',
+              },
+              {
+                v: 'Label 1',
+              },
+            ],
           },
           {
-            name: 'start_station_latitude',
-            type: 'FLOAT',
-            mode: 'NULLABLE',
+            f: [
+              {
+                v: 'Value 2',
+              },
+              {
+                v: 'Label 2',
+              },
+            ],
+          },
+          {
+            f: [
+              {
+                v: 'Value 3',
+              },
+              {
+                v: 'Label 3',
+              },
+            ],
+          },
+          {
+            f: [
+              {
+                v: 'Value 3',
+              },
+              {
+                v: 'Label 3',
+              },
+            ],
           },
         ],
-      },
-      jobReference: {
-        projectId: 'proj-1',
-        jobId: 'job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5',
-        location: 'US',
-      },
-      totalRows: '3',
-      rows: [
-        {
-          f: [
-            {
-              v: '1.521578851E9',
-            },
-            {
-              v: '37.7753058',
-            },
-          ],
-        },
-        {
-          f: [
-            {
-              v: '1.521578916E9',
-            },
-            {
-              v: '37.3322326',
-            },
-          ],
-        },
-        {
-          f: [
-            {
-              v: '1.521578927E9',
-            },
-            {
-              v: '37.781752',
-            },
-          ],
-        },
-      ],
-      totalBytesProcessed: '23289520',
-      jobComplete: true,
-      cacheHit: false,
-    };
+        totalBytesProcessed: '23289520',
+        jobComplete: true,
+        cacheHit: false,
+      };
+      
+      it('should return a var', () => {
+        results = ResponseParser.parseDataQuery(response, 'var');
+        const expectResult = [
+          {
+            text: 'Label 1',
+            value: 'Value 1',
+          },
+          {
+            text: 'Label 2',
+            value: 'Value 2',
+          },
+          {
+            text: 'Label 3',
+            value: 'Value 3',
+          }
+        ]
+        expect(results).toStrictEqual(expectResult);
+      });
+    });
+    
 
-    results = ResponseParser.parseDataQuery(response, 'var');
-    it('should return a var', () => {
-      expect(results.length).toBe(3);
-      expect(results[0].text).toBe('1.521578851E9');
+    describe('without test/value', () => {
+      const response = {
+        kind: 'bigquery#queryResponse',
+        schema: {
+          fields: [
+            {
+              name: 'time',
+              type: 'TIMESTAMP',
+              mode: 'NULLABLE',
+            },
+            {
+              name: 'start_station_latitude',
+              type: 'FLOAT',
+              mode: 'NULLABLE',
+            },
+          ],
+        },
+        jobReference: {
+          projectId: 'proj-1',
+          jobId: 'job_fB4qCDAO-TKg1Orc-OrkdIRxCGN5',
+          location: 'US',
+        },
+        totalRows: '3',
+        rows: [
+          {
+            f: [
+              {
+                v: '1.521578851E9',
+              },
+              {
+                v: '37.7753058',
+              },
+            ],
+          },
+          {
+            f: [
+              {
+                v: '1.521578916E9',
+              },
+              {
+                v: '37.3322326',
+              },
+            ],
+          },
+          {
+            f: [
+              {
+                v: '1.521578927E9',
+              },
+              {
+                v: '37.781752',
+              },
+            ],
+          },
+        ],
+        totalBytesProcessed: '23289520',
+        jobComplete: true,
+        cacheHit: false,
+      };
+
+      it('should return a var', () => {
+        results = ResponseParser.parseDataQuery(response, 'var');
+        expect(results.length).toBe(3);
+        expect(results[0].text).toBe('1.521578851E9');
+      });
     });
   });
 
