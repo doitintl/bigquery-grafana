@@ -4,8 +4,14 @@ import BigQueryQuery from './bigquery_query';
 import ResponseParser, { IResultFormat } from './response_parser';
 import SqlParser from './sql_parser';
 import { v4 as generateID } from 'uuid';
+// import { Table } from 'apache-arrow';
+//import { toDataQueryResponse } from '@grafana/runtime';
+// import axios from 'axios';
+// import { readFileSync } from 'fs';
+// import { Table } from 'apache-arrow';
 
 const Shifted = '_shifted';
+
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -174,17 +180,21 @@ export class BigQueryDatasource {
   private runInProject: string;
   private processingLocation: string;
   private queryPriority: string;
+  // private options: any;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    console.log(instanceSettings,"instanceSettings")
     this.type = instanceSettings.type;
     this.uid = instanceSettings.uid;
     this.url = instanceSettings.url;
     this.jsonData = instanceSettings.jsonData;
     this.baseUrl = `/bigquery/`;
+    //
 
+    //
     this.responseParser = new ResponseParser(this.$q);
     this.queryModel = new BigQueryQuery({});
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -203,6 +213,7 @@ export class BigQueryDatasource {
   }
 
   public async query(options) {
+    // this.options = options
     const queries = _.filter(options.targets, (target) => {
       return target.hide !== true;
     }).map((target) => {
@@ -426,7 +437,7 @@ export class BigQueryDatasource {
       refId: options.annotation.name,
     };
     this.queryModel.target.rawSql = query.rawSql;
-    [query.rawSql,,] = this.queryModel.expend_macros(options);
+    [query.rawSql, ,] = this.queryModel.expend_macros(options);
     return this.backendSrv
       .datasourceRequest({
         data: {
@@ -435,7 +446,7 @@ export class BigQueryDatasource {
           query: query.rawSql,
           to: options.range.to.valueOf().toString(),
           useLegacySql: false,
-          useQueryCache: true,
+          useQueryCache: false,
         },
         method: 'POST',
         requestId: options.annotation.name,
@@ -521,37 +532,83 @@ export class BigQueryDatasource {
     let data,
       queryiesOrJobs = 'queries';
     data = { priority: priority, location, query, useLegacySql: false, useQueryCache: true }; //ExternalDataConfiguration
+    console.log(this.queryModel.target.enableCache);
+    console.log("duration ", this.queryModel.target); // <-------
+      // <---------
+    data['cacheEnabled'] = (this.queryModel.target.enableCache) ? this.queryModel.target.enableCache : false;
+    if (this.queryModel.target.enableCache) {
+      data['cacheType'] = this.jsonData.cacheType;
+      data['cacheData'] = { url: this.jsonData.cacheURL, username: this.jsonData.cacheUsername, password: this.jsonData.cachePassword, port: this.jsonData.cachePort };
+      data['cacheDuration'] = parseInt(this.queryModel.target.cacheDuration);
+    }
     if (priority.toUpperCase() === 'BATCH') {
       queryiesOrJobs = 'jobs';
       data = { configuration: { query: { query, priority } } };
     }
     const path = `v2/projects/${this.runInProject}/${queryiesOrJobs}`;
+    console.log("this.url", this.url)
     const url = this.url + `${this.baseUrl}${path}`;
-    return this.backendSrv
-      .datasourceRequest({
-        data: data,
-        method: 'POST',
-        requestId,
-        url,
-      })
-      .then((result) => {
-        if (result.status !== 200) {
-          if (result.status >= 500 && maxRetries > 0) {
+    console.log("this.queryMod", this.queryModel.target)
+    console.log(this.jsonData,"instanceSettings")
+    // if (this.queryModel.target.enableRedisCache) {
+    //   return this.backendSrv
+    //     .datasourceRequest({
+    //       method: 'POST',
+    //       requestId,
+    //       url: `/api/tsdb/query`,
+    //       data: {
+    //         "from": "1420066800000",
+    //         "to": "1575845999999",
+    //         "queries": [
+    //           {
+    //             "refId": this.queryModel.target.refId,
+    //             "intervalMs": this.options.intervalMs,
+    //             "maxDataPoints": this.options.maxDataPoints,
+    //             "datasourceId": this.id,
+    //             "rawSql": this.queryModel.target.rawSql,
+    //             "format": "JSON",
+    //             "rawQuery": true,
+    //             "enableRedisCache": this.queryModel.target.enableRedisCache
+    //           }
+    //         ]
+    //       }
+    //     }
+    //     )
+    //     .then((result) => {
+    //       var strDataframe = result["data"]["results"][this.queryModel.target.refId]["dataframes"][0];
+    //       const table = Table.from([strDataframe]);
+    //       console.log(table.toString());
+    //     })
+    //     .catch((error) => {
+    //       console.log(error)
+    //     });
+    // } else {
+      return this.backendSrv
+        .datasourceRequest({
+          data: data,
+          method: 'POST',
+          requestId,
+          url,
+        })
+        .then((result) => {
+          if (result.status !== 200) {
+            if (result.status >= 500 && maxRetries > 0) {
+              return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
+            }
+            throw BigQueryDatasource.formatBigqueryError(result.data.error);
+          }
+          return result;
+        })
+        .catch((error) => {
+          if (maxRetries > 0) {
             return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
           }
-          throw BigQueryDatasource.formatBigqueryError(result.data.error);
-        }
-        return result;
-      })
-      .catch((error) => {
-        if (maxRetries > 0) {
-          return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
-        }
-        if (error.cancelled === true) {
-          return [];
-        }
-        return BigQueryDatasource._handleError(error);
-      });
+          if (error.cancelled === true) {
+            return [];
+          }
+          return BigQueryDatasource._handleError(error);
+        });
+    // }
   }
   private async _waitForJobComplete(queryResults, requestId, jobId) {
     let sleepTimeMs = 100;
