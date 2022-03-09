@@ -1,0 +1,64 @@
+{
+  "id": "doitintl-bigquery-datasource",
+  "type": "datasource",
+  "name": "Google BigQuery",
+  "metrics": true,
+  "tables": true,
+  "annotations": true,
+  "alerting": true,
+  "backend": true,
+  "executable": "doitintl-bigquery-datasource",
+  "dependencies": {
+    "grafanaDependency": "7.x || 8.x"
+  },
+  "queryOptions": {
+    "maxDataPoints": true
+  },
+  "info": {
+    "description": "Google BigQuery datasource for Grafana",
+    "author": {
+      "name": "DoiT International",
+      "url": "https://www.doit-intl.com/"
+    },
+    "keywords": [
+      "bigquery"
+    ],
+    "logos": {
+      "small": "img/logo.png",
+      "large": "img/logo.png"
+    },
+    "links": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/doitintl/bigquery-grafana"
+      },
+      {
+        "name": "MIT License",
+        "url": "https://github.com/doitintl/bigquery-grafana/blob/master/LICENSE.md"
+      }
+    ],
+    "updated": "2021-06-29",
+    "version": "2.0.3"
+  },
+  "routes": [
+    {
+      "path": "bigquery",
+      "url": "http://localhost:8080/bigquery",
+      "jwtTokenAuth": {
+        "scopes": [
+          "https://www.googleapis.com/auth/bigquery",
+          "https://www.googleapis.com/auth/drive"
+        ],
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}",
+          "cache_url": "{{.JsonData.cacheURL}}",
+          "cache_port": "{{.JsonData.cachePort}}",
+          "cache_username": "{{.JsonData.cacheUsername}}",
+          "cache_password": "{{.JsonData.cachePassword}}"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "private",
+  "signedByOrg": "ketkideshpande",
+  "signedByOrgName": "ketkideshpande",
+  "rootUrls": [
+    "http://localhost:3000/"
+  ],
+  "plugin": "doitintl-bigquery-datasource",
+  "version": "2.0.3",
+  "time": 1646384374193,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "LICENSE.md": "b40d79313086aafb7ab31bf033798850a20ff52daf52f9dba84f6ef169e326b2",
+    "doitintl-bigquery-datasource_linux_arm64": "cdb65b8af95a7b8a006842e3aab5486c31c90fab9567878d5d95be91f71c5b85",
+    "doitintl-bigquery-datasource_darwin_amd64": "dc48560c3cde0540273abdf7a65591d258d449756a3954dfb55bf46876381c64",
+    "module.js.map": "f3316ff174898c56086f731cf6714e8563e1f97a0293adbb46d2b78592571a2f",
+    "doitintl-bigquery-datasource_windows_amd64.exe": "4327c7fd088013eb7880800031eba5d1783f036a10828522dd70e20c2d8397cd",
+    "plugin.json": "61f697aff4651677805c561247396a5203d42fb51afff6f0f4fd4a344c9220f1",
+    "README.md": "447c283b4add72698be808c3b726b2db4c52b12a30f97ce7fc227f8fe606b9e9",
+    "img/logo.png": "dcd9277d3dfc4e412dc006a000d0ee5b9ff4d9f126687a01f189cea9987e2bfa",
+    "module.js": "fbeb529b53b2f7731798a66a841a87f8d5b1ad19622b267c76b155e81b2ed509",
+    "doitintl-bigquery-datasource_linux_arm": "59be5afd3f2ea8a7f7dd5c5697643e1d8bf3d552869c978786cf98d63f5f2d51",
+    "partials/annotations.editor.html": "798df136efbe8da3fa2a8cd5123f63e79afdb942e5ccdf1aea297b1235e2b2fa",
+    "partials/query.editor.html": "281377374be4fb53fffe8dbfed9e3e5c9f66237cb53f145a66aaeeeef6ebd64b",
+    "partials/config.html": "37d7a7df3dbe351d7609edaf4a5e115add5dffa8b538ef43294e40d5fd5f8817",
+    "doitintl-bigquery-datasource_linux_amd64": "3fdb9b98e2ef2dc79ced1996513817d00f43daf8b120a8f9f5fa96975c0c74f0",
+    "doitintl-bigquery-datasource_darwin_arm64": "bec5273cc3673e1d75d8627a3d6e8066a257aff891d9368ba3c324ff050285db"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.10
+Comment: https://openpgpjs.org
+
+wrgEARMKAAYFAmIh1PYAIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm55mKAgigNHSAAfWjpnX5/FrG7FaLfNuMsktRT6yvNirWe/idUid1L4Ms
+IDCk83jwXG2+tv2rAD4YZ9LX35UAJ8r2Mli03wIJAUnF3CXljXi+5vzlHmbe
+6sAv67SePQiciFY7BVfHHtwxrVSeTuWNSFK15MRLGMLY+Toxp+kVKYLrYyi1
+K9HOVUvu
+=KdIb
+-----END PGP SIGNATURE-----
