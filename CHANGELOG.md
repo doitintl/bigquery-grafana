@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11
+
+- **Fix**: Allow running script queries.
+- **Query validation**: Add interpolated to validation response.
+
 ## 0.1.10
 
 - **Code editor**: Add option to format the query.
