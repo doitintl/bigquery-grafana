@@ -98,6 +98,7 @@ type ValidateQueryResponse struct {
 	IsError    bool              `json:"isError"`
 	Error      string            `json:"error"`
 	Statistics *bq.JobStatistics `json:"statistics"`
+	Query      string            `json:"query"`
 }
 
 func (a *API) ValidateQuery(ctx context.Context, query string) *ValidateQueryResponse {
@@ -116,6 +117,7 @@ func (a *API) ValidateQuery(ctx context.Context, query string) *ValidateQueryRes
 		response.IsValid = true
 		response.Statistics = status.Statistics
 	}
+	response.Query = query
 
 	return response
 }
