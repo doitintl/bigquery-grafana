@@ -15,6 +15,7 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
   jsonData: BigQueryOptions;
 
   authenticationType: string;
+  annotations = {};
 
   constructor(instanceSettings: DataSourceInstanceSettings<BigQueryOptions>) {
     super(instanceSettings);

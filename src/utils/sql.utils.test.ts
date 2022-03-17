@@ -4,7 +4,7 @@ import { applyQueryDefaults } from '../utils';
 import { haveColumns, toRawSql } from './sql.utils';
 
 const queryWithDefaults = applyQueryDefaults({ dataset: 'test', table: 't' } as any, { jsonData: {} } as any);
-const from = 'FROM projectId.test.t';
+const from = 'FROM `projectId.test.t`';
 
 const columns: SQLExpression['columns'] = [
   {

@@ -295,6 +295,7 @@ export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
     sql: q.sql || {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
+      limit: 50,
     },
   };
 

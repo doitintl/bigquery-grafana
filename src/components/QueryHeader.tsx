@@ -149,18 +149,17 @@ export function QueryHeader({
 
         <FlexItem grow={1} />
 
-        {editorMode === EditorMode.Code &&
-          (isQueryRunnable ? (
-            <Button icon="play" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+        {isQueryRunnable ? (
+          <Button icon="play" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+            Run query
+          </Button>
+        ) : (
+          <Tooltip theme="error" content="Your query is invalid. Check below for details." placement="top">
+            <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
               Run query
             </Button>
-          ) : (
-            <Tooltip theme="error" content="Your query is invalid. Check below for details." placement="top">
-              <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
-                Run query
-              </Button>
-            </Tooltip>
-          ))}
+          </Tooltip>
+        )}
 
         <RadioButtonGroup options={editorModes} size="sm" value={editorMode} onChange={onEditorModeChange} />
 

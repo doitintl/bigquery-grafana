@@ -19,7 +19,7 @@ export function toRawSql({ sql, dataset, table }: BigQueryQueryNG, projectId: st
   rawQuery += createSelectClause(sql.columns);
 
   if (dataset && table) {
-    rawQuery += `FROM ${projectId}.${dataset}.${table} `;
+    rawQuery += `FROM \`${projectId}.${dataset}.${table}\` `;
   }
 
   if (sql.whereString) {

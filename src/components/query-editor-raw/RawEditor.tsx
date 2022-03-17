@@ -98,6 +98,7 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery, onValidate, 
               query={queryToValidate}
               onValidate={onValidate}
               onFormatCode={formatQuery}
+              showHints
             />
           );
         }}

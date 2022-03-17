@@ -11,10 +11,11 @@ interface QueryValidatorProps {
   apiClient: BigQueryAPI;
   query: BigQueryQueryNG;
   onValidate: (isValid: boolean) => void;
-  onFormatCode: () => void;
+  onFormatCode?: () => void;
+  showHints?: boolean;
 }
 
-export function QueryValidator({ apiClient, query, onValidate, onFormatCode }: QueryValidatorProps) {
+export function QueryValidator({ apiClient, query, onValidate, onFormatCode, showHints }: QueryValidatorProps) {
   const [validationResult, setValidationResult] = useState<ValidationResults | null>();
   const theme = useTheme2();
   const valueFormatter = useMemo(() => getValueFormat('bytes'), []);
@@ -111,14 +112,18 @@ export function QueryValidator({ apiClient, query, onValidate, onFormatCode }: Q
           </>
         )}
       </div>
-      <div>
-        <HorizontalGroup spacing="sm">
-          <IconButton onClick={onFormatCode} name="brackets-curly" size="xs" tooltip="Format query" />
-          <Tooltip content="Hit CTRL/CMD+Return to run query">
-            <Icon className={styles.hint} name="keyboard" />
-          </Tooltip>
-        </HorizontalGroup>
-      </div>
+      {showHints && (
+        <div>
+          <HorizontalGroup spacing="sm">
+            {onFormatCode && (
+              <IconButton onClick={onFormatCode} name="brackets-curly" size="xs" tooltip="Format query" />
+            )}
+            <Tooltip content="Hit CTRL/CMD+Return to run query">
+              <Icon className={styles.hint} name="keyboard" />
+            </Tooltip>
+          </HorizontalGroup>
+        </div>
+      )}
     </div>
   );
 }
