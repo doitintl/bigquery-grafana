@@ -106,11 +106,12 @@ FROM project.dataset.table
 WHERE $__timeFilter(time_column)
 ```
 
-| Macro example                 | Description                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| _$\_\_timeFilter(timeColumn)_ | Will be replaced by a time range filter using the specified name.                  |
-| _$\_\_from_                   | Will be replaced by the start of the currently active time range filter selection. |
-| _$\_\_to_                     | Will be replaced by the end of the currently active time range filter selection.   |
+| Macro example                         | Description                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| _$\_\_timeFilter(timeColumn)_         | Will be replaced by a time range filter using the specified name.                  |
+| _$\_\_from_                           | Will be replaced by the start of the currently active time range filter selection. |
+| _$\_\_to_                             | Will be replaced by the end of the currently active time range filter selection.   |
+| _$\_\_timeGroup(timeColumn,interval)_ | Will be replaced by an expression usable in GROUP BY clause.                       |
 
 ### Templates and variables
 

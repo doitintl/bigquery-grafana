@@ -62,6 +62,22 @@ func Test_macros(t *testing.T) {
 			"TIMESTAMP((PARSE_DATE(\"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `created_at`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `created_at`)) AS STRING),'-','01'))))",
 			nil,
 		},
+		{
+			"time groups '1M'",
+			"timeGroup",
+			&sqlds.Query{},
+			[]string{"created_at", "'1M'"},
+			"TIMESTAMP((PARSE_DATE(\"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `created_at`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `created_at`)) AS STRING),'-','01'))))",
+			nil,
+		},
+		{
+			"time groups \"1M\"",
+			"timeGroup",
+			&sqlds.Query{},
+			[]string{"created_at", "\"1M\""},
+			"TIMESTAMP((PARSE_DATE(\"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `created_at`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `created_at`)) AS STRING),'-','01'))))",
+			nil,
+		},
 
 		{
 			"millist time from",

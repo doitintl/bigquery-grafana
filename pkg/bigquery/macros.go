@@ -50,17 +50,18 @@ func macroTimeGroup(query *sqlds.Query, args []string) (string, error) {
 	}
 
 	timeVar := args[0]
-	last := args[1][len(args[1])-1:]
+	intervalVar := strings.Trim(args[1], "'\"")
+	last := intervalVar[len(intervalVar)-1:]
 
 	// when month interval
 	if last == "M" {
 		return fmt.Sprintf("TIMESTAMP((PARSE_DATE(\"%%Y-%%m-%%d\",CONCAT( CAST((EXTRACT(YEAR FROM `%s`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `%s`)) AS STRING),'-','01'))))", timeVar, timeVar), nil
 	}
 
-	interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
+	interval, err := gtime.ParseInterval(intervalVar)
 
 	if err != nil {
-		return "", fmt.Errorf("error parsing interval %v", args[1])
+		return "", fmt.Errorf("error parsing interval %v", intervalVar)
 
 	}
 
