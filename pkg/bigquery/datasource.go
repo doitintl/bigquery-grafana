@@ -247,9 +247,10 @@ func (s *BigQueryDatasource) Columns(ctx context.Context, options sqlds.Options)
 }
 
 type ValidateQueryArgs struct {
-	Project  string      `json:"project"`
-	Location string      `json:"location"`
-	Query    sqlds.Query `json:"query"`
+	Project   string            `json:"project"`
+	Location  string            `json:"location"`
+	Query     sqlds.Query       `json:"query"`
+	TimeRange backend.TimeRange `json:"range"`
 }
 
 func (s *BigQueryDatasource) ValidateQuery(ctx context.Context, options ValidateQueryArgs) (*api.ValidateQueryResponse, error) {

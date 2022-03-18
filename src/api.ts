@@ -1,3 +1,4 @@
+import { TimeRange } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { lastValueFrom } from 'rxjs';
 import { BigQueryQueryNG } from 'types';
@@ -41,7 +42,7 @@ export interface BigQueryAPI {
   getTables: (location: string, dataset: string) => Promise<string[]>;
   getTableSchema: (location: string, dataset: string, table: string) => Promise<TableSchema>;
   getColumns: (location: string, dataset: string, table: string, isOrderable?: boolean) => Promise<string[]>;
-  validateQuery: (query: BigQueryQueryNG) => Promise<ValidationResults>;
+  validateQuery: (query: BigQueryQueryNG, range?: TimeRange) => Promise<ValidationResults>;
   dispose: () => void;
 }
 
@@ -83,7 +84,7 @@ class BigQueryAPIClient implements BigQueryAPI {
     });
   };
 
-  validateQuery = async (query: BigQueryQueryNG): Promise<ValidationResults> => {
+  validateQuery = async (query: BigQueryQueryNG, range?: TimeRange): Promise<ValidationResults> => {
     const rawSql = getTemplateSrv().replace(query.rawSql);
 
     if (this.lastValidation && rawSql === this.lastValidation.query) {
@@ -97,6 +98,7 @@ class BigQueryAPIClient implements BigQueryAPI {
         ...query,
         rawSql,
       },
+      range,
     });
 
     this.lastValidation = {

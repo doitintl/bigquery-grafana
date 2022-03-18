@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { formattedValueToString, getValueFormat } from '@grafana/data';
+import { formattedValueToString, getValueFormat, TimeRange } from '@grafana/data';
 import { Icon, IconButton, Spinner, useTheme2, HorizontalGroup, Tooltip } from '@grafana/ui';
 import { BigQueryAPI, ValidationResults } from 'api';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -13,9 +13,10 @@ interface QueryValidatorProps {
   onValidate: (isValid: boolean) => void;
   onFormatCode?: () => void;
   showHints?: boolean;
+  range?: TimeRange;
 }
 
-export function QueryValidator({ apiClient, query, onValidate, onFormatCode, showHints }: QueryValidatorProps) {
+export function QueryValidator({ apiClient, query, onValidate, onFormatCode, showHints, range }: QueryValidatorProps) {
   const [validationResult, setValidationResult] = useState<ValidationResults | null>();
   const theme = useTheme2();
   const valueFormatter = useMemo(() => getValueFormat('bytes'), []);
@@ -55,7 +56,7 @@ export function QueryValidator({ apiClient, query, onValidate, onFormatCode, sho
         return null;
       }
 
-      return await apiClient.validateQuery(q);
+      return await apiClient.validateQuery(q, range);
     },
     [apiClient]
   );

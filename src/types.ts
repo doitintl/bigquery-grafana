@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, TimeRange } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import { BigQueryAPI } from 'api';
 import {
@@ -105,4 +105,5 @@ export interface QueryEditorProps {
   apiClient: BigQueryAPI;
   query: QueryWithDefaults;
   onChange: (query: BigQueryQueryNG) => void;
+  range?: TimeRange;
 }

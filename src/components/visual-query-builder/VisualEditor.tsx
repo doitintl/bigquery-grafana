@@ -18,6 +18,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
   queryRowFilter,
   onChange,
   onValidate,
+  range,
 }) => {
   return (
     <>
@@ -50,7 +51,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
           </EditorRow>
         )}
       </EditorRows>
-      <QueryValidator apiClient={apiClient} query={query} onValidate={onValidate} />
+      <QueryValidator apiClient={apiClient} query={query} onValidate={onValidate} range={range} />
     </>
   );
 };

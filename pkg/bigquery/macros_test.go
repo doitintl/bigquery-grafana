@@ -26,19 +26,6 @@ func Test_macros(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			"table",
-			"table",
-			&sqlds.Query{ConnectionArgs: []byte(
-				`{
-					"dataset" : "dataset",
-					"table" : "table"
-				}`,
-			)},
-			[]string{},
-			"`dataset.table`",
-			nil,
-		},
-		{
 			"time groups 1w",
 			"timeGroup",
 			&sqlds.Query{},

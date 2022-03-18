@@ -11,7 +11,15 @@ interface RawEditorProps extends Omit<QueryEditorProps, 'onChange'> {
   queryToValidate: BigQueryQueryNG;
 }
 
-export function RawEditor({ apiClient, query, onChange, onRunQuery, onValidate, queryToValidate }: RawEditorProps) {
+export function RawEditor({
+  apiClient,
+  query,
+  onChange,
+  onRunQuery,
+  onValidate,
+  queryToValidate,
+  range,
+}: RawEditorProps) {
   const getColumns = useCallback(
     // expects fully qualified table name: <project-id>.<dataset-id>.<table-id>
     async (t: string) => {
@@ -99,6 +107,7 @@ export function RawEditor({ apiClient, query, onChange, onRunQuery, onValidate, 
               onValidate={onValidate}
               onFormatCode={formatQuery}
               showHints
+              range={range}
             />
           );
         }}

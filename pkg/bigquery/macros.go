@@ -1,7 +1,6 @@
 package bigquery
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,17 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/sqlds/v2"
 )
-
-func macroTable(query *sqlds.Query, args []string) (string, error) {
-	var connArgs ConnectionArgs
-	err := json.Unmarshal(query.ConnectionArgs, &connArgs)
-
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("`%s.%s`", connArgs.Dataset, connArgs.Table), nil
-}
 
 // Example:
 //   $__millisTimeFrom(time) => "time >= '1572480000000'"
@@ -69,7 +57,6 @@ func macroTimeGroup(query *sqlds.Query, args []string) (string, error) {
 }
 
 var macros = map[string]sqlds.MacroFunc{
-	"table":          macroTable,
 	"timeGroup":      macroTimeGroup,
 	"millisTimeFrom": macroMillisTimeFrom,
 	"millisTimeTo":   macroMillisTimeTo,

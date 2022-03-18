@@ -12,7 +12,7 @@ import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 type Props = QueryEditorProps<BigQueryDatasource, BigQueryQueryNG, BigQueryOptions>;
 
-export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
+export function QueryEditor({ datasource, query, onChange, onRunQuery, range }: Props) {
   setDatasourceId(datasource.id);
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const { loading: apiLoading, error: apiError, value: apiClient } = useAsync(
@@ -77,6 +77,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           onChange={(q) => onQueryChange(q, false)}
           queryRowFilter={queryRowFilter}
           onValidate={setIsQueryRunnable}
+          range={range}
         />
       )}
 
@@ -88,6 +89,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           onChange={onQueryChange}
           onRunQuery={onRunQuery}
           onValidate={setIsQueryRunnable}
+          range={range}
         />
       )}
     </>

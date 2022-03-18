@@ -68,6 +68,7 @@ func (r *ResourceHandler) validateQuery(rw http.ResponseWriter, req *http.Reques
 		utils.WriteResponse(rw, []byte(err.Error()))
 		return
 	}
+	result.Query.TimeRange = result.TimeRange
 
 	res, err := r.ds.ValidateQuery(req.Context(), result)
 	utils.SendResponse(res, err, rw)
