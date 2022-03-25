@@ -192,7 +192,7 @@ describe('BigQueryQuery', () => {
     expect(query.buildWhereClause()).toBe('\nWHERE\n  $__timeFilter(t) AND\n  v = 1');
     query.target.where = [];
     query.target.partitioned = true;
-    const time = { from: { _d: '1987-06-30' }, to: { _d: '1987-06-30' } };
+    const time = { from: { _d: '1987-06-30 03:00:00' }, to: { _d: '1987-06-30 03:00:00' } };
     query.templateSrv.timeRange = time;
     const whereClause = query.buildWhereClause();
     expect(whereClause).toBe(
@@ -299,7 +299,7 @@ describe('BigQueryQuery', () => {
             ],
           ],
           rawQuery: false,
-          rawSql:
+          rawSql: 
             '#standardSQL\nSELECT\n $__timeGroupAlias(start_date,$__interval),\n  count(trip_id) AS trip_id\nFROM sss.bikeshare_trips\nWHERE\n  $__timeFilter(start_date)\nGROUP BY 1\nORDER BY 1',
           project: 'aviv-playground',
           dataset: 'sss',
@@ -317,20 +317,25 @@ describe('BigQueryQuery', () => {
       to: { _d: 'Thu Nov 07 2019 09:47:02 GMT+0200 (Israel Standard Time)' },
     };
     query.templateSrv.timeRange = time;
+    // console.log(options)
     it('Check macros', () => {
-      expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400) AS time');
+      // console.log(query.expend_macros(options))
+      expect(query.expend_macros(options)).toContain("TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 86400) * 86400) AS time");
       target.rawSql = '$__timeGroupAlias(start_date,1min)';
-      expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) AS time');
+      console.log(query.expend_macros(options))
+      expect(query.expend_macros(options)).toContain('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 60) * 60) AS time');
       target.rawSql = '$__timeGroup(start_date,1w)';
-      expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) AS time');
+      console.log(query.expend_macros(options))
+      expect(query.expend_macros(options)).toContain('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 604800) * 604800) AS time');
       target.rawSql = '$__timeGroupAlias(start_date,1h)';
-      expect(query.expend_macros(options)).toBe('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) AS time');
+      console.log(query.expend_macros(options))
+      expect(query.expend_macros(options)).toContain('TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`t`), 3600) * 3600) AS time');
     });
   });
 
   describe('formatDateToString', () => {
     const date1 = new Date('December 17, 1995 03:24:00');
-    expect(BigQueryQuery.formatDateToString(date1, '-', true)).toBe('1995-12-17 03:24:00');
+    expect(BigQueryQuery.formatDateToString(date1, false, '-', true)).toBe('1995-12-17 03:24:00');
   });
 
   describe('getIntervalStr', () => {
@@ -367,7 +372,7 @@ describe('BigQueryQuery', () => {
       'TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 604800) * 604800) AS time'
     );
     expect(query.getIntervalStr('1m', '1d', null)).toBe(
-      "TIMESTAMP(  (PARSE_DATE( \"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `my_data`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `my_data`)) AS STRING),'-','01')))) AS time"
+      "TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 86400) * 86400) AS time"
     );
     expect(query.getIntervalStr('1y', '2d', null)).toBe(
       'TIMESTAMP_SECONDS(DIV(UNIX_SECONDS(`my_data`), 31536000) * 31536000) AS time'
@@ -380,7 +385,7 @@ describe('BigQueryQuery', () => {
     expect(BigQueryQuery.getUnixSecondsFromString('1h')).toBe(3600);
     expect(BigQueryQuery.getUnixSecondsFromString('1d')).toBe(86400);
     expect(BigQueryQuery.getUnixSecondsFromString('1w')).toBe(604800);
-    expect(BigQueryQuery.getUnixSecondsFromString('1m')).toBe(2629743);
+    expect(BigQueryQuery.getUnixSecondsFromString('1m')).toBe(60);
     expect(BigQueryQuery.getUnixSecondsFromString('1y')).toBe(31536000);
     expect(BigQueryQuery.getUnixSecondsFromString('1z')).toBe(0);
   });
