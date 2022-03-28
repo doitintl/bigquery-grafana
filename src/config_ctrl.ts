@@ -69,6 +69,7 @@ export class BigQueryConfigCtrl {
       { text: 'Frankfurt (europe-west3)', value: 'europe-west3' },
       { text: 'London (europe-west2)', value: 'europe-west2' },
       { text: 'Netherlands (europe-west4)', value: 'europe-west4' },
+      { text: 'Warsaw (europe-central2)', value: 'europe-central2' },
       { text: 'Zürich (europe-west6)', value: 'europe-west6' },
       // Asia Pacific
       { text: 'Hong Kong (asia-east2)', value: 'asia-east2' },
