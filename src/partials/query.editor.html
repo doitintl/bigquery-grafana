@@ -197,7 +197,7 @@
     <div ng-show="ctrl.target.enableCache">
       <div class="gf-form">
         <label class="gf-form-label query-keyword">Cache Duration (in Minutes)</label>
-        <input class="gf-form-input width-10" type="number" ng-model="ctrl.target.cacheDuration" />
+        <input class="gf-form-input width-10" type="number" ng-init="ctrl.target.cacheDuration=ctrl.target.cacheDuration||86400" ng-model="ctrl.target.cacheDuration" />
       </div>
     </div>
     <!----->
