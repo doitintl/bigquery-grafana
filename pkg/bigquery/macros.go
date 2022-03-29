@@ -4,32 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/sqlds/v2"
 )
 
-// Example:
-//   $__millisTimeFrom(time) => "time >= '1572480000000'"
-func macroMillisTimeFrom(query *sqlds.Query, args []string) (string, error) {
-	if len(args) != 1 {
-		return "", fmt.Errorf("%w: expected 1 argument, received %d", errors.New("unexpected number of arguments"), len(args))
-	}
-
-	t := int64(time.Nanosecond) * query.TimeRange.From.UTC().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s >= '%d'", args[0], t), nil
+func macroColumn(query *sqlds.Query, args []string) (string, error) {
+	return "", errors.New("$__column macro is not supported")
 }
 
-// Example:
-// $__millisTimeTo(time) => "time <= '1572480000000'"
-func macroMillisTimeTo(query *sqlds.Query, args []string) (string, error) {
-	if len(args) != 1 {
-		return "", fmt.Errorf("%w: expected 1 argument, received %d", errors.New("unexpected number of arguments"), len(args))
-	}
-
-	t := int64(time.Nanosecond) * query.TimeRange.To.UTC().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s <= '%d'", args[0], t), nil
+func macroTable(query *sqlds.Query, args []string) (string, error) {
+	return "", errors.New("$__table macro is not supported")
 }
 
 func macroTimeGroup(query *sqlds.Query, args []string) (string, error) {
@@ -57,9 +42,9 @@ func macroTimeGroup(query *sqlds.Query, args []string) (string, error) {
 }
 
 var macros = map[string]sqlds.MacroFunc{
-	"timeGroup":      macroTimeGroup,
-	"millisTimeFrom": macroMillisTimeFrom,
-	"millisTimeTo":   macroMillisTimeTo,
+	"column":    macroColumn,
+	"table":     macroTable,
+	"timeGroup": macroTimeGroup,
 }
 
 func (s *BigQueryDatasource) Macros() sqlds.Macros {

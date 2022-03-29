@@ -2,21 +2,12 @@ package bigquery
 
 import (
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/sqlds/v2"
 	"github.com/pkg/errors"
 )
 
 func Test_macros(t *testing.T) {
-	from, _ := time.Parse(time.RFC3339, "2019-10-31T00:00:00.000Z")
-	to, _ := time.Parse(time.RFC3339, "2019-11-30T00:00:00.000Z")
-	timeRange := backend.TimeRange{
-		From: from,
-		To:   to,
-	}
-
 	tests := []struct {
 		description string
 		macro       string
@@ -63,24 +54,6 @@ func Test_macros(t *testing.T) {
 			&sqlds.Query{},
 			[]string{"created_at", "\"1M\""},
 			"TIMESTAMP((PARSE_DATE(\"%Y-%m-%d\",CONCAT( CAST((EXTRACT(YEAR FROM `created_at`)) AS STRING),'-',CAST((EXTRACT(MONTH FROM `created_at`)) AS STRING),'-','01'))))",
-			nil,
-		},
-
-		{
-			"millist time from",
-			"millisTimeFrom",
-			&sqlds.Query{TimeRange: timeRange},
-			[]string{"time"},
-			"time >= '1572480000000'",
-			nil,
-		},
-
-		{
-			"millist time to",
-			"millisTimeTo",
-			&sqlds.Query{TimeRange: timeRange},
-			[]string{"time"},
-			"time <= '1575072000000'",
 			nil,
 		},
 	}

@@ -263,7 +263,11 @@ func (s *BigQueryDatasource) ValidateQuery(ctx context.Context, options Validate
 	query, err := sqlds.Interpolate(s, &options.Query)
 
 	if err != nil {
-		return nil, errors.WithMessage(err, "Could not apply macros")
+		return &api.ValidateQueryResponse{
+			IsValid: false,
+			IsError: true,
+			Error:   "Could not apply macros: " + err.Error(),
+		}, nil
 	}
 
 	return apiClient.ValidateQuery(ctx, query), nil

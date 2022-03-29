@@ -87,7 +87,7 @@ export function QueryValidator({ apiClient, query, onValidate, onFormatCode, sho
     return null;
   }
 
-  const error = state.value?.error ? state.value.error.split(':').slice(2).join(':') : '';
+  const error = state.value?.error ? processErrorMessage(state.value.error) : '';
 
   return (
     <div className={styles.container}>
@@ -127,4 +127,12 @@ export function QueryValidator({ apiClient, query, onValidate, onFormatCode, sho
       )}
     </div>
   );
+}
+
+function processErrorMessage(error: string) {
+  const splat = error.split(':');
+  if (splat.length > 2) {
+    return splat.slice(2).join(':');
+  }
+  return error;
 }
