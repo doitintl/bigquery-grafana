@@ -112,7 +112,7 @@ export const settings: Settings = {
         menuShouldPortal
         value={operatorProps?.selectedKey}
         onChange={(val) => {
-          operatorProps?.setField(val.key);
+          operatorProps?.setField(val.value || '');
         }}
       />
     );
