@@ -352,6 +352,7 @@ export class BigQueryDatasource {
       }
     } catch (error) {
       message = error.statusText ? error.statusText : defaultErrorMessage;
+      status = 'error';
     }
     try {
       const path = `v2/projects/${this.projectName}/jobs/no-such-jobs`;
@@ -365,6 +366,30 @@ export class BigQueryDatasource {
         message = error.statusText ? error.statusText : defaultErrorMessage;
       }
     }
+    console.log("cacheEnabale", this.jsonData.enableCache);
+    if (this.jsonData.enableCache) {
+      if (this.jsonData.cacheType === "redis") {
+        try {
+          var redisURL = this.jsonData.cacheURL;
+          var redisDatabase = this.jsonData.cacheDatabase;
+          var redisPassword = this.jsonData.cachePassword;
+          if (redisURL === undefined) {redisURL = ""}
+          if (!redisDatabase) {redisDatabase = "0"}
+          if (redisPassword === undefined) {redisPassword = ""}
+          const path = `redis/validate/${redisURL}/${redisDatabase}/${redisPassword}`;
+          const response = await this.doRequest(`${this.baseUrl}${path}`);
+          if (response.status !== 200) {
+            status = 'error';
+            message = response.statusText ? response.statusText : defaultErrorMessage;
+          }
+        } catch (error) {
+          message = error.statusText ? error.statusText : defaultErrorMessage;
+          status = 'error';
+        }
+      }
+     
+    }
+   
     return {
       message,
       status,
@@ -534,11 +559,10 @@ export class BigQueryDatasource {
     data = { priority: priority, location, query, useLegacySql: false, useQueryCache: true }; //ExternalDataConfiguration
     console.log(this.queryModel.target.enableCache);
     console.log("duration ", this.queryModel.target); // <-------
-      // <---------
     data['cacheEnabled'] = (this.queryModel.target.enableCache) ? this.queryModel.target.enableCache : false;
     if (this.queryModel.target.enableCache) {
       data['cacheType'] = this.jsonData.cacheType;
-      data['cacheData'] = { url: this.jsonData.cacheURL, username: this.jsonData.cacheUsername, password: this.jsonData.cachePassword, port: this.jsonData.cachePort };
+      data['cacheData'] = { url: this.jsonData.cacheURL, password: this.jsonData.cachePassword, database: this.jsonData.cacheDatabase };
       data['cacheDuration'] = parseInt(this.queryModel.target.cacheDuration);
     }
     if (priority.toUpperCase() === 'BATCH') {
@@ -550,39 +574,7 @@ export class BigQueryDatasource {
     const url = this.url + `${this.baseUrl}${path}`;
     console.log("this.queryMod", this.queryModel.target)
     console.log(this.jsonData,"instanceSettings")
-    // if (this.queryModel.target.enableRedisCache) {
-    //   return this.backendSrv
-    //     .datasourceRequest({
-    //       method: 'POST',
-    //       requestId,
-    //       url: `/api/tsdb/query`,
-    //       data: {
-    //         "from": "1420066800000",
-    //         "to": "1575845999999",
-    //         "queries": [
-    //           {
-    //             "refId": this.queryModel.target.refId,
-    //             "intervalMs": this.options.intervalMs,
-    //             "maxDataPoints": this.options.maxDataPoints,
-    //             "datasourceId": this.id,
-    //             "rawSql": this.queryModel.target.rawSql,
-    //             "format": "JSON",
-    //             "rawQuery": true,
-    //             "enableRedisCache": this.queryModel.target.enableRedisCache
-    //           }
-    //         ]
-    //       }
-    //     }
-    //     )
-    //     .then((result) => {
-    //       var strDataframe = result["data"]["results"][this.queryModel.target.refId]["dataframes"][0];
-    //       const table = Table.from([strDataframe]);
-    //       console.log(table.toString());
-    //     })
-    //     .catch((error) => {
-    //       console.log(error)
-    //     });
-    // } else {
+
       return this.backendSrv
         .datasourceRequest({
           data: data,
