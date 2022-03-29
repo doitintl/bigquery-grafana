@@ -25,6 +25,7 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 - Sharded tables (`tablename_YYYYMMDD`)
 - Partitioned Tables
 - Granular slot allocation (Running queries in a project with flat-rate pricing)
+- Cache results to Redis data store or use local cache
 
 **Plugin Demo:**
 
@@ -32,11 +33,15 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 
 ## Adding the DataSource to Grafana
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under `Dashboards` you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select `BigQuery` from the _Type_ dropdown.
-5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
+1. Run the Go file named ‘reverse_proxy.go’ before configuring the Data Source in the Grafana. The file is present in the main plugin directory in one of the following path: 
+   /grafana/plugin/bigquery-grafana/reverse_proxy.go  or    /grafana/data/plugin/bigquery-grafana/reverse_proxy.go
+   Command to execute (without quote) :  
+   ‘go run reverse_proxy.go’
+2. Open the side menu by clicking the Grafana icon in the top header.
+3. In the side menu under `Dashboards` you should find a link named `Data Sources`.
+4. Click the `+ Add data source` button in the top header.
+5. Select `BigQuery` from the _Type_ dropdown.
+6. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -50,6 +55,21 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 
 You can now set query priority "INTERACTIVE" or "BATCH" per datasouce
 ![](https://raw.githubusercontent.com/doitintl/bigquery-grafana/master/img/QueryPriority.png)
+
+### Set-up Caching Option
+
+1. Use the toggle button 'Enable Cache' to enable/disable caching.
+
+2. Next select 'Redis' or 'Local' option for caching the query results from a drop-down menu.
+
+3. If 'Redis' is selected enter the below details:
+   Url: redis Url in the format 'host-name:port'
+   Database: Database (a number). If left blank, the default value of 0 is taken.
+   Password: Password for the the Redis database.
+
+4. If 'Local' cache is selected from the drop-down, no more details are required. 
+
+5. Click 'Save and Test' to test the database connection.
 
 ### Example of Provisioning a File
 
@@ -158,6 +178,11 @@ You can now use timeFilter macro in raw sql mode
 5. ORDER BY option
 
 Note: If your processing location is not the Default US one set your location from the processing Location drop-down at the top right bottom of the query builder
+
+6. The Query Panel has a toggle button to enable or disable cache on the query level.
+
+7. The time for which the query results are cached can be changed on the query level by entering the required duration in the ‘Cache Duration (in Minutes)’ field. The default   cache duration of 24 hours is used if this field is left blank.
+
 
 ### Troubleshooting
 

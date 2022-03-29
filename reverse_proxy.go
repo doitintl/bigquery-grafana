@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/md5"
 	"fmt"
+	"errors"
 	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
@@ -41,17 +42,43 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// type ErrorObject[]interface{}
+
 	handler := func(p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			log.Println(r.URL)
-			r.Host = remote.Host
-			p.ServeHTTP(w, r)
+			if (strings.Contains(r.URL.String(), "/redis/validate/")) {
+				redisResp, redisErr := validateRedisConnection(r.URL.String())
+				if redisErr != nil {
+					w.WriteHeader(http.StatusBadRequest)
+					w.Header().Set("Content-Type", "application/json")
+					type ErrorObject map[string]interface{}
+					resp := ErrorObject{"error": ErrorObject{"message": redisErr.Error(), "code": 400, "errors":[]ErrorObject{{"reason": redisErr.Error()}}}}
+					jsonResp, err := json.Marshal(resp)
+					if err != nil {
+						log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+					}
+					w.Write(jsonResp)
+				} else {
+					w.Header().Set("Content-Type", "application/json")
+					resp := make(map[string]string)
+					resp["message"] = redisResp
+					jsonResp, err := json.Marshal(resp)
+					if err != nil {
+						log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+					}
+					w.Write(jsonResp)
+				}
+			} else {
+				r.Host = remote.Host
+				p.ServeHTTP(w, r)
+			}
 		}
 	}
 	proxy := httputil.NewSingleHostReverseProxy(remote)
 	proxy.Transport = &transport{http.DefaultTransport}
 	http.HandleFunc("/", handler(proxy))
-	err = http.ListenAndServe("127.0.0.1:8080", nil)
+	err = http.ListenAndServe("127.0.0.1:8880", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,12 +88,35 @@ type transport struct {
 	http.RoundTripper
 }
 
+func validateRedisConnection(url string) (resp string, err error) {
+	splitURL := strings.Split(url, "/redis/validate/")[1]
+	redisParams := strings.Split(splitURL, "/")
+	redisDb,_convErr := strconv.Atoi(redisParams[1])
+	if _convErr != nil {
+		return "", errors.New("Invalid Database")
+	}
+	redisPassword := ""
+	if len(redisParams) > 2 {
+		redisPassword = redisParams[2]
+	}
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:   	redisParams[0] ,
+		Password: 	redisPassword,
+		DB:       	redisDb ,
+	})
+
+	ctx := context.Background()
+	redisResp, redisErr := redisClient.Ping(ctx).Result()
+	if redisErr != nil {
+		return "", redisErr
+	}
+	return redisResp, nil
+}
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	var key string
 	request,error:=requestJson(req) 
 	log.Printf("duration: %v \n", request.CacheDuration)
-
 
 	// check if cache is enabled
 	if error!=nil{
@@ -90,7 +140,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			if request.CacheType=="redis"{
 				ctx := context.Background()
 				// Redis url from input data
-				redisURL := request.CacheData.CacheURL + ":" + request.CacheData.CachePort
+				redisURL := request.CacheData.CacheURL
 				log.Printf("redisURL : %v\n", redisURL)
 				
 				if strings.Contains(redisURL, "://") {
@@ -99,20 +149,19 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 				}
 				// create a redis client and connect to server
 				client = redis.NewClient(&redis.Options{
-					Addr:   redisURL ,
-					Password: request.CacheData.CachePassword,
-					DB:       0,
+					Addr:   	redisURL ,
+					Password: 	request.CacheData.CachePassword,
+					DB:       	int(request.CacheData.CacheDatabase),
 				})
 
 				_, err := client.Ping(ctx).Result()
 				if err != nil {
-					log.Fatalf("unable to connect to redis %v, %v\n", "10.55.178.3:6379", err)
+					log.Fatalf("unable to connect to redis %v, %v\n", redisURL, err)
 					return nil, err
 				}
 				log.Println("successfully connected to redis")
 				// if query data is present in cache, return from cache
 				if b, err := client.Get(req.Context(), key).Result(); err == nil && b != "" {
-					log.Printf("b at line 114: %v \n", b)
 					resp := &http.Response{
 						Header: make(map[string][]string),
 					}
@@ -145,10 +194,11 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 						resp.Header.Set("Content-Length", strconv.Itoa(len(b)))
 						if key != "" {
 							if int(request.CacheDuration) > 0 {				// <--
-								fmt.Println("using input cache duration")
+								fmt.Printf("using cache duration: %v \n", request.CacheDuration)
 								client.Set(req.Context(), key, string(b), time.Duration(int(request.CacheDuration)) * time.Minute) 
 							} else {
-								client.Set(req.Context(), key, string(b), time.Duration(24) * time.Hour)  
+								log.Printf("Invalid Cache Duration in the input !")
+								// client.Set(req.Context(), key, string(b), time.Duration(24) * time.Hour)  
 								// client.Set(req.Context(), key, string(b), 0) <--
 							}
 							
@@ -188,7 +238,8 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 						if int(request.CacheDuration) > 0 {					// <---- new
 							ttl = int(request.CacheDuration) * 60
 						} else {
-							ttl = 86400
+							log.Printf("Invalid Cache Duration in the input !")
+							// ttl = 86400
 						}
 						fmt.Println("ttl: ", ttl)
 						if int(time.Now().Sub(cachedValue.cacheTime).Seconds()) < ttl{ 	// <--------change
@@ -261,8 +312,8 @@ func query(r *http.Request) string {
 
 type redisConfig struct {
 	CacheURL string `json:"url"`
-	CachePort string `json:"port"`
-	CacheUsername string `json:"username"`
+	CacheDatabase int `json:"database"`
+	// CacheUsername string `json:"username"`
 	CachePassword string `json:"password"`
 }
 
