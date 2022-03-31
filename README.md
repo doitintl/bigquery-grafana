@@ -33,10 +33,10 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
 
 ## Adding the DataSource to Grafana
 
-1. Run the Go file named ‘reverse_proxy.go’ before configuring the Data Source in the Grafana. The file is present in the main plugin directory in one of the following path: 
-   /grafana/plugin/bigquery-grafana/reverse_proxy.go  or    /grafana/data/plugin/bigquery-grafana/reverse_proxy.go
+1. Run the Go file named ‘cache_proxy.go’ before configuring the Data Source in the Grafana. The file is present in the main plugin directory in one of the following path: 
+   /grafana/plugin/bigquery-grafana/cache_proxy.go  or    /grafana/data/plugin/bigquery-grafana/cache_proxy.go
    Command to execute (without quote) :  
-   ‘go run reverse_proxy.go’
+   ‘go run cache_proxy.go’
 2. Open the side menu by clicking the Grafana icon in the top header.
 3. In the side menu under `Dashboards` you should find a link named `Data Sources`.
 4. Click the `+ Add data source` button in the top header.
