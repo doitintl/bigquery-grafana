@@ -58,13 +58,15 @@ You can now set query priority "INTERACTIVE" or "BATCH" per datasouce
 
 ### Set-up Caching Option
 
+![cache set-up](https://github.com/kenigeer/bigquery-grafana/blob/bqwithCache/img/cache%20setup.png)
+
 1. Use the toggle button 'Enable Cache' to enable/disable caching.
 
 2. Next select 'Redis' or 'Local' option for caching the query results from a drop-down menu.
 
 3. If 'Redis' is selected enter the below details:
-   Url: redis Url in the format 'host-name:port'
-   Database: Database (a number). If left blank, the default value of 0 is taken.
+   Host Details: redis host details in the format 'host-name:port'.
+   Database: Redis database (it is a number). The default value is 0.
    Password: Password for the the Redis database.
 
 4. If 'Local' cache is selected from the drop-down, no more details are required. 
@@ -183,6 +185,7 @@ Note: If your processing location is not the Default US one set your location fr
 
 7. The time for which the query results are cached can be changed on the query level by entering the required duration in the ‘Cache Duration (in Minutes)’ field. The default   cache duration of 24 hours is used if this field is left blank.
 
+![cache setting on query editor](https://github.com/kenigeer/bigquery-grafana/blob/bqwithCache/img/query%20editor.png)
 
 ### Troubleshooting
 

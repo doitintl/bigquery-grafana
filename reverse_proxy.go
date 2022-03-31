@@ -88,9 +88,18 @@ type transport struct {
 	http.RoundTripper
 }
 
-func validateRedisConnection(url string) (resp string, err error) {
-	splitURL := strings.Split(url, "/redis/validate/")[1]
+// function pings the redis server and returns the response. 
+// Invoked while saving the plugin at datasource panel in grafana.
+func validateRedisConnection(redisCacheUrl string) (resp string, err error) {
+	splitURL := strings.Split(redisCacheUrl, "/redis/validate/")[1]
+	log.Println("spliturl: ",splitURL)
+
 	redisParams := strings.Split(splitURL, "/")
+	
+	redisUrl,_ := url.PathUnescape(redisParams[0])
+	redisUrl,_ = url.PathUnescape(redisUrl)
+	log.Println("redisUrl: ", redisUrl)
+
 	redisDb,_convErr := strconv.Atoi(redisParams[1])
 	if _convErr != nil {
 		return "", errors.New("Invalid Database")
@@ -99,8 +108,9 @@ func validateRedisConnection(url string) (resp string, err error) {
 	if len(redisParams) > 2 {
 		redisPassword = redisParams[2]
 	}
+
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:   	redisParams[0] ,
+		Addr:   	redisUrl ,
 		Password: 	redisPassword,
 		DB:       	redisDb ,
 	})
