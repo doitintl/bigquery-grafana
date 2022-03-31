@@ -71,7 +71,7 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
       {isJWT && (
         <FieldSet label="JWT Key Details">
           {hasJWTConfigured ? (
-            <JWTForm options={options.jsonData} onReset={onResetApiKey} onChange={onJWTFormChange} />
+            <JWTForm options={options.jsonData} onReset={() => onResetApiKey()} onChange={onJWTFormChange} />
           ) : (
             <JWTConfigEditor
               onChange={(jwt) => {

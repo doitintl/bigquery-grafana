@@ -1,4 +1,9 @@
 # Changelog
+
+## 0.1.13
+
+- **Data source settings**: Fix bug, that made it impossible to reset and change JWT token used for authentication.
+
 ## 0.1.12
 
 - **Annotations**: Add annotation support.
