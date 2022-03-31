@@ -15,10 +15,12 @@ export class BigQueryConfigCtrl {
   private readonly defaultFlatRateProject: string;
   private readonly defaultProcessingLocation: string;
   private queryPriority: { text: string; value: string }[];
+  public redisUrlValid: boolean;
 
   /** @ngInject */
   constructor(datasourceSrv) {
     this.defaultAuthenticationType = 'jwt';
+    this.redisUrlValid = true;
     this.defaultFlatRateProject = undefined;
     this.defaultProcessingLocation = undefined;
     this.datasourceSrv = datasourceSrv;
@@ -149,5 +151,26 @@ export class BigQueryConfigCtrl {
     }
 
     return false;
+  }
+
+  // function validates if the redis host details entered in the datasource matches the given regex pattern.
+  private validateRedisCacheUrl(e) {
+      const regPattern = /^(?!((\w*):\/\/))([a-zA-Z0-9@:%._\+~#=]{2,256})(\.[a-z]{3,6})?\b([0-9:]*)/;
+      const result = regPattern.test(e.target.value)
+      this.redisUrlValid = true;
+      if (!result) {
+        this.redisUrlValid = false;
+        // this.validationErrors.push('The entered Host deatils are not in the correct format.');
+      }
+      if (this.validationErrors.length === 0) {
+        this.inputDataValid = true;
+        return true;
+      }
+  
+      return false;
+  }
+
+  private validateRedisCacheDb(e) {
+      e.target.value = parseInt(e.target.value)
   }
 }

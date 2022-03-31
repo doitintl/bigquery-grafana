@@ -186,7 +186,7 @@ export class BigQueryDatasource {
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
-    console.log(instanceSettings,"instanceSettings")
+    console.log(instanceSettings, "instanceSettings")
     this.type = instanceSettings.type;
     this.uid = instanceSettings.uid;
     this.url = instanceSettings.url;
@@ -366,6 +366,8 @@ export class BigQueryDatasource {
         message = error.statusText ? error.statusText : defaultErrorMessage;
       }
     }
+    // If cache is enabled and the type is Redis then this api is fired to check if the redis details are correct
+    // and if the redis connection can be established.
     console.log("cacheEnabale", this.jsonData.enableCache);
     if (this.jsonData.enableCache) {
       if (this.jsonData.cacheType === "redis") {
@@ -373,23 +375,30 @@ export class BigQueryDatasource {
           var redisURL = this.jsonData.cacheURL;
           var redisDatabase = this.jsonData.cacheDatabase;
           var redisPassword = this.jsonData.cachePassword;
-          if (redisURL === undefined) {redisURL = ""}
-          if (!redisDatabase) {redisDatabase = "0"}
-          if (redisPassword === undefined) {redisPassword = ""}
-          const path = `redis/validate/${redisURL}/${redisDatabase}/${redisPassword}`;
-          const response = await this.doRequest(`${this.baseUrl}${path}`);
-          if (response.status !== 200) {
-            status = 'error';
-            message = response.statusText ? response.statusText : defaultErrorMessage;
+          if (redisURL === undefined) { redisURL = "" }
+          if (!redisDatabase) { redisDatabase = "0" }
+          if (redisPassword === undefined) { redisPassword = "" }
+          if (redisURL === "") { message = "Invalid Redis Host Details"; status = "error" } else {
+            redisURL = encodeURIComponent(redisURL)
+            redisDatabase = encodeURIComponent(redisDatabase)
+            redisPassword = encodeURIComponent(redisPassword)
+            const path = `redis/validate/${redisURL}/${redisDatabase}/${redisPassword}`;
+            console.log('path: ', path);
+            const response = await this.doRequest(`${this.baseUrl}${path}`);
+            if (response.status !== 200) {
+              status = 'error';
+              message = response.statusText ? decodeURIComponent(response.statusText) : defaultErrorMessage;
+            }
           }
+
         } catch (error) {
-          message = error.statusText ? error.statusText : defaultErrorMessage;
+          message = error.statusText ? decodeURIComponent(error.statusText) : defaultErrorMessage;
           status = 'error';
         }
       }
-     
+
     }
-   
+
     return {
       message,
       status,
@@ -573,33 +582,33 @@ export class BigQueryDatasource {
     console.log("this.url", this.url)
     const url = this.url + `${this.baseUrl}${path}`;
     console.log("this.queryMod", this.queryModel.target)
-    console.log(this.jsonData,"instanceSettings")
+    console.log(this.jsonData, "instanceSettings")
 
-      return this.backendSrv
-        .datasourceRequest({
-          data: data,
-          method: 'POST',
-          requestId,
-          url,
-        })
-        .then((result) => {
-          if (result.status !== 200) {
-            if (result.status >= 500 && maxRetries > 0) {
-              return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
-            }
-            throw BigQueryDatasource.formatBigqueryError(result.data.error);
-          }
-          return result;
-        })
-        .catch((error) => {
-          if (maxRetries > 0) {
+    return this.backendSrv
+      .datasourceRequest({
+        data: data,
+        method: 'POST',
+        requestId,
+        url,
+      })
+      .then((result) => {
+        if (result.status !== 200) {
+          if (result.status >= 500 && maxRetries > 0) {
             return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
           }
-          if (error.cancelled === true) {
-            return [];
-          }
-          return BigQueryDatasource._handleError(error);
-        });
+          throw BigQueryDatasource.formatBigqueryError(result.data.error);
+        }
+        return result;
+      })
+      .catch((error) => {
+        if (maxRetries > 0) {
+          return this.doQueryRequest(query, requestId, priority, maxRetries - 1);
+        }
+        if (error.cancelled === true) {
+          return [];
+        }
+        return BigQueryDatasource._handleError(error);
+      });
     // }
   }
   private async _waitForJobComplete(queryResults, requestId, jobId) {
