@@ -1,6 +1,5 @@
 import { BigQueryAPI, TableSchema } from 'api';
-import React, { useEffect, useState } from 'react';
-import { useDebounce } from 'react-use';
+import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import { BigQueryQueryNG, QueryWithDefaults } from 'types';
 import { mapColumnTypeToIcon } from 'utils/useColumns';
@@ -22,31 +21,15 @@ export function BQWhereRow({ query, apiClient, onQueryChange }: BQWhereRowProps)
     const tableSchema = await apiClient.getTableSchema(query.location, query.dataset, query.table);
     return getFields(tableSchema);
   }, [apiClient, query.dataset, query.location, query.table]);
-  const [sql, setSql] = useState(query.sql);
-  const [debouncedSql, setDebouncedSql] = useState(query.sql);
 
   const { onSqlChange } = useSqlChange({ query, onQueryChange });
-
-  useEffect(() => {
-    onSqlChange(debouncedSql);
-    // it should be okay to exclude the onSqlChange from the dependency list
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSql]);
-
-  useDebounce(
-    () => {
-      setDebouncedSql(sql);
-    },
-    500,
-    [sql]
-  );
 
   return (
     <SQLWhereRow
       config={{ fields: state.value || {} }}
-      sql={sql}
+      sql={query.sql}
       onSqlChange={(val) => {
-        setSql(val);
+        onSqlChange(val);
       }}
     />
   );
