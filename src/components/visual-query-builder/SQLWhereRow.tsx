@@ -22,6 +22,12 @@ export function SQLWhereRow({ sql, config, onSqlChange }: SQLBuilderWhereRowProp
     }
   }, [configWithDefaults, sql.whereJsonTree, tree]);
 
+  useEffect(() => {
+    if (!sql.whereJsonTree) {
+      setTree(Utils.checkTree(Utils.loadTree(emptyInitValue), configWithDefaults));
+    }
+  }, [configWithDefaults, sql.whereJsonTree]);
+
   const onTreeChange = useCallback(
     (changedTree: ImmutableTree, config: Config) => {
       setTree(changedTree);

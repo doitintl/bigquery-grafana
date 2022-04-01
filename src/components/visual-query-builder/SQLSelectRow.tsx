@@ -129,10 +129,10 @@ const getStyles = () => {
 
 const aggregateFnOptions = BQ_AGGREGATE_FNS.map((v) => toOption(v.name));
 
-function getColumnValue({ parameters }: QueryEditorFunctionExpression): SelectableValue<string> | undefined {
+function getColumnValue({ parameters }: QueryEditorFunctionExpression): SelectableValue<string> | null {
   const column = parameters?.find((p) => p.type === QueryEditorExpressionType.FunctionParameter);
   if (column?.name) {
     return toOption(column.name);
   }
-  return undefined;
+  return null;
 }

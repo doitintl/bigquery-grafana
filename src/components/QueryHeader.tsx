@@ -66,9 +66,11 @@ export function QueryHeader({
   };
 
   const onTableChange = (e: SelectableValue) => {
-    const next = {
+    const next: BigQueryQueryNG = {
       ...query,
       table: e.value,
+      sql: undefined,
+      rawSql: '',
     };
     onChange(next);
   };
