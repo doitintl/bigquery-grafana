@@ -25,7 +25,7 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
   }
 
   filterQuery(query: BigQueryQueryNG) {
-    if (!query.rawSql) {
+    if (query.hide || !query.rawSql) {
       return false;
     }
     return true;
