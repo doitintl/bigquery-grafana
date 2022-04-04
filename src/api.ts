@@ -2,6 +2,7 @@ import { TimeRange } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { lastValueFrom } from 'rxjs';
 import { BigQueryQueryNG } from 'types';
+import { interpolateVariable } from './utils/interpolateVariable';
 
 export interface TableFieldSchema {
   name: string;
@@ -85,7 +86,7 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   validateQuery = async (query: BigQueryQueryNG, range?: TimeRange): Promise<ValidationResults> => {
-    const rawSql = getTemplateSrv().replace(query.rawSql);
+    const rawSql = getTemplateSrv().replace(query.rawSql, undefined, interpolateVariable);
 
     if (this.lastValidation && rawSql === this.lastValidation.query) {
       return this.lastValidation;

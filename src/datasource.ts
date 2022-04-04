@@ -6,11 +6,10 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   ScopedVars,
-  VariableModel,
   vectorator,
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { quoteLiteral } from 'utils';
+import { interpolateVariable } from './utils/interpolateVariable';
 export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, BigQueryOptions> {
   jsonData: BigQueryOptions;
 
@@ -61,28 +60,8 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
     });
   }
 
-  private interpolateVariable = (value: any, variable: VariableModel) => {
-    if (typeof value === 'string') {
-      // @ts-ignore
-      if (variable.multi || variable.includeAll) {
-        return quoteLiteral(value);
-      } else {
-        return value;
-      }
-    }
-
-    if (typeof value === 'number') {
-      return value;
-    }
-
-    const quotedValues = _.map(value, (v) => {
-      return quoteLiteral(v);
-    });
-    return quotedValues.join(',');
-  };
-
   applyTemplateVariables(queryModel: BigQueryQueryNG, scopedVars: ScopedVars): QueryModel {
-    const interpolatedSql = getTemplateSrv().replace(queryModel.rawSql, scopedVars, this.interpolateVariable);
+    const interpolatedSql = getTemplateSrv().replace(queryModel.rawSql, scopedVars, interpolateVariable);
 
     const result = {
       refId: queryModel.refId,
