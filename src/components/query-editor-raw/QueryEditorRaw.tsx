@@ -1,9 +1,9 @@
-import React, { useMemo, useRef, useEffect, useCallback } from 'react';
-import { BigQueryQueryNG } from '../../types';
-import { TableSchema } from 'api';
-import { getBigQueryCompletionProvider } from './bigqueryCompletionProvider';
 import { ColumnDefinition, SQLEditor, TableDefinition } from '@grafana/experimental';
-import sqlFormatter from 'sql-formatter-plus';
+import { TableSchema } from 'api';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { BigQueryQueryNG } from '../../types';
+import { formatSQL } from '../../utils/formatSQL';
+import { getBigQueryCompletionProvider } from './bigqueryCompletionProvider';
 
 type Props = {
   query: BigQueryQueryNG;
@@ -25,6 +25,7 @@ export function QueryEditorRaw({
   const getColumns = useRef<Props['getColumns']>(apiGetColumns);
   const getTables = useRef<Props['getTables']>(apiGetTables);
   const getTableSchema = useRef<Props['getTableSchema']>(apiGetTableSchema);
+
   const completionProvider = useMemo(
     () => getBigQueryCompletionProvider({ getColumns, getTables, getTableSchema }),
     []
@@ -51,7 +52,7 @@ export function QueryEditorRaw({
     <SQLEditor
       query={query.rawSql}
       onChange={onRawQueryChange}
-      language={{ id: 'bigquery', completionProvider, formatter: sqlFormatter.format }}
+      language={{ id: 'bigquery', completionProvider, formatter: formatSQL }}
     >
       {children}
     </SQLEditor>
