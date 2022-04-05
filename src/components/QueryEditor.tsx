@@ -4,6 +4,7 @@ import { RawEditor } from 'components/query-editor-raw/RawEditor';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { applyQueryDefaults, isQueryValid, setDatasourceId } from 'utils';
+import { haveColumns } from 'utils/sql.utils';
 import { getApiClient } from '../api';
 import { QueryHeader } from '../components/QueryHeader';
 import { BigQueryDatasource } from '../datasource';
@@ -46,6 +47,10 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery, range }: 
   const onQueryChange = (q: BigQueryQueryNG, process = true) => {
     setQueryToValidate(q as any);
     onChange(q);
+
+    if (haveColumns(q.sql?.columns) && q.sql?.columns.some((c) => c.name) && !queryRowFilter.group) {
+      setQueryRowFilter({ ...queryRowFilter, group: true });
+    }
 
     if (process) {
       processQuery(q);
