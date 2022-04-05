@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.14
+
+- **Fix**: Reset query in visual query builder when table is changed.
+- **Fix**: Remove debounced state updates in visual query builder.
+- **Fix**: Format template variables and macros correctly in code editor.
+- **Fix**: Do not run hidden queries.
+- **Fix**: Interpolate template variables correctly for validation requests.
+
 ## 0.1.13
 
 - **Data source settings**: Fix bug, that made it impossible to reset and change JWT token used for authentication.
