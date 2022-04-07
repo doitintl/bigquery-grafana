@@ -2,6 +2,7 @@ package driver
 
 import (
 	"database/sql/driver"
+	b64 "encoding/base64"
 	"fmt"
 	"math/big"
 
@@ -23,6 +24,8 @@ func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (dr
 		return v.(float64), nil
 	case "STRING":
 		return v.(string), nil
+	case "BYTES":
+		return b64.StdEncoding.EncodeToString(v.([]byte)), nil
 	case "BOOLEAN":
 		return v.(bool), nil
 	case "TIME":

@@ -70,7 +70,7 @@ func (r *rows) bigqueryTypeOf(columnType *string) (reflect.Type, error) {
 		return reflect.TypeOf(int64(0)), nil
 	case "FLOAT", "FLOAT64", "NUMERIC":
 		return reflect.TypeOf(float64(0)), nil
-	case "STRING":
+	case "STRING", "BYTES":
 		return reflect.TypeOf(""), nil
 	case "BOOLEAN":
 		return reflect.TypeOf(false), nil
