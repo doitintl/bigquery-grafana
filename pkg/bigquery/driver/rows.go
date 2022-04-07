@@ -78,7 +78,7 @@ func (r *rows) bigqueryTypeOf(columnType *string) (reflect.Type, error) {
 		return reflect.TypeOf(time.Time{}), nil
 	case "DATE", "TIME", "DATETIME":
 		return reflect.TypeOf(""), nil
-	case "RECORD":
+	case "RECORD", "GEOGRAPHY":
 		return reflect.TypeOf(""), nil
 	default:
 		return nil, fmt.Errorf("unknown column type `%s`", *columnType)

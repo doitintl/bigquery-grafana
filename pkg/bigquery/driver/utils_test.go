@@ -129,6 +129,14 @@ func Test_ConvertColumnValue(t *testing.T) {
 			expectedValue: "01:01:01",
 		},
 		{
+			name:          "GEOGRAPHY",
+			value:         bigquery.Value("POINT(1.0 1.0)"),
+			columnType:    "GEOGRAPHY",
+			schema:        &bigquery.FieldSchema{Type: "GEOGRAPHY"},
+			expectedType:  "string",
+			expectedValue: "POINT(1.0 1.0)",
+		},
+		{
 			name: "RECORD",
 			value: bigquery.Value([]bigquery.Value{
 				bigquery.Value(int64(1)),
