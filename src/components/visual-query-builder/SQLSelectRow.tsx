@@ -15,8 +15,12 @@ interface SQLSelectRowProps {
   columns?: Array<SelectableValue<string>>;
 }
 
+const asteriskValue = { label: '*', value: '*' };
+
 export function SQLSelectRow({ sql, columns, onSqlChange }: SQLSelectRowProps) {
   const styles = useStyles2(getStyles);
+  const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
+
   const onColumnChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (column: SelectableValue<string>) => {
       let modifiedItem = { ...item };
@@ -80,7 +84,7 @@ export function SQLSelectRow({ sql, columns, onSqlChange }: SQLSelectRowProps) {
             <EditorField label="Column" width={25}>
               <Select
                 value={getColumnValue(item)}
-                options={columns}
+                options={columnsWithAsterisk}
                 inputId={`select-column-${index}-${uniqueId()}`}
                 menuShouldPortal
                 allowCustomValue
