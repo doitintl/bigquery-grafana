@@ -3,6 +3,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { CodeEditor, Field, IconButton, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { formatSQL } from 'utils/formatSQL';
 
 type PreviewProps = {
   rawSql: string;
@@ -25,7 +26,7 @@ export function Preview({ rawSql }: PreviewProps) {
       <CodeEditor
         language="sql"
         height={80}
-        value={rawSql}
+        value={formatSQL(rawSql)}
         monacoOptions={{ scrollbar: { vertical: 'hidden' }, scrollBeyondLastLine: false }}
         readOnly={true}
         showMiniMap={false}
