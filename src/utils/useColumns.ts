@@ -79,6 +79,8 @@ export function mapColumnTypeToIcon(type: string) {
     case 'STRING':
     case 'BYTES':
       return 'text';
+    case 'GEOGRAPHY':
+      return 'map';
     default:
       return undefined;
   }
