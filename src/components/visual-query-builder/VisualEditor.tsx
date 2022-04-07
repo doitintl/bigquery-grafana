@@ -6,7 +6,7 @@ import { BQSelectRow } from './BQSelectRow';
 import { BQWhereRow } from './BQWhereRow';
 import { Preview } from './Preview';
 import { BQGroupByRow } from './BQGroupByRow';
-import { QueryValidator } from 'components/query-editor-raw/QueryValidator';
+import { QueryToolbox } from 'components/query-editor-raw/QueryToolbox';
 
 interface VisualEditorProps extends QueryEditorProps {
   queryRowFilter: QueryRowFilter;
@@ -51,7 +51,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({
           </EditorRow>
         )}
       </EditorRows>
-      <QueryValidator apiClient={apiClient} query={query} onValidate={onValidate} range={range} />
+      <QueryToolbox apiClient={apiClient} query={query} onValidate={onValidate} range={range} />
     </>
   );
 };

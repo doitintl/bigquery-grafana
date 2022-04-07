@@ -1233,10 +1233,10 @@
     prettier "2.2.1"
     typescript "4.3.4"
 
-"@grafana/experimental@0.0.2-canary.23":
-  version "0.0.2-canary.23"
-  resolved "https://registry.yarnpkg.com/@grafana/experimental/-/experimental-0.0.2-canary.23.tgz#42614f4a19de34cab01b8232b87b94b556d6260e"
-  integrity sha512-hYnQ4rfx6cdokYioHNi0vlOrU7/M1H4qrEMgl9ePWlz8LSkuSD2dnk+agTtPqgVePDta1fawODZ7ZS41G5fE2g==
+"@grafana/experimental@0.0.2-canary.24":
+  version "0.0.2-canary.24"
+  resolved "https://registry.yarnpkg.com/@grafana/experimental/-/experimental-0.0.2-canary.24.tgz#43fb640529270428a9b2a0a583437aa4560fc0a2"
+  integrity sha512-5PY0ld0/+urrSQ5j3Lo/sDDWYRy9axrdx2dB5wJjVmqOAZut7OfM3iFwS0rAktQcY8e3lKm73XMFfPZdB+xC7w==
   dependencies:
     "@types/uuid" "^8.3.3"
     uuid "^8.3.2"
@@ -2501,6 +2501,13 @@
   version "4.4.4"
   resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-4.4.4.tgz#acd4cceaa2be6b757db61ed7b432e103242d163e"
   integrity sha512-7gAPz7anVK5xzbeQW9wFBDg7G++aPLAFY0QaSMOou9rJZpbuI58WAuJrgu+qR92l61grlnCUe7AFX8KGahAgug==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-virtualized-auto-sizer@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@types/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.1.tgz#b3187dae1dfc4c15880c9cfc5b45f2719ea6ebd4"
+  integrity sha512-GH8sAnBEM5GV9LTeiz56r4ZhMOUSrP43tAQNSRVxNexDjcNKLCEtnxusAItg1owFUFE6k0NslV26gqVClVvong==
   dependencies:
     "@types/react" "*"
 
@@ -10632,6 +10639,11 @@ react-use@17.3.2, react-use@^17.3.1:
     throttle-debounce "^3.0.1"
     ts-easing "^0.2.0"
     tslib "^2.1.0"
+
+react-virtualized-auto-sizer@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.6.tgz#66c5b1c9278064c5ef1699ed40a29c11518f97ca"
+  integrity sha512-7tQ0BmZqfVF6YYEWcIGuoR3OdYe8I/ZFbNclFlGOC3pMqunkYF/oL30NCjSGl9sMEb17AnzixDz98Kqc3N76HQ==
 
 react-window@1.8.6:
   version "1.8.6"

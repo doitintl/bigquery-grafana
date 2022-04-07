@@ -152,11 +152,20 @@ export function QueryHeader({
         <FlexItem grow={1} />
 
         {isQueryRunnable ? (
-          <Button icon="play" variant="secondary" size="sm" onClick={() => onRunQuery()}>
+          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
             Run query
           </Button>
         ) : (
-          <Tooltip theme="error" content="Your query is invalid. Check below for details." placement="top">
+          <Tooltip
+            theme="error"
+            content={
+              <>
+                Your query is invalid. Check below for details. <br />
+                However, you can still run this query.
+              </>
+            }
+            placement="top"
+          >
             <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
               Run query
             </Button>

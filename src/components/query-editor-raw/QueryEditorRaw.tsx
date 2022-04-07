@@ -12,6 +12,8 @@ type Props = {
   getTableSchema: (l: string, d: string, t: string) => Promise<TableSchema | null>;
   onChange: (value: BigQueryQueryNG, processQuery: boolean) => void;
   children?: (props: { formatQuery: () => void }) => React.ReactNode;
+  width?: number;
+  height?: number;
 };
 
 export function QueryEditorRaw({
@@ -21,6 +23,8 @@ export function QueryEditorRaw({
   getTableSchema: apiGetTableSchema,
   onChange,
   query,
+  width,
+  height,
 }: Props) {
   const getColumns = useRef<Props['getColumns']>(apiGetColumns);
   const getTables = useRef<Props['getTables']>(apiGetTables);
@@ -50,6 +54,8 @@ export function QueryEditorRaw({
 
   return (
     <SQLEditor
+      width={width}
+      height={height}
       query={query.rawSql}
       onChange={onRawQueryChange}
       language={{ id: 'bigquery', completionProvider, formatter: formatSQL }}
