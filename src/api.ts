@@ -28,7 +28,8 @@ export interface TableSchema {
 }
 
 export interface ValidationResults {
-  query: string;
+  query: BigQueryQueryNG;
+  rawSql: string;
   error: string;
   isError: boolean;
   isValid: boolean;
@@ -86,9 +87,12 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   validateQuery = async (query: BigQueryQueryNG, range?: TimeRange): Promise<ValidationResults> => {
-    const rawSql = getTemplateSrv().replace(query.rawSql, undefined, interpolateVariable);
+    const rawSql = getTemplateSrv().replace(query.rawSql, undefined, interpolateVariable).trim();
+    const lastRawSql =
+      this.lastValidation &&
+      getTemplateSrv().replace(this.lastValidation.query.rawSql, undefined, interpolateVariable).trim();
 
-    if (this.lastValidation && rawSql === this.lastValidation.query) {
+    if (this.lastValidation && rawSql === lastRawSql && query.location === this.lastValidation.query.location) {
       return this.lastValidation;
     }
 
@@ -103,9 +107,11 @@ class BigQueryAPIClient implements BigQueryAPI {
     });
 
     this.lastValidation = {
-      query: rawSql,
       ...validationResults,
+      query,
+      rawSql: validationResults.query,
     };
+
     return this.lastValidation!;
   };
 

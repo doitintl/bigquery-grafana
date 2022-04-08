@@ -57,6 +57,11 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery, range }: 
     }
   };
 
+  const onQueryHeaderChange = (q: BigQueryQueryNG) => {
+    setQueryToValidate(q as any);
+    onChange(q);
+  };
+
   if (apiLoading || apiError || !apiClient) {
     return null;
   }
@@ -64,7 +69,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery, range }: 
   return (
     <>
       <QueryHeader
-        onChange={onChange}
+        onChange={onQueryHeaderChange}
         onRunQuery={onRunQuery}
         onQueryRowChange={setQueryRowFilter}
         queryRowFilter={queryRowFilter}
