@@ -3,14 +3,14 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
 } from '@grafana/data';
-import { Field, FieldSet, Input, RadioButtonGroup, Select } from '@grafana/ui';
+import { Field, FieldSet, RadioButtonGroup, Select } from '@grafana/ui';
 
 import React from 'react';
 import { JWTConfigEditor } from './JWTConfigEditor';
 import { JWTForm } from './JWTForm';
 import { ConfigurationHelp } from './/ConfigurationHelp';
-import { GOOGLE_AUTH_TYPE_OPTIONS, PROCESSING_LOCATIONS, QUERY_PRIORITIES } from '../constants';
-import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType, QueryPriority } from '../types';
+import { GOOGLE_AUTH_TYPE_OPTIONS, PROCESSING_LOCATIONS } from '../constants';
+import { BigQueryOptions, BigQuerySecureJsonData, GoogleAuthType } from '../types';
 
 export type BigQueryConfigEditorProps = DataSourcePluginOptionsEditorProps<BigQueryOptions, BigQuerySecureJsonData>;
 
@@ -97,17 +97,6 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
 
       <FieldSet label="Other settings">
         <Field
-          label="Flat rate project"
-          description="The project that the Queries will be run in if you are using a flat-rate pricing model"
-        >
-          <Input
-            className="width-30"
-            value={jsonData.flatRateProject || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'flatRateProject')}
-          />
-        </Field>
-
-        <Field
           label="Processing location"
           description={
             <span>
@@ -130,34 +119,6 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
             options={PROCESSING_LOCATIONS}
             onChange={onUpdateDatasourceJsonDataOptionSelect(props, 'processingLocation')}
             menuShouldPortal={true}
-          />
-        </Field>
-
-        <Field
-          label="Query priority"
-          description={
-            <span>
-              Read more about query priotities{' '}
-              <a
-                href="https://cloud.google.com/bigquery/docs/query-overview#types_of_queries"
-                className="external-link"
-                rel="noreferrer"
-                target="_blank"
-              >
-                here
-              </a>
-            </span>
-          }
-        >
-          <RadioButtonGroup
-            options={QUERY_PRIORITIES}
-            value={jsonData.queryPriority || QueryPriority.Interactive}
-            onChange={(v) => {
-              props.onOptionsChange({
-                ...options,
-                jsonData: { ...jsonData, queryPriority: v },
-              });
-            }}
           />
         </Field>
       </FieldSet>
