@@ -1,6 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
-
   "id": "grafana-bigquery-datasource",
   "type": "datasource",
   "name": "Google BigQuery",
@@ -11,19 +10,20 @@
   "backend": true,
   "executable": "grafana-bq-ds",
   "dependencies": {
-    "grafanaDependency": "7.x || 8.x"
+    "grafanaDependency": "8.x || 9.x"
   },
   "queryOptions": {
     "maxDataPoints": true
   },
-
   "info": {
     "description": "Google BigQuery datasource for Grafana",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": ["bigquery"],
+    "keywords": [
+      "bigquery"
+    ],
     "logos": {
       "small": "img/logo.png",
       "large": "img/logo.png"
@@ -42,7 +42,10 @@
       "path": "bigquery",
       "url": "https://www.googleapis.com/bigquery",
       "jwtTokenAuth": {
-        "scopes": ["https://www.googleapis.com/auth/bigquery", "https://www.googleapis.com/auth/drive"],
+        "scopes": [
+          "https://www.googleapis.com/auth/bigquery",
+          "https://www.googleapis.com/auth/drive"
+        ],
         "params": {
           "token_uri": "{{.JsonData.tokenUri}}",
           "client_email": "{{.JsonData.clientEmail}}",
