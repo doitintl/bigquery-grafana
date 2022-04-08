@@ -56,16 +56,26 @@ export function QueryHeader({
   };
 
   const onDatasetChange = (e: SelectableValue) => {
+    if (e.value === query.dataset) {
+      return;
+    }
+
     const next = {
       ...query,
       dataset: e.value,
       table: undefined,
+      sql: undefined,
+      rawSql: '',
     };
 
     onChange(next);
   };
 
   const onTableChange = (e: SelectableValue) => {
+    if (e.value === query.table) {
+      return;
+    }
+
     const next: BigQueryQueryNG = {
       ...query,
       table: e.value,
@@ -216,7 +226,7 @@ export function QueryHeader({
                 apiClient={apiClient}
                 location={query.location}
                 dataset={query.dataset}
-                value={query.table}
+                value={query.table === undefined ? null : query.table}
                 onChange={onTableChange}
                 applyDefault
               />

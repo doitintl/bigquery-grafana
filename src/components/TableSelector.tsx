@@ -6,7 +6,7 @@ import { ResourceSelectorProps } from '../types';
 
 interface TableSelectorProps extends ResourceSelectorProps {
   dataset?: string;
-  value?: string;
+  value: string | null;
   onChange: (v: SelectableValue) => void;
 }
 
