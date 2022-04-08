@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.15
+
+- **Data types support** Add support for GEOGRAPHY, BIGNUMERIC and BYTES data types.
+- **Code editor**: Add possibility to edit query in an expanded editor.
+- **Visual Query Builder**: Support asterisk in select.
+- **Visual Query Builder**: Format preview.
+- **Visual Query Builder**: Open group by when aggregation selected.
+- **Fix**: Reset query on dataset change.
+- **Fix**: Remove not used config settings.
+- **Fix**: Perform query validation on processing location change.
+- Update list of available processing locations.
+- Update minimal Grafana version.
+
 ## 0.1.14
 
 - **Fix**: Reset query in visual query builder when table is changed.
