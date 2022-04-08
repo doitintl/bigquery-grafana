@@ -46,7 +46,7 @@ func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (dr
 			return nil, err
 		}
 		return res, nil
-	case "NUMERIC":
+	case "NUMERIC", "BIGNUMERIC":
 		conv, _ := v.(*big.Rat).Float64()
 		return conv, nil
 	case "GEOGRAPHY":

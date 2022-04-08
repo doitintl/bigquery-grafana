@@ -89,6 +89,14 @@ func Test_ConvertColumnValue(t *testing.T) {
 			expectedValue: "2",
 		},
 		{
+			name:          "numeric type BIGNUMERIC",
+			value:         bigquery.Value((&big.Rat{}).SetFloat64(2.34e+12)),
+			columnType:    "BIGNUMERIC",
+			schema:        &bigquery.FieldSchema{Type: "BIGNUMERIC"},
+			expectedType:  "float64",
+			expectedValue: "2.34e+12",
+		},
+		{
 			name:          "numeric type NUMERIC",
 			value:         bigquery.Value((&big.Rat{}).SetFloat64(1.99999)),
 			columnType:    "NUMERIC",
