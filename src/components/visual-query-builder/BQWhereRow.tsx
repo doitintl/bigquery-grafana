@@ -26,6 +26,8 @@ export function BQWhereRow({ query, apiClient, onQueryChange }: BQWhereRowProps)
 
   return (
     <SQLWhereRow
+      // TODO: fix key that's used to force clean render or SQLWhereRow - otherwise it doesn't render operators correctly
+      key={JSON.stringify(state.value)}
       config={{ fields: state.value || {} }}
       sql={query.sql}
       onSqlChange={(val) => {

@@ -1,5 +1,5 @@
-import { toOption } from '@grafana/data';
-import { Button, Input, Select } from '@grafana/ui';
+import { dateTime, toOption } from '@grafana/data';
+import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
 import React from 'react';
 import { BasicConfig, Config, JsonItem, Settings, Utils, Widgets } from 'react-awesome-query-builder';
 
@@ -51,7 +51,22 @@ export const widgets: Widgets = {
       );
     },
   },
+  datetime: {
+    ...BasicConfig.widgets.datetime,
+    factory: function DateTimeInput(props) {
+      return (
+        <DateTimePicker
+          onChange={(e) => {
+            props?.setValue(e.format(BasicConfig.widgets.datetime.valueFormat));
+          }}
+          date={dateTime(props?.value).utc()}
+        />
+      );
+    },
+  },
 };
+
+const { is_empty, is_not_empty, proximity, ...supportedOperators } = BasicConfig.operators;
 
 export const settings: Settings = {
   ...BasicConfig.settings,
@@ -123,6 +138,7 @@ export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,
   settings,
+  operators: supportedOperators as typeof BasicConfig.operators,
 };
 
 export type { Config };

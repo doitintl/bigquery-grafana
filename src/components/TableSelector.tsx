@@ -29,12 +29,14 @@ export const TableSelector: React.FC<TableSelectorProps> = ({
   return (
     <Select
       className={className}
+      disabled={state.loading}
       aria-label="Table selector"
       value={value}
       options={state.value}
       onChange={onChange}
       isLoading={state.loading}
       menuShouldPortal={true}
+      placeholder={state.loading ? 'Loading tables' : 'Select table'}
     />
   );
 };

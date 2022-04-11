@@ -10359,10 +10359,10 @@ rc-util@^5.0.1, rc-util@^5.16.1, rc-util@^5.2.1, rc-util@^5.3.0, rc-util@^5.5.0,
     react-is "^16.12.0"
     shallowequal "^1.1.0"
 
-react-awesome-query-builder@^4.8.0:
-  version "4.8.0"
-  resolved "https://registry.yarnpkg.com/react-awesome-query-builder/-/react-awesome-query-builder-4.8.0.tgz#bc7c62bf20099ca8dfe13e54c6a0249778346620"
-  integrity sha512-6PxndFFXJ4E17qSBA1sw4XCQaU796Q4OOj7e95dnAk7OCxFQf/P8Fm2qgKTRL0ap+AtqyI6/+ocNEoKHKMuMcg==
+react-awesome-query-builder@^5.1.2:
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/react-awesome-query-builder/-/react-awesome-query-builder-5.1.2.tgz#2a8e34e4558275471069ca5b39d73113e748cf84"
+  integrity sha512-qh+vcu0Cgo1OaGS6uNiXNSNd2ORUGAtXUhwqqoGuI1LqXwXBQgKVBKg3/uaVL7T7BK8LYvJQiKu94S9+C9Fh3Q==
   dependencies:
     "@date-io/moment" "^1.3.13"
     classnames "^2.3.1"
@@ -10371,8 +10371,9 @@ react-awesome-query-builder@^4.8.0:
     lodash "^4.17.21"
     moment "^2.29.1"
     prop-types "^15.7.2"
-    react-redux "~7.1.3"
+    react-redux "^7.2.2"
     redux "^4.1.0"
+    spel2js "^0.2.8"
     sqlstring "^2.3.2"
 
 react-beautiful-dnd@13.1.0:
@@ -10504,7 +10505,7 @@ react-inlinesvg@2.3.0:
     exenv "^1.2.2"
     react-from-dom "^0.6.0"
 
-react-is@^16.12.0, react-is@^16.13.1, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.9.0:
+react-is@^16.12.0, react-is@^16.13.1, react-is@^16.6.0, react-is@^16.7.0:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
@@ -10539,17 +10540,17 @@ react-redux@^7.2.0:
     prop-types "^15.7.2"
     react-is "^17.0.2"
 
-react-redux@~7.1.3:
-  version "7.1.3"
-  resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.1.3.tgz#717a3d7bbe3a1b2d535c94885ce04cdc5a33fc79"
-  integrity sha512-uI1wca+ECG9RoVkWQFF4jDMqmaw0/qnvaSvOoL/GA4dNxf6LoV8sUAcNDvE5NWKs4hFpn0t6wswNQnY3f7HT3w==
+react-redux@^7.2.2:
+  version "7.2.8"
+  resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.2.8.tgz#a894068315e65de5b1b68899f9c6ee0923dd28de"
+  integrity sha512-6+uDjhs3PSIclqoCk0kd6iX74gzrGc3W5zcAjbrFgEdIjRSQObdIwfx80unTkVUYvbQ95Y8Av3OvFHq1w5EOUw==
   dependencies:
-    "@babel/runtime" "^7.5.5"
-    hoist-non-react-statics "^3.3.0"
-    invariant "^2.2.4"
+    "@babel/runtime" "^7.15.4"
+    "@types/react-redux" "^7.1.20"
+    hoist-non-react-statics "^3.3.2"
     loose-envify "^1.4.0"
     prop-types "^15.7.2"
-    react-is "^16.9.0"
+    react-is "^17.0.2"
 
 react-router-dom@^5.2.0:
   version "5.3.0"
@@ -11621,6 +11622,11 @@ spdx-license-ids@^3.0.0:
   version "3.0.11"
   resolved "https://registry.yarnpkg.com/spdx-license-ids/-/spdx-license-ids-3.0.11.tgz#50c0d8c40a14ec1bf449bae69a0ea4685a9d9f95"
   integrity sha512-Ctl2BrFiM0X3MANYgj3CkygxhRmr9mi6xhejbdO960nF6EDJApTYpn0BQnDKlnNBULKiCN1n3w9EBkHK8ZWg+g==
+
+spel2js@^0.2.8:
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/spel2js/-/spel2js-0.2.8.tgz#3ba3b291e5c6bae5c9f703e839294969b61fc691"
+  integrity sha512-dzYq+v4YV7SPIdNrmvFAUjc0HcgI7b0yoMw7kzOBmlj/GjdOb/+8dVn1I7nLuOS5X2SW+LK3tf2SVkXRjCkWBA==
 
 split-string@^3.0.1, split-string@^3.0.2:
   version "3.1.0"
