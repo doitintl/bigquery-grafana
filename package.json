@@ -18,7 +18,7 @@
   "dependencies": {
     "@emotion/css": "11.1.3",
     "@grafana/data": "canary",
-    "@grafana/experimental": "0.0.2-canary.24",
+    "@grafana/experimental": "0.0.2-canary.26",
     "@grafana/runtime": "canary",
     "@grafana/ui": "canary",
     "brace": "^0.10.0",
