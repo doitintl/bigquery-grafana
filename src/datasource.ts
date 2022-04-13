@@ -1,7 +1,8 @@
 import _ from 'lodash';
-import { BigQueryQueryNG, BigQueryOptions, GoogleAuthType, QueryModel } from './types';
+import { BigQueryQueryNG, BigQueryOptions, GoogleAuthType, QueryModel, QueryFormat } from './types';
 import {
   DataFrame,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -10,6 +11,9 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { interpolateVariable } from './utils/interpolateVariable';
+import { DEFAULT_REGION } from './constants';
+import { EditorMode } from '@grafana/experimental';
+
 export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, BigQueryOptions> {
   jsonData: BigQueryOptions;
 
@@ -28,6 +32,38 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
       return false;
     }
     return true;
+  }
+
+  async importQueries(queries: DataQuery[]) {
+    const importedQueries = [];
+
+    for (let i = 0; i < queries.length; i++) {
+      if (queries[i].datasource?.type === 'doitintl-bigquery-datasource') {
+        const {
+          // ignore not supported fields
+          group,
+          metricColumn,
+          orderByCol,
+          orderBySort,
+          select,
+          timeColumn,
+          timeColumnType,
+          where,
+          convertToUTC,
+          // use the rest of the fields
+          ...commonQueryProps
+        } = queries[i] as any;
+
+        importedQueries.push({
+          ...commonQueryProps,
+          location: (queries[i] as any).location || DEFAULT_REGION,
+          format: (queries[i] as any).format === 'time_series' ? QueryFormat.Timeseries : QueryFormat.Table,
+          editorMode: EditorMode.Code,
+        } as BigQueryQueryNG);
+      }
+    }
+
+    return Promise.resolve(importedQueries) as any;
   }
 
   async metricFindQuery(query: BigQueryQueryNG) {
