@@ -1,6 +1,6 @@
 {
   "name": "grafana-bigquery-datasource",
-  "version": "0.1.15",
+  "version": "1.0.0",
   "description": "Google BigQuery datasource for Grafana",
   "scripts": {
     "dev": "grafana-toolkit plugin:dev",

@@ -2,10 +2,6 @@
 
 The Google BigQuery data source plugin allows you to query and visualize Google BigQuery data from within Grafana.
 
-## Beta
-
-This plugin is currently in Beta development and subject to change.
-
 ## Install the plugin
 
 1. Navigate to [BigQuery](https://grafana.com/grafana/plugins/grafana-bigquery-datasource/) plugin homepage.
@@ -84,6 +80,40 @@ datasources:
 
 The query editor allows you to query Google BigQuery datasource. Queries can contain macros which simplify syntax and allow for dynamic parts.
 
+### SQL query editor
+
+SQL query editor comes with a rich support for standard SQL as well as verbose autocompletion for:
+
+- BigQuery standard SQL language syntax.
+- BigQuery datasets, tables and columns.
+- Macros and template variables.
+
+SQL query editor also supports query validation and code formatting.
+
+<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditor.png" />
+
+#### Query validation
+
+SQL query editor validates the query prividing you with a meaningful information about what's wrong with the query. If the query is valid, an estimated query size is shown.
+
+<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditorValidation.gif" />
+
+#### Extended code editor
+
+SQL query editor allows editing the query in a full screen code editor making it easy to work with long queries:
+
+<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditorFS.gif" />
+
+#### Keyboard shortcuts
+
+- `CMD/Ctrl + Return` - Run query
+
+### Visual query editor
+
+Visual query editor allows creating simple BigQuery queries without SQL knowledge. It comes with basic aggregations support, filtering, grouping, ordering and raw query preview. Similar to SQL query editor, the Visual query editor also validates your query as it's being created.
+
+<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQVqb.gif" />
+
 ### Query as time series
 
 Time series visualization options are selectable after adding [`TIMESTAMP`](https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#timestamp_type) field to your query. This field will be used as the timestamp. You can select time series visualization using the visualization options. Grafana interprets timestamp rows without explicit time zone as UTC. Any column except time is treated as a value column.
@@ -102,16 +132,14 @@ Here is an example of a query with a macro that will use Grafana's time filter:
 SELECT
       time_column,
       value_column,
-FROM project.dataset.table
+FROM `project.dataset.table`
 WHERE $__timeFilter(time_column)
 ```
 
-| Macro example                         | Description                                                                        |
-| ------------------------------------- | ---------------------------------------------------------------------------------- |
-| _$\_\_timeFilter(timeColumn)_         | Will be replaced by a time range filter using the specified name.                  |
-| _$\_\_from_                           | Will be replaced by the start of the currently active time range filter selection. |
-| _$\_\_to_                             | Will be replaced by the end of the currently active time range filter selection.   |
-| _$\_\_timeGroup(timeColumn,interval)_ | Will be replaced by an expression usable in GROUP BY clause.                       |
+| Macro example                         | Description                                                       |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| _$\_\_timeFilter(timeColumn)_         | Will be replaced by a time range filter using the specified name. |
+| _$\_\_timeGroup(timeColumn,interval)_ | Will be replaced by an expression usable in GROUP BY clause.      |
 
 ### Templates and variables
 

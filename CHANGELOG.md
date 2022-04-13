@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- **Visual Query Builder**: Support IS [NOT] NULL operator.
+- **Code editor**: Add template variables suggestions.
+- **Query builder**: Automatically import [doitintl-bigquery-datasource](https://github.com/doitintl/bigquery-grafana) queries when changing data source to [google-bigquery-datasource](https://github.com/grafana/google-bigquery-datasource). **Works only with Grafana 8.5+.**
+
 ## 0.1.15
 
 - **Data types support** Add support for GEOGRAPHY, BIGNUMERIC and BYTES data types.
