@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- **Authentication**: Allow configuring default project when using GCE authentication.
+
 ## 1.0.0
 
 - **Visual Query Builder**: Support IS [NOT] NULL operator.

@@ -3,7 +3,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
 } from '@grafana/data';
-import { Field, FieldSet, RadioButtonGroup, Select } from '@grafana/ui';
+import { Field, FieldSet, Input, RadioButtonGroup, Select } from '@grafana/ui';
 
 import React from 'react';
 import { JWTConfigEditor } from './JWTConfigEditor';
@@ -17,7 +17,6 @@ export type BigQueryConfigEditorProps = DataSourcePluginOptionsEditorProps<BigQu
 export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props) => {
   const { options, onOptionsChange } = props;
   const { jsonData, secureJsonFields, secureJsonData } = options;
-
   if (!jsonData.authenticationType) {
     jsonData.authenticationType = GoogleAuthType.JWT;
   }
@@ -96,6 +95,16 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
       )}
 
       <FieldSet label="Other settings">
+        {!isJWT && (
+          <Field label="Default project">
+            <Input
+              id="defaultProject"
+              width={60}
+              value={jsonData.defaultProject || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'defaultProject')}
+            />
+          </Field>
+        )}
         <Field
           label="Processing location"
           description={

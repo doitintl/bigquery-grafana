@@ -25,6 +25,10 @@ func (r *ResourceHandler) defaultProjects(rw http.ResponseWriter, req *http.Requ
 	}
 
 	if s.AuthenticationType == "gce" {
+		if s.DefaultProject != "" {
+			utils.SendResponse(s.DefaultProject, nil, rw)
+			return
+		}
 		res, err := r.ds.GetGCEDefaultProject(req.Context())
 		utils.SendResponse(res, err, rw)
 	} else {
