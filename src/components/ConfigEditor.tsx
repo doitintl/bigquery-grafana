@@ -96,7 +96,7 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
 
       <FieldSet label="Other settings">
         {!isJWT && (
-          <Field label="Default project">
+          <Field label="Default project" description="GCP project where BigQuery jobs will be created">
             <Input
               id="defaultProject"
               width={60}

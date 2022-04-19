@@ -74,7 +74,7 @@ func (s *BigQueryDatasource) Connect(config backend.DataSourceInstanceSettings, 
 
 	connectionSettings := getConnectionSettings(settings, args)
 
-	if settings.AuthenticationType == "gce" {
+	if settings.AuthenticationType == "gce" && connectionSettings.Project == "" {
 		defaultProject, err := s.GetGCEDefaultProject(context.Background())
 		if err != nil {
 			return nil, errors.WithMessage(err, "Failed to retrieve default GCE project")
