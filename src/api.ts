@@ -87,7 +87,26 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   validateQuery = async (query: BigQueryQueryNG, range?: TimeRange): Promise<ValidationResults> => {
-    const rawSql = getTemplateSrv().replace(query.rawSql, undefined, interpolateVariable).trim();
+    const rawSql = getTemplateSrv()
+      .replace(
+        query.rawSql,
+        // The $__interval vars are hardcoded here, as validation is not performed via PanelQueryRunner which provides the interval value.
+        // Moreover, the interval and the rest of the query options are not passed down to the QueryEditor are these are dependand on
+        // dashbaord settings, panel size etc. Hardcoding the interval value here should not influence the query validation whatsoever.
+        {
+          __interval: {
+            text: '1m',
+            value: '1m',
+          },
+          __interval_ms: {
+            text: '60000',
+            value: 60000,
+          },
+        },
+        interpolateVariable
+      )
+      .trim();
+
     const lastRawSql =
       this.lastValidation &&
       getTemplateSrv().replace(this.lastValidation.query.rawSql, undefined, interpolateVariable).trim();
