@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- **Data types support**: Add support for querying array of primitive types.
+- **Fix**: Interpolate `$__interval` and `$__interval_ms` variables when validating query.
+
 ## 1.0.2
 
 - **Fix**: Use configured default project when using GCE authentication.
