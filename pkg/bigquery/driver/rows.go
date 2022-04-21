@@ -88,6 +88,10 @@ func (r *rows) bigqueryTypeOf(columnType *string) (reflect.Type, error) {
 func (r *rows) ColumnTypeScanType(index int) reflect.Type {
 	columnType := r.types[index]
 
+	if r.fieldSchemas[index].Repeated {
+		return reflect.TypeOf("")
+	}
+
 	convertedBigqueryData, err := r.bigqueryTypeOf(&columnType)
 	if err != nil {
 		log.DefaultLogger.Error(err.Error())

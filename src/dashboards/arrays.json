@@ -1,0 +1,3016 @@
+{
+    "__inputs": [
+        {
+            "name": "DS_BQ",
+            "label": "BigQuery",
+            "description": "",
+            "type": "datasource",
+            "pluginId": "grafana-bigquery-datasource",
+            "pluginName": "Google BigQuery"
+        }
+    ],
+    "__requires": [
+        {
+            "type": "grafana",
+            "id": "grafana",
+            "name": "Grafana",
+            "version": "8.0.0"
+        },
+        {
+            "type": "panel",
+            "id": "table",
+            "name": "Table",
+            "version": ""
+        },
+        {
+            "type": "datasource",
+            "id": "grafana-bigquery-datasource",
+            "name": "Google BigQuery",
+            "version": "1.0.0"
+        }
+    ],
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1112,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 2,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  [1, 2, 3] as numbers,\n  [\"a\", \"b\", \"c\"] as strings,\n  [true, false, true] as booleans;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Array literals",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 3,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  [a, b, c]\nFROM\n  (\n    SELECT\n      5 AS a,\n      37 AS b,\n      406 AS c\n  );\nSELECT\n  [a, b, c]\nFROM\n  (\n    SELECT\n      CAST(5 AS INT64) AS a,\n      CAST(37 AS FLOAT64) AS b,\n      406 AS c\n  );",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Arrays from expressions with compatible types",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 0,
+                "y": 4
+            },
+            "id": 4,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#generating_arrays_of_integers"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  GENERATE_ARRAY(11, 33, 2) AS odds;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Generating arrays [1]",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 8,
+                "y": 4
+            },
+            "id": 5,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#generating_arrays_of_integers"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  GENERATE_ARRAY(21, 14, -1) AS countdown;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Generating arrays [2]",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 16,
+                "y": 4
+            },
+            "id": 6,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#generating_arrays_of_dates"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  GENERATE_DATE_ARRAY('2017-11-21', '2017-12-31', INTERVAL 1 WEEK) AS date_array;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Generating arrays [3]",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            },
+            "id": 7,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#accessing_array_elements"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [5, 10] AS some_numbers\n)\nSELECT\n  some_numbers,\n  some_numbers [OFFSET(1)] AS offset_1,\n  some_numbers [ORDINAL(1)] AS ordinal_1\nFROM\n  sequences;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Accessing array elements",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 12,
+                "y": 8
+            },
+            "id": 8,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#finding_lengths"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [5, 10] AS some_numbers\n)\nSELECT\n  some_numbers,\n  ARRAY_LENGTH(some_numbers) AS len\nFROM\n  sequences;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Finding lengths",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 0,
+                "y": 14
+            },
+            "id": 9,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  *\nFROM\n  UNNEST(\n    ['foo', 'bar', 'baz', 'qux', 'corge', 'garply', 'waldo', 'fred']\n  ) AS element WITH OFFSET AS offset\nORDER BY\n  offset;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Converting elements in an array to rows in a table",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 8,
+                "y": 14
+            },
+            "id": 10,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays\n\n"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    1 AS id,\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    2 AS id,\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    3 AS id,\n    [5, 10] AS some_numbers\n)\nSELECT\n  id,\n  flattened_numbers\nFROM\n  sequences\n  CROSS JOIN UNNEST(sequences.some_numbers) AS flattened_numbers;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Converting elements in an array to rows in a table",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 16,
+                "y": 14
+            },
+            "id": 11,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays\n\n"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    1 AS id,\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    2 AS id,\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    3 AS id,\n    [5, 10] AS some_numbers\n)\nSELECT\n  id,\n  flattened_numbers\nFROM\n  sequences,\n  sequences.some_numbers AS flattened_numbers;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Converting elements in an array to rows in a table",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 0,
+                "y": 21
+            },
+            "id": 12,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#query_structs_in_an_array"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH races AS (\n  SELECT\n    \"800M\" AS race,\n    [STRUCT(\"Rudisha\" as name, [23.4, 26.3, 26.4, 26.1] as laps\n),\nSTRUCT(\n  \"Makhloufi\" as name,\n  [24.5, 25.4, 26.6, 26.1] as laps\n),\nSTRUCT(\n  \"Murphy\" as name,\n  [23.9, 26.0, 27.0, 26.0] as laps\n),\nSTRUCT(\n  \"Bosse\" as name,\n  [23.6, 26.2, 26.5, 27.1] as laps\n),\nSTRUCT(\n  \"Rotich\" as name,\n  [24.7, 25.6, 26.9, 26.4] as laps\n),\nSTRUCT(\n  \"Lewandowski\" as name,\n  [25.0, 25.7, 26.3, 27.2] as laps\n),\nSTRUCT(\n  \"Kipketer\" as name,\n  [23.2, 26.1, 27.3, 29.4] as laps\n),\nSTRUCT(\n  \"Berian\" as name,\n  [23.7, 26.1, 27.0, 29.3] as laps\n) ] AS participants\n)\nSELECT\n  race,\n  participant\nFROM\n  races r\n  CROSS JOIN UNNEST(r.participants) as participant;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Querying STRUCT elements in an ARRAY",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 21
+            },
+            "id": 13,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#query_structs_in_an_array"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH races AS (\n  SELECT\n    \"800M\" AS race,\n    [STRUCT(\"Rudisha\" as name, [23.4, 26.3, 26.4, 26.1] as laps\n),\nSTRUCT(\n  \"Makhloufi\" as name,\n  [24.5, 25.4, 26.6, 26.1] as laps\n),\nSTRUCT(\n  \"Murphy\" as name,\n  [23.9, 26.0, 27.0, 26.0] as laps\n),\nSTRUCT(\n  \"Bosse\" as name,\n  [23.6, 26.2, 26.5, 27.1] as laps\n),\nSTRUCT(\n  \"Rotich\" as name,\n  [24.7, 25.6, 26.9, 26.4] as laps\n),\nSTRUCT(\n  \"Lewandowski\" as name,\n  [25.0, 25.7, 26.3, 27.2] as laps\n),\nSTRUCT(\n  \"Kipketer\" as name,\n  [23.2, 26.1, 27.3, 29.4] as laps\n),\nSTRUCT(\n  \"Berian\" as name,\n  [23.7, 26.1, 27.0, 29.3] as laps\n) ] AS participants\n)\nSELECT\n  race,\n  (\n    SELECT\n      name\n    FROM\n      UNNEST(participants)\n    ORDER BY\n      (\n        SELECT\n          SUM(duration)\n        FROM\n          UNNEST(laps) AS duration\n      ) ASC\n    LIMIT\n      1\n  ) AS fastest_racer\nFROM\n  races;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Querying STRUCT elements in an ARRAY",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 0,
+                "y": 28
+            },
+            "id": 14,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#querying_array-type_fields_in_a_struct"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH races AS (\n  SELECT\n    \"800M\" AS race,\n    [STRUCT(\"Rudisha\" as name, [23.4, 26.3, 26.4, 26.1] as laps\n),\nSTRUCT(\n  \"Makhloufi\" as name,\n  [24.5, 25.4, 26.6, 26.1] as laps\n),\nSTRUCT(\n  \"Murphy\" as name,\n  [23.9, 26.0, 27.0, 26.0] as laps\n),\nSTRUCT(\n  \"Bosse\" as name,\n  [23.6, 26.2, 26.5, 27.1] as laps\n),\nSTRUCT(\n  \"Rotich\" as name,\n  [24.7, 25.6, 26.9, 26.4] as laps\n),\nSTRUCT(\n  \"Lewandowski\" as name,\n  [25.0, 25.7, 26.3, 27.2] as laps\n),\nSTRUCT(\n  \"Kipketer\" as name,\n  [23.2, 26.1, 27.3, 29.4] as laps\n),\nSTRUCT(\n  \"Berian\" as name,\n  [23.7, 26.1, 27.0, 29.3] as laps\n) ] AS participants\n)\nSELECT\n  race,\n  (\n    SELECT\n      name\n    FROM\n      UNNEST(participants),\n      UNNEST(laps) AS duration\n    ORDER BY\n      duration ASC\n    LIMIT\n      1\n  ) AS runner_with_fastest_lap\nFROM\n  races;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Querying ARRAY-type fields in a STRUCT",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 8,
+                "y": 28
+            },
+            "id": 15,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#querying_array-type_fields_in_a_struct"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH races AS (\n  SELECT\n    \"800M\" AS race,\n    [STRUCT(\"Rudisha\" as name, [23.4, 26.3, 26.4, 26.1] as laps\n),\nSTRUCT(\n  \"Makhloufi\" as name,\n  [24.5, 25.4, 26.6, 26.1] as laps\n),\nSTRUCT(\n  \"Murphy\" as name,\n  [23.9, 26.0, 27.0, 26.0] as laps\n),\nSTRUCT(\n  \"Bosse\" as name,\n  [23.6, 26.2, 26.5, 27.1] as laps\n),\nSTRUCT(\n  \"Rotich\" as name,\n  [24.7, 25.6, 26.9, 26.4] as laps\n),\nSTRUCT(\n  \"Lewandowski\" as name,\n  [25.0, 25.7, 26.3, 27.2] as laps\n),\nSTRUCT(\n  \"Kipketer\" as name,\n  [23.2, 26.1, 27.3, 29.4] as laps\n),\nSTRUCT(\n  \"Berian\" as name,\n  [23.7, 26.1, 27.0, 29.3] as laps\n) ] AS participants\n)\nSELECT\n  race,\n  (\n    SELECT\n      name\n    FROM\n      UNNEST(participants)\n      CROSS JOIN UNNEST(laps) AS duration\n    ORDER BY\n      duration ASC\n    LIMIT\n      1\n  ) AS runner_with_fastest_lap\nFROM\n  races;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Querying ARRAY-type fields in a STRUCT",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 16,
+                "y": 28
+            },
+            "id": 16,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#querying_array-type_fields_in_a_struct"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH races AS (\n  SELECT\n    \"800M\" AS race,\n    [STRUCT(\"Rudisha\" as name, [23.4, 26.3, 26.4, 26.1] as laps\n),\nSTRUCT(\n  \"Makhloufi\" as name,\n  [24.5, 25.4, 26.6, 26.1] as laps\n),\nSTRUCT(\n  \"Murphy\" as name,\n  [23.9, 26.0, 27.0, 26.0] as laps\n),\nSTRUCT(\n  \"Bosse\" as name,\n  [23.6, 26.2, 26.5, 27.1] as laps\n),\nSTRUCT(\n  \"Rotich\" as name,\n  [24.7, 25.6, 26.9, 26.4] as laps\n),\nSTRUCT(\n  \"Lewandowski\" as name,\n  [25.0, 25.7, 26.3, 27.2] as laps\n),\nSTRUCT(\n  \"Kipketer\" as name,\n  [23.2, 26.1, 27.3, 29.4] as laps\n),\nSTRUCT(\n  \"Berian\" as name,\n  [23.7, 26.1, 27.0, 29.3] as laps\n),\nSTRUCT(\"Nathan\" as name, ARRAY < FLOAT64 > [] as laps),\nSTRUCT(\"David\" as name, NULL as laps) ] AS participants\n)\nSELECT\n  name,\n  sum(duration) AS finish_time\nFROM\n  races,\n  races.participants\n  LEFT JOIN participants.laps duration\nGROUP BY\n  name;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Querying ARRAY-type fields in a STRUCT",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 0,
+                "y": 35
+            },
+            "id": 18,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#filtering_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [5, 10] AS some_numbers\n)\nSELECT\n  ARRAY(\n    SELECT\n      x * 2\n    FROM\n      UNNEST(some_numbers) AS x\n    WHERE\n      x < 5\n  ) AS doubled_less_than_five\nFROM\n  sequences;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Filtering arrays",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 8,
+                "y": 35
+            },
+            "id": 19,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#filtering_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n)\nSELECT\n  ARRAY(\n    SELECT\n      DISTINCT x\n    FROM\n      UNNEST(some_numbers) AS x\n  ) AS unique_numbers\nFROM\n  sequences;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Filtering arrays (SELECT DISTINCT)",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 16,
+                "y": 35
+            },
+            "id": 20,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#filtering_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [5, 10] AS some_numbers\n)\nSELECT\n  ARRAY(\n    SELECT\n      x\n    FROM\n      UNNEST(some_numbers) AS x\n    WHERE\n      2 IN UNNEST(some_numbers)\n  ) AS contains_two\nFROM\n  sequences;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Filtering arrays (IN operator)",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 0,
+                "y": 42
+            },
+            "id": 21,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#scanning_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  2 IN UNNEST([0, 1, 1, 2, 3, 5]) AS contains_value;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Scanning for specific values",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 12,
+                "y": 42
+            },
+            "id": 22,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#scanning_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    1 AS id,\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    2 AS id,\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    3 AS id,\n    [5, 10] AS some_numbers\n)\nSELECT\n  id AS matching_rows\nFROM\n  sequences\nWHERE\n  2 IN UNNEST(sequences.some_numbers)\nORDER BY\n  matching_rows;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Scanning for specific values",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 0,
+                "y": 46
+            },
+            "id": 23,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#scanning_for_values_that_satisfy_a_condition"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH Sequences AS (\n  SELECT\n    1 AS id,\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    2 AS id,\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    3 AS id,\n    [5, 10] AS some_numbers\n)\nSELECT\n  id AS matching_rows\nFROM\n  Sequences\nWHERE\n  EXISTS(\n    SELECT\n      *\n    FROM\n      UNNEST(some_numbers) AS x\n    WHERE\n      x > 5\n  );",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Scanning for values that satisfy a condition",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 12,
+                "y": 46
+            },
+            "id": 24,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#scanning_for_struct_field_values_that_satisfy_a_condition"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH Sequences AS (\n  SELECT\n    1 AS id,\n    [STRUCT(0 AS a, 1 AS b)] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    2 AS id,\n    [STRUCT(2 AS a, 4 AS b)] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    3 AS id,\n    [STRUCT(5 AS a, 3 AS b), STRUCT(7 AS a, 4 AS b)] AS some_numbers\n)\nSELECT\n  id AS matching_rows\nFROM\n  Sequences\nWHERE\n  EXISTS(\n    SELECT\n      1\n    FROM\n      UNNEST(some_numbers)\n    WHERE\n      b > 3\n  );",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Scanning for STRUCT field values that satisfy a condition",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 0,
+                "y": 50
+            },
+            "id": 25,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH fruits AS (\n  SELECT\n    \"apple\" AS fruit\n  UNION\n  ALL\n  SELECT\n    \"pear\" AS fruit\n  UNION\n  ALL\n  SELECT\n    \"banana\" AS fruit\n)\nSELECT\n  ARRAY_AGG(fruit) AS fruit_basket\nFROM\n  fruits;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Arrays and aggregations",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 12,
+                "y": 50
+            },
+            "id": 26,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH fruits AS (\n  SELECT\n    \"apple\" AS fruit\n  UNION\n  ALL\n  SELECT\n    \"pear\" AS fruit\n  UNION\n  ALL\n  SELECT\n    \"banana\" AS fruit\n)\nSELECT\n  ARRAY_AGG(\n    fruit\n    ORDER BY\n      fruit\n  ) AS fruit_basket\nFROM\n  fruits;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Arrays and aggregations",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 0,
+                "y": 54
+            },
+            "id": 27,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [5, 10] AS some_numbers\n)\nSELECT\n  some_numbers,\n  (\n    SELECT\n      SUM(x)\n    FROM\n      UNNEST(s.some_numbers) x\n  ) AS sums\nFROM\n  sequences s;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Arrays and aggregations",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 12,
+                "y": 54
+            },
+            "id": 28,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH aggregate_example AS (\n  SELECT\n    [1,2] AS numbers\n  UNION\n  ALL\n  SELECT\n    [3,4] AS numbers\n  UNION\n  ALL\n  SELECT\n    [5, 6] AS numbers\n)\nSELECT\n  ARRAY_CONCAT_AGG(numbers) AS count_to_six_agg\nFROM\n  aggregate_example;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Arrays and aggregations",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 0,
+                "y": 59
+            },
+            "id": 29,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#converting_arrays_to_strings"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH greetings AS (\n  SELECT\n    [\"Hello\", \"World\"] AS greeting\n)\nSELECT\n  ARRAY_TO_STRING(greeting, \" \") AS greetings\nFROM\n  greetings;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Converting arrays to strings",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 12,
+                "y": 59
+            },
+            "id": 30,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#converting_arrays_to_strings"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  ARRAY_TO_STRING(arr, \".\", \"N\") AS non_empty_string,\n  ARRAY_TO_STRING(arr, \".\", \"\") AS empty_string,\n  ARRAY_TO_STRING(arr, \".\") AS omitted\nFROM\n  (\n    SELECT\n      [\"a\", NULL, \"b\", NULL, \"c\", NULL] AS arr\n  );",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Converting arrays to strings",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 8,
+                "x": 0,
+                "y": 64
+            },
+            "id": 31,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#combining_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  ARRAY_CONCAT([1, 2], [3, 4], [5, 6]) as count_to_six;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Combining arrays",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 8,
+                "x": 8,
+                "y": 64
+            },
+            "id": 32,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#zipping_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH combinations AS (\n  SELECT\n    ['a', 'b'] AS letters,\n    [1, 2, 3] AS numbers\n)\nSELECT\n  ARRAY(\n    SELECT\n      AS STRUCT letters [SAFE_OFFSET(index)] AS letter,\n      numbers [SAFE_OFFSET(index)] AS number\n    FROM\n      combinations\n      CROSS JOIN UNNEST(\n        GENERATE_ARRAY(\n          0,\n          LEAST(ARRAY_LENGTH(letters), ARRAY_LENGTH(numbers)) - 1\n        )\n      ) AS index\n    ORDER BY\n      index\n  );",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Zipping arrays",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 8,
+                "x": 16,
+                "y": 64
+            },
+            "id": 33,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#zipping_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH combinations AS (\n  SELECT\n    ['a', 'b'] AS letters,\n    [1, 2, 3] AS numbers\n)\nSELECT\n  ARRAY(\n    SELECT\n      AS STRUCT letters [SAFE_OFFSET(index)] AS letter,\n      numbers [SAFE_OFFSET(index)] AS number\n    FROM\n      combinations\n      CROSS JOIN UNNEST(\n        GENERATE_ARRAY(\n          0,\n          GREATEST(ARRAY_LENGTH(letters), ARRAY_LENGTH(numbers)) - 1\n        )\n      ) AS index\n    ORDER BY\n      index\n  );",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Zipping arrays",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 0,
+                "y": 69
+            },
+            "id": 17,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#building_arrays_of_arrays"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH points AS (\n  SELECT\n    [1, 5] as point\n  UNION\n  ALL\n  SELECT\n    [2, 8] as point\n  UNION\n  ALL\n  SELECT\n    [3, 7] as point\n  UNION\n  ALL\n  SELECT\n    [4, 1] as point\n  UNION\n  ALL\n  SELECT\n    [5, 7] as point\n)\nSELECT\n  ARRAY(\n    SELECT\n      STRUCT(point)\n    FROM\n      points\n  ) AS coordinates;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Building arrays of arrays",
+            "type": "table"
+        },
+        {
+            "datasource": "${DS_BQ}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto",
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 12,
+                "x": 12,
+                "y": 69
+            },
+            "id": 34,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Docs",
+                    "url": "https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#creating_arrays_from_subqueries"
+                }
+            ],
+            "options": {
+                "footer": {
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "9.0.0-pre",
+            "targets": [
+                {
+                    "dataset": "",
+                    "datasource": {
+                        "type": "grafana-bigquery-datasource",
+                        "uid": "qldD84P7k"
+                    },
+                    "editorMode": "code",
+                    "format": 1,
+                    "location": "US",
+                    "rawQuery": true,
+                    "rawSql": "WITH sequences AS (\n  SELECT\n    [0, 1, 1, 2, 3, 5] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [2, 4, 8, 16, 32] AS some_numbers\n  UNION\n  ALL\n  SELECT\n    [5, 10] AS some_numbers\n)\nSELECT\n  some_numbers,\n  ARRAY(\n    SELECT\n      x * 2\n    FROM\n      UNNEST(some_numbers) AS x\n  ) AS doubled\nFROM\n  sequences;",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [
+                            {
+                                "property": {
+                                    "type": "string"
+                                },
+                                "type": "groupBy"
+                            }
+                        ],
+                        "limit": 50
+                    }
+                }
+            ],
+            "title": "Creating arrays from subqueries",
+            "type": "table"
+        }
+    ],
+    "refresh": "",
+    "schemaVersion": 36,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Array queries examples",
+    "uid": "OEg-OHQ7z",
+    "version": 17,
+    "weekStart": ""
+}

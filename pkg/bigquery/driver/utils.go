@@ -5,6 +5,7 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/civil"
@@ -14,6 +15,23 @@ import (
 func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (driver.Value, error) {
 	if v == nil {
 		return nil, nil
+	}
+
+	if fieldSchema.Type == "RECORD" {
+		res, err := ConvertRecordValue(v.([]bigquery.Value), fieldSchema)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+
+	if fieldSchema.Repeated {
+		res, err := ConvertArrayValue(v.([]bigquery.Value), fieldSchema)
+		if err != nil {
+			return nil, err
+		}
+
+		return res, nil
 	}
 
 	switch fieldSchema.Type {
@@ -40,12 +58,6 @@ func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (dr
 	case "DATETIME":
 		return bigquery.CivilDateTimeString(v.(civil.DateTime)), nil
 
-	case "RECORD":
-		res, err := ConvertRecordValue(v.([]bigquery.Value), fieldSchema)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
 	case "NUMERIC", "BIGNUMERIC":
 		conv, _ := v.(*big.Rat).Float64()
 		return conv, nil
@@ -54,6 +66,35 @@ func ConvertColumnValue(v bigquery.Value, fieldSchema *bigquery.FieldSchema) (dr
 	default:
 		return v, nil
 	}
+}
+
+func ConvertArrayValue(v []bigquery.Value, fieldSchema *bigquery.FieldSchema) (string, error) {
+	res := make([]string, len(v))
+
+	// A new field schema with the repeated flag set to false. This is needed for the conversion of the values not to consider values as nested repeats.
+	schema := &bigquery.FieldSchema{
+		Description: fieldSchema.Description,
+		Name:        fieldSchema.Name,
+		Repeated:    false,
+		Required:    fieldSchema.Required,
+		Type:        fieldSchema.Type,
+		PolicyTags:  fieldSchema.PolicyTags,
+		MaxLength:   fieldSchema.MaxLength,
+		Precision:   fieldSchema.Precision,
+		Scale:       fieldSchema.Scale,
+	}
+
+	for i, val := range v {
+		converted, err := ConvertColumnValue(val, schema)
+
+		if err != nil {
+			return "", err
+		}
+
+		res[i] = fmt.Sprintf("%v", converted)
+	}
+
+	return strings.Join(res, ","), nil
 }
 
 // Converts RECORD field to a map or array of maps (for repeated records)

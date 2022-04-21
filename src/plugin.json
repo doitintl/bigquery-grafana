@@ -53,5 +53,12 @@
         }
       }
     }
+  ],
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Array queries examples",
+      "path": "dashboards/arrays.json"
+    }
   ]
 }
