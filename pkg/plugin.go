@@ -111,6 +111,50 @@ func (td *BigQueryDatasource) QueryData(ctx context.Context, req *backend.QueryD
 	return response, nil
 }
 
+// Define regex to add $__timeFilter support
+var timeFilterRegex *regexp.Regexp = regexp.MustCompile("\\$__timeFilter\\((.*?)\\)")
+
+func getTypeArray(typ string) interface{} {
+	log.DefaultLogger.Debug("getTypeArray", "type", typ)
+	switch t := typ; t {
+	case "TIMESTAMP":
+		return []time.Time{}
+	case "INTEGER":
+		return []int64{}
+	case "FLOAT":
+		return []float64{}
+	default:
+		return []string{}
+	}
+}
+
+func toValue(val interface{}, typ string) interface{} {
+	if val == nil {
+		switch typ {
+		case "STRING":
+			return ""
+		case "INTEGER":
+			return 0
+		case "FLOAT":
+			return 0.0
+		default:
+			return nil;
+		}
+	}
+	switch t := val.(type) {
+	case float32, time.Time, string, int64, float64, bool, int16, int8:
+		return t
+	case int:
+		return int64(t)
+	default:
+		r, err := json.Marshal(val)
+		if err != nil {
+			log.DefaultLogger.Info("Marshalling failed ", "err", err)
+		}
+		return string(r)
+	}
+}
+
 func (td *BigQueryDatasource) query(ctx context.Context, query backend.DataQuery, req *backend.QueryDataRequest) backend.DataResponse {
 	response := backend.DataResponse{}
 
@@ -131,83 +175,34 @@ func (td *BigQueryDatasource) query(ctx context.Context, query backend.DataQuery
 	// create data frame response
 	frame := data.NewFrame("response")
 
-	// supports only time_series initally
-	switch queryModel.Format {
-	case "time_series":
-		// any field called "time" will be parsed from Timestamp
-		// else try to convert from an int64/float64 metric
-		for _, fieldSchema := range bigQueryResult.Schema {
-			switch fieldSchema.Name {
-			case "time":
-				values := make([]time.Time, 0)
-				for _, row := range bigQueryResult.Rows {
-					value := row[fieldSchema.Name]
-					switch fieldSchema.Type {
-					case bigquery.TimestampFieldType:
-						v, ok := value.(time.Time)
-						if !ok {
-							response.Error = fmt.Errorf("could not convert field '%s' into time.Time field", fieldSchema.Name)
-							return response
-						}
-						values = append(values, v)
-						break
-					default:
-						response.Error = fmt.Errorf("unexpected type for field '%s': %s", fieldSchema.Name, fieldSchema.Type)
-						return response
-					}
-				}
-				frame.Fields = append(frame.Fields,
-					data.NewField(fieldSchema.Name, nil, values),
-				)
-				break
-			default:
-				switch fieldSchema.Type {
-				case bigquery.IntegerFieldType:
-					values := make([]int64, 0)
-					for _, row := range bigQueryResult.Rows {
-						value := row[fieldSchema.Name]
-						v, ok := value.(int64)
-						if !ok {
-							response.Error = fmt.Errorf("could not convert field '%s' into int64 field", fieldSchema.Name)
-							return response
-						}
-						values = append(values, v)
-					}
-					frame.Fields = append(frame.Fields,
-						data.NewField("values", nil, values),
-					)
-					break
-				case bigquery.FloatFieldType:
-					values := make([]float64, 0)
-					for _, row := range bigQueryResult.Rows {
-						value := row[fieldSchema.Name]
-						v, ok := value.(float64)
-						if !ok {
-							response.Error = fmt.Errorf("could not convert field '%s' into int64 field", fieldSchema.Name)
-							return response
-						}
-						values = append(values, v)
-					}
-					frame.Fields = append(frame.Fields,
-						data.NewField(fieldSchema.Name, nil, values),
-					)
-					break
-				default:
-					response.Error = fmt.Errorf("unexpected type for field '%s': %s", fieldSchema.Name, fieldSchema.Type)
-					return response
-				}
-				break
-			}
+	// new fields, time, metric, value
+	for _, c := range bigQueryResult.Schema {
+		log.DefaultLogger.Info("Adding Column", "name", c.Name, "type", c.Type)
+		frame.Fields = append(frame.Fields,
+			data.NewField(c.Name, nil, getTypeArray(string(c.Type))),
+		)
+	}
+
+	// new fields, time's value, value's name and value's value
+	for _, row := range bigQueryResult.Rows {
+		// New map each iteration
+		vals := make([]interface{}, 0)
+		for _, c := range bigQueryResult.Schema {
+			vals = append(vals, toValue(row[c.Name], string(c.Type)))
 		}
-		break
-	default:
-		response.Error = fmt.Errorf("unimplemented format '%s'. expected one of ['time_series']", queryModel.Format)
+		log.DefaultLogger.Debug(fmt.Sprintf("Adding vals, %v", vals...))
+		frame.AppendRow(vals...)
+	}
+
+	// create a wide frame to support multi-series
+	var wideFrame *data.Frame
+	wideFrame, response.Error = data.LongToWide(frame, nil)
+
+	if response.Error != nil {
 		return response
 	}
 
-	// add the frames to the response
-	response.Frames = append(response.Frames, frame)
-
+	response.Frames = append(response.Frames, wideFrame)
 	return response
 }
 
@@ -315,7 +310,7 @@ func (td *BigQueryDatasource) executeQuery(ctx context.Context, queryModel Query
 	}
 
 	// substituteVariables replaces any placeholder variables
-	sql := substituteVariables(queryModel.RawSQL, queryModel, originalQuery)
+	sql := substituteVariables(queryModel.RawSQL, originalQuery)
 	log.DefaultLogger.Debug(fmt.Sprintf("query: %s\n", sql))
 
 	// create the query
@@ -363,13 +358,14 @@ func (td *BigQueryDatasource) executeQuery(ctx context.Context, queryModel Query
 }
 
 // substituteVariables replaces standard grafana variables in an input string and returns the result
-func substituteVariables(sql string, queryModel QueryModel, originalQuery backend.DataQuery) string {
+func substituteVariables(sql string, originalQuery backend.DataQuery) string {
 	// __from
 	sql = strings.Replace(sql, "${__from}", fmt.Sprintf("%d", originalQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)), -1)
 	sql = strings.Replace(sql, "${__from:date}", originalQuery.TimeRange.From.Format(time.RFC3339), -1)
 	sql = strings.Replace(sql, "${__from:date:iso}", originalQuery.TimeRange.From.Format(time.RFC3339), -1)
 	sql = strings.Replace(sql, "${__from:date:seconds}", fmt.Sprintf("%d", originalQuery.TimeRange.From.Unix()), -1)
 	sql = strings.Replace(sql, "${__from:date:YYYY-MM}", originalQuery.TimeRange.From.Format("2006-01"), -1)
+	sql = strings.Replace(sql, "${__from:date:YYYY-MM-DD}", originalQuery.TimeRange.From.Format("2006-01-02"), -1)
 
 	// __to
 	sql = strings.Replace(sql, "${__to}", fmt.Sprintf("%d", originalQuery.TimeRange.To.UnixNano()/int64(time.Millisecond)), -1)
@@ -377,47 +373,14 @@ func substituteVariables(sql string, queryModel QueryModel, originalQuery backen
 	sql = strings.Replace(sql, "${__to:date:iso}", originalQuery.TimeRange.To.Format(time.RFC3339), -1)
 	sql = strings.Replace(sql, "${__to:date:seconds}", fmt.Sprintf("%d", originalQuery.TimeRange.To.Unix()), -1)
 	sql = strings.Replace(sql, "${__to:date:YYYY-MM}", originalQuery.TimeRange.To.Format("2006-01"), -1)
+	sql = strings.Replace(sql, "${__to:date:YYYY-MM-DD}", originalQuery.TimeRange.To.Format("2006-01-02"), -1)
 
-	// Macros
-	from := adjustTime(originalQuery.TimeRange.From, queryModel.TimeColumnType)
-	to := adjustTime(originalQuery.TimeRange.To, queryModel.TimeColumnType)
-	wholeRange := quoteTimeColumn(queryModel.TimeColumn) + " BETWEEN " + from + " AND " + to
-	fromRange := quoteTimeColumn(queryModel.TimeColumn) + " > " + from + " "
-	toRange := quoteTimeColumn(queryModel.TimeColumn) + " < " + to + " "
-
-	timeFilterRegex := regexp.MustCompile(`\$__timeFilter\((.*?)\)`)
-	sql = timeFilterRegex.ReplaceAllString(sql, wholeRange)
-	timeFromRegex := regexp.MustCompile(`\$__timeFrom\(([\w_.]+)\)`)
-	sql = timeFromRegex.ReplaceAllString(sql, fromRange)
-	timeToRegex := regexp.MustCompile(`\$__timeTo\(([\w_.]+)\)`)
-	sql = timeToRegex.ReplaceAllString(sql, toRange)
-	millisTimeToRegex := regexp.MustCompile(`\$__millisTimeTo\(([\w_.]+)\)`)
-	sql = millisTimeToRegex.ReplaceAllString(sql, to)
-	millisTimeFromRegex := regexp.MustCompile(`\$__millisTimeFrom\(([\w_.]+)\)`)
-	sql = millisTimeFromRegex.ReplaceAllString(sql, from)
-
+	// __timeFormat
+	match := timeFilterRegex.FindStringSubmatch(sql)
+	if match != nil {
+		sql = timeFilterRegex.ReplaceAllString(sql, fmt.Sprintf("%s BETWEEN '%s' AND '%s'",
+			match[1], originalQuery.TimeRange.From.UTC().Format(time.RFC3339Nano),
+			originalQuery.TimeRange.To.UTC().Format(time.RFC3339Nano)))
+	}
 	return sql
-}
-
-func adjustTime(value time.Time, timeType string) string {
-	switch timeType {
-	case "DATE":
-		return fmt.Sprintf("'%s'", value.Format("2006-01-01")) //  '2006-01-01'
-	case "DATETIME":
-		return fmt.Sprintf("'%s'", value.Format("2006-01-01 15:04:05")) //  '2006-01-01 15:04:05'
-	default:
-		return fmt.Sprintf("TIMESTAMP_MILLIS (%d)", value.UnixMilli()) //  TIMESTAMP_MILLIS (1612056873199)
-	}
-}
-
-func quoteTimeColumn(value string) string {
-	vals := strings.Split(value, ".")
-	res := ""
-	for i := 0; i < len(vals); i++ {
-		res = res + "`" + vals[i] + "`"
-		if len(vals) > 1 && i+1 < len(vals) {
-			res = res + "."
-		}
-	}
-	return res
 }
