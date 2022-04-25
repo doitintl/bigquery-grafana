@@ -35,6 +35,12 @@ export function QueryEditorRaw({
     []
   );
 
+  // We need to pass query via ref to SQLEditor as onChange is executed via monacoEditor.onDidChangeModelContent callback, not onChange property
+  const queryRef = useRef<BigQueryQueryNG>(query);
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
+
   useEffect(() => {
     getColumns.current = apiGetColumns;
     getTables.current = apiGetTables;
@@ -43,13 +49,13 @@ export function QueryEditorRaw({
   const onRawQueryChange = useCallback(
     (rawSql: string, processQuery: boolean) => {
       const newQuery = {
-        ...query,
+        ...queryRef.current,
         rawQuery: true,
         rawSql,
       };
       onChange(newQuery, processQuery);
     },
-    [onChange, query]
+    [onChange]
   );
 
   return (
