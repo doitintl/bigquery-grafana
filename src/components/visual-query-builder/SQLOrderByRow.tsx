@@ -1,5 +1,5 @@
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, Space } from '@grafana/experimental';
+import { EditorField, InputGroup, Space } from '@grafana/experimental';
 import { Input, RadioButtonGroup, Select } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React, { useCallback } from 'react';
@@ -57,7 +57,7 @@ export function SQLOrderByRow({ sql, onSqlChange, columns, showOffset }: SQLOrde
   return (
     <>
       <EditorField label="Order by" width={25}>
-        <>
+        <InputGroup>
           <Select
             aria-label="Order by"
             options={columns}
@@ -75,7 +75,7 @@ export function SQLOrderByRow({ sql, onSqlChange, columns, showOffset }: SQLOrde
             value={sql.orderByDirection}
             onChange={onSortOrderChange}
           />
-        </>
+        </InputGroup>
       </EditorField>
       <EditorField label="Limit" optional width={25}>
         <Input type="number" min={0} id={uniqueId('limit-')} value={sql.limit || ''} onChange={onLimitChange} />
