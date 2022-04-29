@@ -38,13 +38,19 @@ export interface ValidationResults {
   } | null;
 }
 
+interface GCPProject {
+  displayName: string;
+  projectId: string;
+}
+
 export interface BigQueryAPI {
   getDefaultProject: () => string;
-  getDatasets: (location: string) => Promise<string[]>;
-  getTables: (location: string, dataset: string) => Promise<string[]>;
-  getTableSchema: (location: string, dataset: string, table: string) => Promise<TableSchema>;
-  getColumns: (location: string, dataset: string, table: string, isOrderable?: boolean) => Promise<string[]>;
+  getDatasets: (location: string, project: string) => Promise<string[]>;
+  getTables: (query: BigQueryQueryNG) => Promise<string[]>;
+  getTableSchema: (query: BigQueryQueryNG) => Promise<TableSchema>;
+  getColumns: (query: BigQueryQueryNG, isOrderable?: boolean) => Promise<string[]>;
   validateQuery: (query: BigQueryQueryNG, range?: TimeRange) => Promise<ValidationResults>;
+  getProjects: () => Promise<GCPProject[]>;
   dispose: () => void;
 }
 
@@ -52,9 +58,11 @@ class BigQueryAPIClient implements BigQueryAPI {
   private RESULTS_CACHE = new Map<string, any>();
   private baseUrl: string;
   private resourcesUrl: string;
+  private datasourceId: number;
   private lastValidation: ValidationResults | null = null;
 
   constructor(datasourceId: number, private defaultProject: string) {
+    this.datasourceId = datasourceId;
     this.baseUrl = `/api/datasources/${datasourceId}`;
     this.resourcesUrl = `${this.baseUrl}/resources`;
   }
@@ -63,26 +71,36 @@ class BigQueryAPIClient implements BigQueryAPI {
     return this.defaultProject;
   }
 
-  getDatasets = async (location: string) => {
-    return await this.fromCache('datasets', this._getDatasets)(location);
+  getDatasets = async (location: string, project: string) => {
+    return await this.fromCache('datasets', this._getDatasets)(location, project);
   };
 
-  private _getDatasets = async (location: string): Promise<string[]> => {
+  private _getDatasets = async (location: string, project: string): Promise<string[]> => {
     return await getBackendSrv().post(this.resourcesUrl + '/datasets', {
-      project: this.defaultProject,
+      project,
       location,
     });
   };
 
-  getTables = async (location: string, dataset: string): Promise<string[]> => {
-    return this.fromCache('tables', this._getTables)(location, dataset);
+  private _getProjects = async (): Promise<GCPProject[]> => {
+    return await getBackendSrv().post(this.resourcesUrl + '/projects', {
+      datasourceId: `${this.datasourceId}`,
+    });
   };
 
-  private _getTables = async (location: string, dataset: string): Promise<string[]> => {
+  getProjects = async (): Promise<GCPProject[]> => {
+    return this.fromCache('projects', this._getProjects)(this.datasourceId);
+  };
+
+  getTables = async (query: BigQueryQueryNG): Promise<string[]> => {
+    return this.fromCache('tables', this._getTables)(query);
+  };
+
+  private _getTables = async (query: BigQueryQueryNG): Promise<string[]> => {
     return await getBackendSrv().post(this.resourcesUrl + '/tables', {
-      project: this.defaultProject,
-      location,
-      dataset,
+      project: query.project,
+      location: query.location,
+      dataset: query.dataset,
     });
   };
 
@@ -134,30 +152,25 @@ class BigQueryAPIClient implements BigQueryAPI {
     return this.lastValidation!;
   };
 
-  getColumns = async (location: string, dataset: string, table: string, isOrderable?: boolean): Promise<string[]> => {
-    return this.fromCache('columns', this._getColumns)(location, dataset, table, isOrderable);
+  getColumns = async (query: BigQueryQueryNG, isOrderable?: boolean): Promise<string[]> => {
+    return this.fromCache('columns', this._getColumns)(query, isOrderable);
   };
 
-  private _getColumns = async (
-    location: string,
-    dataset: string,
-    table: string,
-    isOrderable?: boolean
-  ): Promise<string[]> => {
+  private _getColumns = async (query: BigQueryQueryNG, isOrderable?: boolean): Promise<string[]> => {
     return await getBackendSrv().post(this.resourcesUrl + '/columns', {
-      project: this.defaultProject,
-      location,
-      dataset,
-      table,
+      project: query.project,
+      location: query.location,
+      dataset: query.dataset,
+      table: query.table,
       isOrderable: isOrderable ? 'true' : 'false',
     });
   };
 
-  getTableSchema = async (location: string, dataset: string, table: string): Promise<TableSchema> => {
-    return this.fromCache('schema', this._getTableSchema)(location, dataset, table);
+  getTableSchema = async (query: BigQueryQueryNG): Promise<TableSchema> => {
+    return this.fromCache('schema', this._getTableSchema)(query);
   };
 
-  private _getTableSchema = async (location: string, dataset: string, table: string): Promise<TableSchema> => {
+  private _getTableSchema = async (query: BigQueryQueryNG): Promise<TableSchema> => {
     const result = await lastValueFrom(
       getBackendSrv().fetch<TableSchema>({
         method: 'POST',
@@ -165,10 +178,10 @@ class BigQueryAPIClient implements BigQueryAPI {
         showSuccessAlert: false,
         url: this.resourcesUrl + '/dataset/table/schema',
         data: {
-          project: this.defaultProject,
-          location,
-          dataset,
-          table,
+          project: query.project,
+          location: query.location,
+          dataset: query.dataset,
+          table: query.table,
         },
       })
     );
@@ -177,7 +190,11 @@ class BigQueryAPIClient implements BigQueryAPI {
   };
 
   private fromCache = <T>(scope: string, fn: (...args: any[]) => Promise<T>) => async (...args: any[]): Promise<T> => {
-    const id = `${scope}/${args.join('.')}`;
+    let id = `${scope}/${args.join('.')}`;
+
+    if (args[0]?.location) {
+      id = `${scope}/${args[0].project}.${args[0].location}.${args[0].dataset}.${args[0].table}`;
+    }
 
     if (this.RESULTS_CACHE.has(id)) {
       return Promise.resolve(this.RESULTS_CACHE.get(id)!);

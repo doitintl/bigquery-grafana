@@ -9,6 +9,7 @@ import { DEFAULT_REGION, PROCESSING_LOCATIONS, QUERY_FORMAT_OPTIONS } from '../c
 import { BigQueryQueryNG, QueryFormat, QueryRowFilter, QueryWithDefaults } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
+import { ProjectSelector } from './ProjectSelector';
 import { TableSelector } from './TableSelector';
 
 interface QueryHeaderProps {
@@ -63,6 +64,23 @@ export function QueryHeader({
     const next = {
       ...query,
       dataset: e.value,
+      table: undefined,
+      sql: undefined,
+      rawSql: '',
+    };
+
+    onChange(next);
+  };
+
+  const onProjectChange = (e: SelectableValue) => {
+    if (e.value === query.project) {
+      return;
+    }
+
+    const next = {
+      ...query,
+      project: e.value,
+      dataset: undefined,
       table: undefined,
       sql: undefined,
       rawSql: '',
@@ -191,7 +209,7 @@ export function QueryHeader({
             copyToClipboard(query.rawSql);
             onChange({
               ...query,
-              rawSql: toRawSql(query, apiClient.getDefaultProject()),
+              rawSql: toRawSql(query),
               editorMode: EditorMode.Builder,
             });
           }}
@@ -199,7 +217,7 @@ export function QueryHeader({
             setShowConfirm(false);
             onChange({
               ...query,
-              rawSql: toRawSql(query, apiClient.getDefaultProject()),
+              rawSql: toRawSql(query),
               editorMode: EditorMode.Builder,
             });
           }}
@@ -212,11 +230,14 @@ export function QueryHeader({
           <Space v={0.5} />
 
           <EditorRow>
+            <ProjectSelector apiClient={apiClient} value={query.project} onChange={onProjectChange} />
+
             <EditorField label="Dataset" width={25}>
               <DatasetSelector
                 apiClient={apiClient}
                 location={query.location}
-                value={query.dataset}
+                value={query.dataset === undefined ? null : query.dataset}
+                project={query.project}
                 onChange={onDatasetChange}
               />
             </EditorField>
@@ -224,8 +245,7 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 apiClient={apiClient}
-                location={query.location}
-                dataset={query.dataset}
+                query={query}
                 value={query.table === undefined ? null : query.table}
                 onChange={onTableChange}
                 applyDefault

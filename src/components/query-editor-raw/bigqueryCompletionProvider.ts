@@ -18,7 +18,7 @@ import { BQ_OPERATORS } from './bigQueryOperators';
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: string) => Promise<ColumnDefinition[]>>;
   getTables: React.MutableRefObject<(d?: string) => Promise<TableDefinition[]>>;
-  getTableSchema: React.MutableRefObject<(l: string, d: string, t: string) => Promise<TableSchema | null>>;
+  getTableSchema: React.MutableRefObject<(p: string, d: string, t: string) => Promise<TableSchema | null>>;
 }
 
 export const getBigQueryCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider = ({
@@ -76,11 +76,12 @@ export const customStatementPlacement: StatementPlacementProvider = () => [
         currentToken?.is(TokenType.Delimiter, '.') ||
           (currentToken?.is(TokenType.Whitespace) && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
           (currentToken?.value === '`' && currentToken?.previous?.is(TokenType.Delimiter, '.')) ||
+          (currentToken?.isNumber() && currentToken.value.endsWith('.')) || // number with dot at the end like "projectname-21342."
           (currentToken?.value === '`' && isTypingTableIn(currentToken))
       );
     },
   },
-  // Overriding default befaviour of AfterFrom resolver
+  // Overriding default behaviour of AfterFrom resolver
   {
     id: StatementPosition.AfterFrom,
     overrideDefault: true,
@@ -113,6 +114,7 @@ export const customSuggestionKinds: (
       return t.map((table) => ({
         label: table.name,
         insertText: table.completion ?? table.name,
+        command: { id: 'editor.action.triggerSuggest', title: '' },
         kind: CompletionItemKind.Field,
         sortText: CompletionItemPriority.High,
         range: {
@@ -139,7 +141,7 @@ export const customSuggestionKinds: (
           const timePartitioningSetup = schema.timePartitioning;
           if (timePartitioningSetup) {
             if (timePartitioningSetup.field) {
-              // TODO: add suport for field partitioning
+              // TODO: add support for field partitioning
             }
 
             if (timePartitioningSetup.type) {
@@ -186,13 +188,15 @@ export const customSuggestionKinds: (
   },
 ];
 
-function getTablePath(token: LinkedToken) {
+export function getTablePath(token: LinkedToken) {
   let processedToken = token;
   let tablePath = '';
   while (processedToken?.previous && !processedToken.previous.isWhiteSpace()) {
-    tablePath = processedToken.previous.value + tablePath;
+    tablePath = processedToken.value + tablePath;
     processedToken = processedToken.previous;
   }
+
+  tablePath = tablePath.trim();
 
   if (tablePath.startsWith('`')) {
     tablePath = tablePath.slice(1);

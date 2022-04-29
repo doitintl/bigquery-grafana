@@ -10,6 +10,7 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/sqlds/v2"
+	"google.golang.org/api/googleapi"
 )
 
 func ColumnsFromTableSchema(schema bq.Schema, isOrderable bool) []string {
@@ -84,7 +85,17 @@ func WriteResponse(rw http.ResponseWriter, b []byte) {
 func SendResponse(res interface{}, err error, rw http.ResponseWriter) {
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		WriteResponse(rw, []byte(err.Error()))
+		googleApiError, success := err.(*googleapi.Error)
+		if !success {
+			WriteResponse(rw, []byte(err.Error()))
+			return
+		}
+		marshaledError, err := json.Marshal(googleApiError)
+		if err != nil {
+			WriteResponse(rw, []byte(err.Error()))
+			return
+		}
+		WriteResponse(rw, marshaledError)
 		return
 	}
 	bytes, err := json.Marshal(res)

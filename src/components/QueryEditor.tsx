@@ -20,7 +20,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery, range }: 
     async () => await getApiClient(datasource.id),
     [datasource]
   );
-  const queryWithDefaults = applyQueryDefaults(query, datasource);
+  const queryWithDefaults = applyQueryDefaults(query, datasource, apiClient);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql.whereString,
     group: !!queryWithDefaults.sql.groupBy?.[0]?.property.name,

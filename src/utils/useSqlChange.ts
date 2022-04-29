@@ -20,7 +20,7 @@ export function useSqlChange({ query, onQueryChange }: UseSqlChange) {
         return;
       }
       const newQuery: BigQueryQueryNG = { ...query, sql };
-      newQuery.rawSql = toRawSql(newQuery, apiClient.getDefaultProject());
+      newQuery.rawSql = toRawSql(newQuery);
       onQueryChange(newQuery);
     },
     [apiClient, onQueryChange, query]

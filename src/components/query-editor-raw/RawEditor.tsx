@@ -41,16 +41,26 @@ export function RawEditor({
       const tablePath = t.split('.');
 
       if (tablePath.length === 3) {
-        cols = await apiClient.getColumns(query.location, tablePath[1], tablePath[2]);
+        cols = await apiClient.getColumns({
+          ...query,
+          dataset: tablePath[1],
+          table: tablePath[2],
+          project: tablePath[0],
+        });
       } else {
         if (!query.dataset) {
           return [];
         }
-        cols = await apiClient.getColumns(query.location, query.dataset, t!);
+        cols = await apiClient.getColumns({ ...query, table: t, project: tablePath[0] });
       }
 
       if (cols.length > 0) {
-        const schema = await apiClient.getTableSchema(query.location, tablePath[1], tablePath[2]);
+        const schema = await apiClient.getTableSchema({
+          ...query,
+          dataset: tablePath[1],
+          table: tablePath[2],
+          project: tablePath[0],
+        });
         return cols.map((c) => {
           const cInfo = schema.schema ? getColumnInfoFromSchema(c, schema.schema) : null;
           return { name: c, ...cInfo };
@@ -59,47 +69,48 @@ export function RawEditor({
         return [];
       }
     },
-    [apiClient, query.location, query.dataset]
+    [apiClient, query]
   );
 
   const getTables = useCallback(
-    async (d?: string) => {
+    async (p?: string) => {
       if (!apiClient) {
         return [];
       }
 
-      let datasets = [];
-      if (!d) {
-        datasets = await apiClient.getDatasets(query.location);
-        return datasets.map((d) => ({ name: d, completion: `\`${apiClient.getDefaultProject()}.${d}.` }));
+      let projects = [];
+
+      if (!p) {
+        projects = await apiClient.getProjects();
+        return projects.map((p) => ({ name: p.displayName, completion: `\`${p.projectId}.` }));
       } else {
-        const path = d.split('.').filter((s) => s);
+        const path = p.split('.').filter((s) => s);
         if (path.length > 2) {
           return [];
         }
         if (path[0] && path[1]) {
-          const tables = await apiClient.getTables(query.location, path[1]);
+          const tables = await apiClient.getTables({ ...query, project: path[0], dataset: path[1] });
           return tables.map((t) => ({ name: t, completion: `${t}\`` }));
         } else if (path[0]) {
-          datasets = await apiClient.getDatasets(query.location);
-          return datasets.map((d) => ({ name: d, completion: `${d}` }));
+          const datasets = await apiClient.getDatasets(query.location, path[0]);
+          return datasets.map((d) => ({ name: d, completion: `${d}.` }));
         } else {
           return [];
         }
       }
     },
-    [apiClient, query.location]
+    [apiClient, query]
   );
 
   const getTableSchema = useCallback(
-    async (location: string, dataset: string, table: string) => {
+    async (project: string, dataset: string, table: string) => {
       if (!apiClient) {
         return null;
       }
 
-      return apiClient.getTableSchema(location, dataset, table);
+      return apiClient.getTableSchema({ ...query, dataset, table, project });
     },
-    [apiClient]
+    [apiClient, query]
   );
 
   const renderQueryEditor = (width?: number, height?: number) => {

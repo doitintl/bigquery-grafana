@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { BigQueryQueryNG, BigQueryOptions, GoogleAuthType, QueryModel, QueryFormat } from './types';
+import { getApiClient } from 'api';
 import {
   DataFrame,
   DataQuery,
@@ -94,6 +95,28 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
         resolve(res.data[0] || { fields: [] });
       });
     });
+  }
+
+  async testDatasource() {
+    const health = await this.callHealthCheck();
+    if (health.status.toLowerCase() === 'error') {
+      return { status: 'error', message: health.message, details: health.details };
+    }
+
+    const client = await getApiClient(this.id);
+    try {
+      await client.getProjects();
+    } catch (err: any) {
+      return {
+        status: 'error',
+        message: err.data?.message || 'Error connecting to resource manager.',
+        details: err.data?.details,
+      };
+    }
+    return {
+      status: 'OK',
+      message: 'Data source is working',
+    };
   }
 
   applyTemplateVariables(queryModel: BigQueryQueryNG, scopedVars: ScopedVars): QueryModel {

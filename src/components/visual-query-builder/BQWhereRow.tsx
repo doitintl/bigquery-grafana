@@ -18,7 +18,7 @@ export function BQWhereRow({ query, apiClient, onQueryChange }: BQWhereRowProps)
     if (!query.location || !query.dataset || !query.table) {
       return;
     }
-    const tableSchema = await apiClient.getTableSchema(query.location, query.dataset, query.table);
+    const tableSchema = await apiClient.getTableSchema(query);
     return getFields(tableSchema);
   }, [apiClient, query.dataset, query.location, query.table]);
 

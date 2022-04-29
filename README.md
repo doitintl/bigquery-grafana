@@ -20,6 +20,13 @@ The Google BigQuery data source plugin allows you to query and visualize Google 
 
 Follow [these instructions](https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/) to add a new Google BigQuery data source, and enter configuration options:
 
+### Requirements
+
+The following Google APIs need to be enabled for the plugin to work:
+
+- [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.googleapis.com)
+- [Cloud Resource Manager API](https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com)
+
 ### Authentication
 
 Google BigQuery datasource provides two ways of authentication:
@@ -29,7 +36,7 @@ Google BigQuery datasource provides two ways of authentication:
 
 #### Google Service Account authentication
 
-[Create a Google Cloud Platform (GCP) Service Account](https://cloud.google.com/iam/docs/creating-managing-service-accounts). The BigQuery Data Viewer role and the Job User role provide all the permissions that Grafana needs. [BigQuery API](https://console.cloud.google.com/apis/library/bigquery.googleapis.com) has to be enabled on GCP for the data source to work.
+[Create a Google Cloud Platform (GCP) Service Account](https://cloud.google.com/iam/docs/creating-managing-service-accounts). The BigQuery Data Viewer role and the Job User role provide all the permissions that Grafana needs.
 
 #### Google metadata server
 

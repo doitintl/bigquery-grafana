@@ -75,7 +75,6 @@ export interface SQLExpression {
 
 export interface ResourceSelectorProps {
   apiClient: BigQueryAPI;
-  location: string;
   disabled?: boolean;
   className?: string;
   applyDefault?: boolean;
@@ -83,6 +82,7 @@ export interface ResourceSelectorProps {
 export interface BigQueryQueryNG extends DataQuery {
   dataset?: string;
   table?: string;
+  project?: string;
 
   format: QueryFormat;
   rawQuery?: boolean;

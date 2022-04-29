@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-bigquery-datasource/pkg/bigquery/api"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/option"
 )
 
@@ -29,6 +30,7 @@ func Test_datasourceConnection(t *testing.T) {
 				Location: "test",
 			}, nil
 		},
+		resourceManagerServices: make(map[string]*cloudresourcemanager.Service),
 	}
 
 	t.Run("errors if authentication details are not configured connection", func(t *testing.T) {
@@ -70,7 +72,7 @@ func Test_datasourceConnection(t *testing.T) {
 		assert.True(t, conn2Exists)
 	})
 
-	t.Run("reuses existing BigQuert client if API exists for given connection details ", func(t *testing.T) {
+	t.Run("reuses existing BigQuery client if API exists for given connection details ", func(t *testing.T) {
 		clientsFactoryCallsCount := 0
 
 		ds := &BigQueryDatasource{
@@ -80,6 +82,7 @@ func Test_datasourceConnection(t *testing.T) {
 					Location: "test",
 				}, nil
 			},
+			resourceManagerServices: make(map[string]*cloudresourcemanager.Service),
 		}
 
 		ds.apiClients.Store("1/us-west2:raintank-dev", api.New(&bq.Client{
@@ -94,7 +97,7 @@ func Test_datasourceConnection(t *testing.T) {
 		assert.Equal(t, 0, clientsFactoryCallsCount)
 	})
 
-	t.Run("creates BigQuert client if API does not exists for given connection details ", func(t *testing.T) {
+	t.Run("creates BigQuery client if API does not exists for given connection details ", func(t *testing.T) {
 		clientsFactoryCallsCount := 0
 
 		ds := &BigQueryDatasource{
@@ -104,6 +107,7 @@ func Test_datasourceConnection(t *testing.T) {
 					Location: "test",
 				}, nil
 			},
+			resourceManagerServices: make(map[string]*cloudresourcemanager.Service),
 		}
 
 		ds.apiClients.Store("1/us-west2:raintank-dev", api.New(&bq.Client{
@@ -122,6 +126,23 @@ func Test_datasourceConnection(t *testing.T) {
 		assert.True(t, apiClient2Exists)
 
 		assert.Equal(t, 1, clientsFactoryCallsCount)
+	})
+
+	t.Run("creates resource manager if doesn't exist for the given datasource", func(t *testing.T) {
+		ds := &BigQueryDatasource{
+			bqFactory: func(ctx context.Context, projectID string, opts ...option.ClientOption) (*bq.Client, error) {
+				return &bq.Client{
+					Location: "test",
+				}, nil
+			},
+			resourceManagerServices: make(map[string]*cloudresourcemanager.Service),
+		}
+
+		_, err1 := RunConnection(ds, []byte(`{}`))
+		assert.Nil(t, err1)
+
+		_, exists := ds.resourceManagerServices["1"]
+		assert.True(t, exists)
 	})
 }
 

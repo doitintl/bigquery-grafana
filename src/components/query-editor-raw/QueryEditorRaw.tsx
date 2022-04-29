@@ -9,7 +9,7 @@ type Props = {
   query: BigQueryQueryNG;
   getTables: (d?: string) => Promise<TableDefinition[]>;
   getColumns: (t: string) => Promise<ColumnDefinition[]>;
-  getTableSchema: (l: string, d: string, t: string) => Promise<TableSchema | null>;
+  getTableSchema: (p: string, d: string, t: string) => Promise<TableSchema | null>;
   onChange: (value: BigQueryQueryNG, processQuery: boolean) => void;
   children?: (props: { formatQuery: () => void }) => React.ReactNode;
   width?: number;

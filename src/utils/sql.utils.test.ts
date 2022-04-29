@@ -3,7 +3,10 @@ import { SQLExpression } from 'types';
 import { applyQueryDefaults } from '../utils';
 import { haveColumns, toRawSql } from './sql.utils';
 
-const queryWithDefaults = applyQueryDefaults({ dataset: 'test', table: 't' } as any, { jsonData: {} } as any);
+const queryWithDefaults = applyQueryDefaults(
+  { dataset: 'test', table: 't', project: 'projectId' } as any,
+  { jsonData: {} } as any
+);
 const from = 'FROM `projectId.test.t`';
 
 const columns: SQLExpression['columns'] = [
@@ -23,7 +26,7 @@ const columns: SQLExpression['columns'] = [
 
 describe('toRawSql function', () => {
   it('should return empty string if there are no values in the sql object', () => {
-    const result = toRawSql(queryWithDefaults, 'projectId');
+    const result = toRawSql(queryWithDefaults);
     expect(result).toEqual('');
   });
 
@@ -31,7 +34,7 @@ describe('toRawSql function', () => {
     const sql: SQLExpression = {
       columns: [columns[0]],
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT id ${from} `);
   });
 
@@ -39,7 +42,7 @@ describe('toRawSql function', () => {
     const sql: SQLExpression = {
       columns,
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT id, name, value ${from} `);
   });
 
@@ -47,7 +50,7 @@ describe('toRawSql function', () => {
     const sql: SQLExpression = {
       columns: [{ ...columns[2], name: 'AVG' }],
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT AVG(value) ${from} `);
   });
 
@@ -56,7 +59,7 @@ describe('toRawSql function', () => {
       columns: [columns[0]],
       whereString: 'id = 1',
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT id ${from} WHERE id = 1 `);
   });
 
@@ -67,7 +70,7 @@ describe('toRawSql function', () => {
         { type: QueryEditorExpressionType.GroupBy, property: { name: 'name', type: QueryEditorPropertyType.String } },
       ],
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} GROUP BY name `);
   });
 
@@ -79,7 +82,7 @@ describe('toRawSql function', () => {
         { type: QueryEditorExpressionType.GroupBy, property: { name: 'value', type: QueryEditorPropertyType.String } },
       ],
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name, value ${from} GROUP BY name, value `);
   });
 
@@ -91,7 +94,7 @@ describe('toRawSql function', () => {
         property: { name: 'name', type: QueryEditorPropertyType.String },
       },
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} ORDER BY name `);
   });
 
@@ -104,7 +107,7 @@ describe('toRawSql function', () => {
       },
       orderByDirection: 'DESC',
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} ORDER BY name DESC `);
   });
 
@@ -113,7 +116,7 @@ describe('toRawSql function', () => {
       columns: [columns[1]],
       orderByDirection: 'DESC',
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} `);
   });
 
@@ -122,7 +125,7 @@ describe('toRawSql function', () => {
       columns: [columns[1]],
       limit: 10,
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} LIMIT 10 `);
   });
 
@@ -131,7 +134,7 @@ describe('toRawSql function', () => {
       columns: [columns[1]],
       limit: 0,
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} LIMIT 0 `);
   });
 
@@ -140,7 +143,7 @@ describe('toRawSql function', () => {
       columns: [columns[1]],
       limit: -2,
     };
-    const result = toRawSql({ ...queryWithDefaults, sql }, 'projectId');
+    const result = toRawSql({ ...queryWithDefaults, sql });
     expect(result).toEqual(`SELECT name ${from} `);
   });
 });

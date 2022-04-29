@@ -8,7 +8,7 @@ import {
 import { isEmpty } from 'lodash';
 import { BigQueryQueryNG, SQLExpression } from 'types';
 
-export function toRawSql({ sql, dataset, table }: BigQueryQueryNG, projectId: string): string {
+export function toRawSql({ sql, dataset, table, project }: BigQueryQueryNG): string {
   let rawQuery = '';
 
   // Return early with empty string if there is no sql column
@@ -19,7 +19,7 @@ export function toRawSql({ sql, dataset, table }: BigQueryQueryNG, projectId: st
   rawQuery += createSelectClause(sql.columns);
 
   if (dataset && table) {
-    rawQuery += `FROM \`${projectId}.${dataset}.${table}\` `;
+    rawQuery += `FROM \`${project}.${dataset}.${table}\` `;
   }
 
   if (sql.whereString) {

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/sqlds/v2"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/option"
 )
 
@@ -32,6 +33,7 @@ type BigqueryDatasourceIface interface {
 	Datasets(ctx context.Context, args DatasetsArgs) ([]string, error)
 	TableSchema(ctx context.Context, args TableSchemaArgs) (*types.TableMetadataResponse, error)
 	ValidateQuery(ctx context.Context, args ValidateQueryArgs) (*api.ValidateQueryResponse, error)
+	Projects(options ProjectsArgs) ([]*cloudresourcemanager.Project, error)
 }
 
 type conn struct {
@@ -42,9 +44,10 @@ type conn struct {
 type bqServiceFactory func(ctx context.Context, projectID string, opts ...option.ClientOption) (*bq.Client, error)
 
 type BigQueryDatasource struct {
-	connections sync.Map
-	apiClients  sync.Map
-	bqFactory   bqServiceFactory
+	connections             sync.Map
+	apiClients              sync.Map
+	bqFactory               bqServiceFactory
+	resourceManagerServices map[string]*cloudresourcemanager.Service
 }
 
 type ConnectionArgs struct {
@@ -55,7 +58,8 @@ type ConnectionArgs struct {
 
 func New() *BigQueryDatasource {
 	return &BigQueryDatasource{
-		bqFactory: bq.NewClient,
+		bqFactory:               bq.NewClient,
+		resourceManagerServices: make(map[string]*cloudresourcemanager.Service),
 	}
 }
 
@@ -84,6 +88,13 @@ func (s *BigQueryDatasource) Connect(config backend.DataSourceInstanceSettings, 
 
 	connectionKey := fmt.Sprintf("%d/%s:%s", config.ID, connectionSettings.Location, connectionSettings.Project)
 
+	if s.resourceManagerServices[fmt.Sprint(config.ID)] == nil {
+		err := createResourceManagerService(settings, fmt.Sprint(config.ID), s)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	c, exists := s.connections.Load(connectionKey)
 
 	if exists {
@@ -108,14 +119,14 @@ func (s *BigQueryDatasource) Connect(config backend.DataSourceInstanceSettings, 
 		s.connections.Store(connectionKey, conn{db: db, driver: dr})
 		return db, nil
 	} else {
-		client, err := newHTTPClient(settings, httpclient.Options{})
+		client, err := newHTTPClient(settings, httpclient.Options{}, bigQueryRoute)
 		if err != nil {
-			return nil, errors.WithMessage(err, "Failed to crate http client")
+			return nil, errors.WithMessage(err, "Failed to create http client")
 		}
 
 		bqClient, err := s.bqFactory(context.Background(), connectionSettings.Project, option.WithHTTPClient(client))
 		if err != nil {
-			return nil, errors.WithMessage(err, "Failed to crate BigQuery client")
+			return nil, errors.WithMessage(err, "Failed to create BigQuery client")
 		}
 
 		dr, db, err := driver.Open(connectionSettings, bqClient)
@@ -135,6 +146,23 @@ func (s *BigQueryDatasource) Connect(config backend.DataSourceInstanceSettings, 
 		return db, nil
 	}
 
+}
+
+func createResourceManagerService(settings types.BigQuerySettings, id string, s *BigQueryDatasource) error {
+	httpClient, err := newHTTPClient(settings, httpclient.Options{}, resourceManagerRoute)
+
+	if err != nil {
+		return errors.WithMessage(err, "Failed to create http client for resource manager")
+	}
+
+	cloudresourcemanagerService, err := cloudresourcemanager.NewService(context.Background(), option.WithHTTPClient(httpClient))
+	s.resourceManagerServices[id] = cloudresourcemanagerService
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *BigQueryDatasource) Converters() (sc []sqlutil.Converter) {
@@ -246,6 +274,20 @@ func (s *BigQueryDatasource) Columns(ctx context.Context, options sqlds.Options)
 	return apiClient.ListColumns(ctx, args.Dataset, args.Table, isOrderable)
 }
 
+type ProjectsArgs struct {
+	DatasourceID string `json:"datasourceId"`
+}
+
+func (s *BigQueryDatasource) Projects(options ProjectsArgs) ([]*cloudresourcemanager.Project, error) {
+	response, err := s.resourceManagerServices[options.DatasourceID].Projects.Search().Do()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Projects, nil
+}
+
 type ValidateQueryArgs struct {
 	Project   string            `json:"project"`
 	Location  string            `json:"location"`
@@ -304,7 +346,7 @@ func (s *BigQueryDatasource) getApi(ctx context.Context, project, location strin
 		return nil, err
 	}
 
-	httpClient, err := newHTTPClient(settings, httpclient.Options{})
+	httpClient, err := newHTTPClient(settings, httpclient.Options{}, bigQueryRoute)
 
 	if err != nil {
 		return nil, errors.WithMessage(err, "Failed to crate http client")

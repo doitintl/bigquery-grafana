@@ -9,31 +9,40 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
-var bigqueryRoute = struct {
-	path   string
+const (
+	bigQueryRoute        = "bigQuery"
+	resourceManagerRoute = "cloudresourcemanager"
+)
+
+type routeInfo struct {
 	method string
-	url    string
 	scopes []string
-}{
-	path:   "bigquery",
-	method: "GET",
-	url:    "https://www.googleapis.com/auth/bigquery",
-	scopes: []string{"https://www.googleapis.com/auth/bigquery",
-		"https://www.googleapis.com/auth/bigquery.insertdata",
-		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/cloud-platform.read-only",
-		"https://www.googleapis.com/auth/devstorage.full_control",
-		"https://www.googleapis.com/auth/devstorage.read_only",
-		"https://www.googleapis.com/auth/devstorage.read_write"},
 }
 
-func getMiddleware(settings types.BigQuerySettings) (httpclient.Middleware, error) {
+var routes = map[string]routeInfo{
+	bigQueryRoute: {
+		method: "GET",
+		scopes: []string{"https://www.googleapis.com/auth/bigquery",
+			"https://www.googleapis.com/auth/bigquery.insertdata",
+			"https://www.googleapis.com/auth/cloud-platform",
+			"https://www.googleapis.com/auth/cloud-platform.read-only",
+			"https://www.googleapis.com/auth/devstorage.full_control",
+			"https://www.googleapis.com/auth/devstorage.read_only",
+			"https://www.googleapis.com/auth/devstorage.read_write"},
+	},
+	resourceManagerRoute: {
+		method: "GET",
+		scopes: []string{"https://www.googleapis.com/auth/cloudplatformprojects"},
+	},
+}
+
+func getMiddleware(settings types.BigQuerySettings, routePath string) (httpclient.Middleware, error) {
 	providerConfig := tokenprovider.Config{
-		RoutePath:         bigqueryRoute.path,
-		RouteMethod:       bigqueryRoute.method,
+		RoutePath:         routePath,
+		RouteMethod:       routes[routePath].method,
 		DataSourceID:      settings.DatasourceId,
 		DataSourceUpdated: settings.Updated,
-		Scopes:            bigqueryRoute.scopes,
+		Scopes:            routes[routePath].scopes,
 	}
 
 	var provider tokenprovider.TokenProvider
@@ -58,8 +67,8 @@ func getMiddleware(settings types.BigQuerySettings) (httpclient.Middleware, erro
 	return tokenprovider.AuthMiddleware(provider), nil
 }
 
-func newHTTPClient(settings types.BigQuerySettings, opts httpclient.Options) (*http.Client, error) {
-	m, err := getMiddleware(settings)
+func newHTTPClient(settings types.BigQuerySettings, opts httpclient.Options, route string) (*http.Client, error) {
+	m, err := getMiddleware(settings, route)
 	if err != nil {
 		return nil, err
 	}

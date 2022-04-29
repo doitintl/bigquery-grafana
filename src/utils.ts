@@ -22,6 +22,7 @@
 
 import { DataQueryRequest, dateTime, DurationUnit } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
+import { BigQueryAPI } from 'api';
 import { BigQueryDatasource } from 'datasource';
 import SqlParser from 'sql_parser';
 import { BigQueryQueryNG, QueryFormat } from 'types';
@@ -277,7 +278,7 @@ export function convertToUtc(d: Date) {
   return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
 }
 
-export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
+export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource, apiClient?: BigQueryAPI) {
   let editorMode = q.editorMode || EditorMode.Builder;
 
   // Switching to code editor if the query was created before visual query builder was introduced.
@@ -287,8 +288,8 @@ export function applyQueryDefaults(q: BigQueryQueryNG, ds: BigQueryDatasource) {
 
   const result = {
     ...q,
-    dataset: q.dataset || '',
-    location: q.location || ds.jsonData.defaultRegion || DEFAULT_REGION,
+    project: q.project || apiClient?.getDefaultProject() || '',
+    location: q.location || ds.jsonData.processingLocation || DEFAULT_REGION,
     format: q.format !== undefined ? q.format : QueryFormat.Table,
     rawSql: q.rawSql || '',
     editorMode,

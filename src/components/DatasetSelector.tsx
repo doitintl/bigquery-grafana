@@ -5,7 +5,9 @@ import { useAsync } from 'react-use';
 import { ResourceSelectorProps } from 'types';
 
 interface DatasetSelectorProps extends ResourceSelectorProps {
-  value?: string;
+  value: string | null;
+  project: string;
+  location: string;
   applyDefault?: boolean;
   disabled?: boolean;
   onChange: (v: SelectableValue) => void;
@@ -15,15 +17,16 @@ export const DatasetSelector: React.FC<DatasetSelectorProps> = ({
   apiClient,
   location,
   value,
+  project,
   onChange,
   disabled,
   className,
   applyDefault,
 }) => {
   const state = useAsync(async () => {
-    const datasets = await apiClient.getDatasets(location);
+    const datasets = await apiClient.getDatasets(location, project);
     return datasets.map(toOption);
-  }, [location]);
+  }, [location, project]);
 
   useEffect(() => {
     if (!applyDefault) {

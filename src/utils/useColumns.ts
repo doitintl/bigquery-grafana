@@ -20,8 +20,8 @@ export function useColumns({ query, isOrderable = false }: Options) {
       return;
     }
 
-    const columns = await apiClient.getColumns(query.location, query.dataset, query.table, isOrderable);
-    const schema = await apiClient.getTableSchema(query.location, query.dataset, query.table);
+    const columns = await apiClient.getColumns(query, isOrderable);
+    const schema = await apiClient.getTableSchema(query);
     const colTypes = new Map<string, SelectableValue[]>();
 
     for (let i = 0; i < columns.length; i++) {
@@ -50,7 +50,7 @@ export function useColumns({ query, isOrderable = false }: Options) {
       results = results.concat(v);
     }
     return results;
-  }, [apiClient, query.dataset, query.location, query.table]);
+  }, [apiClient, query]);
 
   return state;
 }
