@@ -37,11 +37,12 @@ There are multiple ways to install bigquery-grafana. See [INSTALL](https://doiti
    /grafana/plugin/bigquery-grafana/cache_proxy.go  or    /grafana/data/plugin/bigquery-grafana/cache_proxy.go
    Command to execute (without quote) :  
    ‘go run cache_proxy.go’
-2. Open the side menu by clicking the Grafana icon in the top header.
-3. In the side menu under `Dashboards` you should find a link named `Data Sources`.
-4. Click the `+ Add data source` button in the top header.
-5. Select `BigQuery` from the _Type_ dropdown.
-6. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
+2. The cache config can be configured in _cache_proxy_config.yml file. The configurations include BigQuery url and proxy server host and port information.
+3. Open the side menu by clicking the Grafana icon in the top header.
+4. In the side menu under `Dashboards` you should find a link named `Data Sources`.
+5. Click the `+ Add data source` button in the top header.
+6. Select `BigQuery` from the _Type_ dropdown.
+7. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 

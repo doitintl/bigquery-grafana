@@ -73,8 +73,12 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+	
+	blankHost :=  (len(conf.Server.Host) == 0)
+	blankPort := (len(conf.Server.Port) == 0)
+	blankUrl := (len(conf.Bigquery.Url) == 0)
 
-	if (len(conf.Server.Host) == 0) || (len(conf.Server.Port) == 0) || (len(conf.Bigquery.Url) == 0) {
+	if blankHost || blankPort || blankUrl {
 		log.Fatal("No field can be left blank in config file ! Please enter all the required details.")
 	}
 
@@ -90,6 +94,7 @@ func main() {
 			if (strings.Contains(r.URL.String(), "/redis/validate/")) {
 				redisResp, redisErr := validateRedisConnection(r.URL.String())
 				if redisErr != nil {
+					// format the response and send it back to grafana to display on panel
 					w.WriteHeader(http.StatusBadRequest)
 					w.Header().Set("Content-Type", "application/json")
 					type ErrorObject map[string]interface{}
@@ -100,6 +105,7 @@ func main() {
 					}
 
 					w.Write(jsonResp)
+
 				} else {
 					w.Header().Set("Content-Type", "application/json")
 					resp := make(map[string]string)
@@ -144,6 +150,7 @@ func readCacheConf(cacheConfigFile string) (*cacheConfig, error) {
 // function pings the redis server and returns the response. 
 // Invoked while saving the plugin at datasource panel in grafana.
 func validateRedisConnection(redisCacheUrl string) (resp string, err error) {
+
 	splitURL := strings.Split(redisCacheUrl, "/redis/validate/")[1]
 	redisParams := strings.Split(splitURL, "/")
 	redisUrl,_ := url.PathUnescape(redisParams[0])
@@ -175,9 +182,9 @@ func validateRedisConnection(redisCacheUrl string) (resp string, err error) {
 }
 
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	
 	var key string
 	request,error:=requestJson(req) 
-	// log.Printf("duration: %v \n", request.CacheDuration)
 
 	// check if cache is enabled
 	if error!=nil{
@@ -196,7 +203,6 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		if q != "" {
 			x := sha256.Sum256([]byte(q))
 			key = hex.EncodeToString(x[:])
-			// log.Printf("key: %x \n", key)
 		}
 
 		if key != "" {
@@ -205,7 +211,6 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 				ctx := context.Background()
 				// Redis url from input data
 				redisURL := request.CacheData.CacheURL
-				// log.Printf("redisURL : %v\n", redisURL)
 				
 				if strings.Contains(redisURL, "://") {
 					addr :=strings.Split(redisURL, "/")
@@ -263,6 +268,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 						if key != "" {
 							if int(request.CacheDuration) > 0 {				
 								fmt.Printf("using cache duration: %v \n", request.CacheDuration)
+								// setting cache duration in the redis client
 								client.Set(req.Context(), key, string(b), time.Duration(int(request.CacheDuration)) * time.Minute) 
 							} else {
 								log.Printf("Invalid Cache Duration in the input !")
@@ -310,8 +316,9 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 							ttl = int(request.CacheDuration) * 60
 						} else {
 							log.Printf("Invalid Cache Duration in the input !")
-							// ttl = 86400
 						}
+						// If the difference between cache save time and current time is less than TTL, send response from cache
+						// else delete old cache entry and send a fresh query request to BigQuery
 
 						if int(time.Now().Sub(cachedValue.cacheTime).Seconds()) < ttl{ 	
 							fmt.Println("returning response from cache")
@@ -406,9 +413,6 @@ func requestJson(r *http.Request) (requestBody,error) {
 			return q, err1
 		}
 
-		// log.Printf("query : %v\n", q.Query)
-		// log.Printf("cacheEnabled : %v\n", q.CacheEnabled)
-		// log.Printf("cacheType : %v\n", q.CacheType)
 		return q, nil
 	} else {
 		return q, nil
