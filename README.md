@@ -6,11 +6,9 @@
 ![GitHub forks](https://img.shields.io/github/forks/doitintl/bigquery-grafana.svg?style=svg)
 [![Automated Release Notes by gren](https://img.shields.io/badge/%F0%9F%A4%96-release%20notes-00B2EE.svg)](https://github-tools.github.io/github-release-notes/)
 
-## Status: Production Ready
-
 # BigQuery DataSource for Grafana
 
-A BigQuery DataSource plugin provides support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.
+A production-ready BigQuery DataSource plugin that provides support for [BigQuery](https://cloud.google.com/bigquery/) as a backend database.
 
 ### Quick Start
 
@@ -200,8 +198,8 @@ yarn run test
 
 ## Contributing
 
-See the [Contribution Guide](https://doitintl.github.io/bigquery-grafana/CONTRIBUTING).
+See the [CONTRIBUTING](https://doitintl.github.io/bigquery-grafana/CONTRIBUTING) file.
 
 ## License
 
-See the [License File](https://doitintl.github.io/bigquery-grafana/LICENSE).
+See the [LICENSE](https://doitintl.github.io/bigquery-grafana/LICENSE) file.
