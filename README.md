@@ -1,4 +1,4 @@
-## We are retiring the [DoiT International BigQuery DataSource plugin](https://grafana.com/grafana/plugins/doitintl-bigquery-datasource/) for Grafana. We recommend that you migrate to the official [Google BigQuery data source](https://grafana.com/grafana/plugins/grafana-bigquery-datasource/) maintained by Grafana. In August 2022, we will cease all development and archive the GitHub project.
+### We are retiring the [DoiT International BigQuery DataSource plugin](https://grafana.com/grafana/plugins/doitintl-bigquery-datasource/) for Grafana. We recommend that you migrate to the official [Google BigQuery data source](https://grafana.com/grafana/plugins/grafana-bigquery-datasource/) maintained by Grafana. In August 2022, we will cease all development and archive the GitHub project.
 
 ---
 
