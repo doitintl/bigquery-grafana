@@ -53,7 +53,6 @@ Below you will find some provisioning examples
 ```yaml
 # config file version
 apiVersion: 1
-
 datasources:
   - name: BigQuery DS
     type: grafana-bigquery-datasource
@@ -73,7 +72,6 @@ datasources:
 ```yaml
 # config file version
 apiVersion: 1
-
 datasources:
   - name: BigQuery DS
     type: grafana-bigquery-datasource
@@ -97,19 +95,19 @@ SQL query editor comes with a rich support for standard SQL as well as verbose a
 
 SQL query editor also supports query validation and code formatting.
 
-<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditor.png" />
+![](https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditor.png)
 
 #### Query validation
 
-SQL query editor validates the query prividing you with a meaningful information about what's wrong with the query. If the query is valid, an estimated query size is shown.
+SQL query editor validates the query providing you with a meaningful information about what's wrong with the query. If the query is valid, an estimated query size is shown.
 
-<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditorValidation.gif" />
+![](https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditorValidation.gif)
 
 #### Extended code editor
 
 SQL query editor allows editing the query in a full screen code editor making it easy to work with long queries:
 
-<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditorFS.gif" />
+![](https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQCodeEditorFS.gif)
 
 #### Keyboard shortcuts
 
@@ -119,7 +117,7 @@ SQL query editor allows editing the query in a full screen code editor making it
 
 Visual query editor allows creating simple BigQuery queries without SQL knowledge. It comes with basic aggregations support, filtering, grouping, ordering and raw query preview. Similar to SQL query editor, the Visual query editor also validates your query as it's being created.
 
-<img src="https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQVqb.gif" />
+![](https://raw.githubusercontent.com/grafana/google-bigquery-datasource/main/docs/BQVqb.gif)
 
 ### Query as time series
 
