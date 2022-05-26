@@ -72,21 +72,24 @@ export const JWTConfigEditor: React.FC<Props> = ({ onChange }) => {
         <>
           {isPasting !== true && (
             <div data-testid={TEST_IDS.dropZone}>
-              <FileDropzone
-                options={{ multiple: false, accept: 'application/json' }}
-                readAs="readAsText"
-                onLoad={(result) => {
-                  readAndValidateJWT(result as string);
-                  setIsPasting(false);
-                }}
-              >
-                <p style={{ margin: 0, fontSize: `${theme.typography.h4.fontSize}`, textAlign: 'center' }}>
-                  Drop the Google JWT file here
-                  <br />
-                  <br />
-                  <LinkButton fill="outline">Click to browse files</LinkButton>
-                </p>
-              </FileDropzone>
+              {/* Backward compatibility check. FileDropzone added in 8.1 */}
+              {FileDropzone && (
+                <FileDropzone
+                  options={{ multiple: false, accept: 'application/json' }}
+                  readAs="readAsText"
+                  onLoad={(result) => {
+                    readAndValidateJWT(result as string);
+                    setIsPasting(false);
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: `${theme.typography.h4.fontSize}`, textAlign: 'center' }}>
+                    Drop the Google JWT file here
+                    <br />
+                    <br />
+                    <LinkButton fill="outline">Click to browse files</LinkButton>
+                  </p>
+                </FileDropzone>
+              )}
             </div>
           )}
 

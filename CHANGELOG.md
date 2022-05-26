@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- **Fix:** Compatibility issue with Grafana version 8.0.0 (#121)
+
 ## 1.1.0
 
 This release comes with a new feature that enables using multiple BigQuery projects using a single data source. In order to see GCP projects listed in the query editor, you need to enable the [Google Cloud Resource Manager API](https://cloud.google.com/resource-manager).

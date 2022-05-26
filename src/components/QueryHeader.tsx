@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
+import { Button, InlineField, InlineSwitch, RadioButtonGroup, Select, Tooltip } from '@grafana/ui';
 import { BigQueryAPI } from 'api';
 import React, { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
@@ -9,6 +9,7 @@ import { DEFAULT_REGION, PROCESSING_LOCATIONS, QUERY_FORMAT_OPTIONS } from '../c
 import { BigQueryQueryNG, QueryFormat, QueryRowFilter, QueryWithDefaults } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
+import { ErrorBoundary } from './ErrorBoundary';
 import { ProjectSelector } from './ProjectSelector';
 import { TableSelector } from './TableSelector';
 
@@ -106,24 +107,53 @@ export function QueryHeader({
   return (
     <>
       <EditorHeader>
-        <InlineSelect
-          label="Processing location"
-          value={location}
-          placeholder="Select location"
-          allowCustomValue
-          menuShouldPortal
-          onChange={({ value }) => value && onChange({ ...query, location: value || DEFAULT_REGION })}
-          options={PROCESSING_LOCATIONS}
-        />
+        {/* Backward compatibility check. Inline select uses SelectContainer that was added in 8.3 */}
+        <ErrorBoundary
+          fallBackComponent={
+            <InlineField label="Processing location" labelWidth={20}>
+              <Select
+                placeholder="Select location"
+                allowCustomValue
+                value={location}
+                onChange={({ value }) => value && onChange({ ...query, location: value || DEFAULT_REGION })}
+                options={PROCESSING_LOCATIONS}
+              />
+            </InlineField>
+          }
+        >
+          <InlineSelect
+            label="Processing location"
+            value={location}
+            placeholder="Select location"
+            allowCustomValue
+            menuShouldPortal
+            onChange={({ value }) => value && onChange({ ...query, location: value || DEFAULT_REGION })}
+            options={PROCESSING_LOCATIONS}
+          />
+        </ErrorBoundary>
 
-        <InlineSelect
-          label="Format"
-          value={query.format}
-          placeholder="Select format"
-          menuShouldPortal
-          onChange={onFormatChange}
-          options={QUERY_FORMAT_OPTIONS}
-        />
+        {/* Backward compatibility check. Inline select uses SelectContainer that was added in 8.3 */}
+        <ErrorBoundary
+          fallBackComponent={
+            <InlineField label="Format" labelWidth={15}>
+              <Select
+                placeholder="Select format"
+                value={query.format}
+                onChange={onFormatChange}
+                options={QUERY_FORMAT_OPTIONS}
+              />
+            </InlineField>
+          }
+        >
+          <InlineSelect
+            label="Format"
+            value={query.format}
+            placeholder="Select format"
+            menuShouldPortal
+            onChange={onFormatChange}
+            options={QUERY_FORMAT_OPTIONS}
+          />
+        </ErrorBoundary>
 
         {editorMode === EditorMode.Builder && (
           <>

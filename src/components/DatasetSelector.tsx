@@ -1,8 +1,9 @@
-import { SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 import React, { useEffect } from 'react';
 import { useAsync } from 'react-use';
 import { ResourceSelectorProps } from 'types';
+import { toOption } from 'utils/data';
 
 interface DatasetSelectorProps extends ResourceSelectorProps {
   value: string | null;

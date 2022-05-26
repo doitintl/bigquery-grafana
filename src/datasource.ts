@@ -99,7 +99,7 @@ export class BigQueryDatasource extends DataSourceWithBackend<BigQueryQueryNG, B
 
   async testDatasource() {
     const health = await this.callHealthCheck();
-    if (health.status.toLowerCase() === 'error') {
+    if (health.status?.toLowerCase() === 'error') {
       return { status: 'error', message: health.message, details: health.details };
     }
 

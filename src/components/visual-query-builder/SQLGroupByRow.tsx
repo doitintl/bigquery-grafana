@@ -1,9 +1,10 @@
-import { SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 import { QueryEditorGroupByExpression } from 'expressions';
 import React, { useCallback } from 'react';
 import { SQLExpression } from 'types';
+import { toOption } from 'utils/data';
 import { setGroupByField } from 'utils/sql.utils';
 
 interface SQLGroupByRowProps {

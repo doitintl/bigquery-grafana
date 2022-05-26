@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { EditorField, Stack } from '@grafana/experimental';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 import { QueryEditorExpressionType, QueryEditorFunctionExpression } from 'expressions';
 import { uniqueId } from 'lodash';
 import React, { useCallback } from 'react';
+import { toOption } from 'utils/data';
 import { createFunctionField } from 'utils/sql.utils';
 import { SQLExpression } from '../../types';
 import { BQ_AGGREGATE_FNS } from '../query-editor-raw/bigQueryFunctions';
