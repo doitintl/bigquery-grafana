@@ -57,7 +57,7 @@ export const BigQueryConfigEditor: React.FC<BigQueryConfigEditorProps> = (props)
     <>
       <ConfigurationHelp />
 
-      <FieldSet label="Authentication">
+      <FieldSet label="Authentication =)">
         <Field label="Authentication type">
           <RadioButtonGroup
             options={GOOGLE_AUTH_TYPE_OPTIONS}
