@@ -135,23 +135,27 @@ The query builder provides a simple yet a user-friendly interface to help you qu
 2. The time field and metric field
 3. WHERE clause - Either use one of the pre-defined macros, to speed your writing time, or set up your own expression. Existing supported Macros are:
 
-   a. Macro $__timeFiler with last 7 days example:
+   a. Macro $__timeFilter(column) with last 7 days example:
+   
+   ``` 
+    WHERE $__timeFilter(createDate)
+   ```
+   turns into
+   ```
+     WHERE `createDate` BETWEEN TIMESTAMP_MILLIS (1592147699012) AND TIMESTAMP_MILLIS (1592752499012) AND _PARTITIONTIME >= '2020-06-14 18:14:59' AND _PARTITIONTIME < '2020-06-21 18:14:59'
+   ```
 
-```
-  WHERE `createDate` BETWEEN TIMESTAMP_MILLIS (1592147699012) AND TIMESTAMP_MILLIS (1592752499012) AND _PARTITIONTIME >= '2020-06-14 18:14:59' AND _PARTITIONTIME < '2020-06-21 18:14:59'
-```
+   b. Macro $__timeFrom with last 7 days example:
 
-b. Macro $__timeFrom with last 7 days example:
+   ```
+     WHERE `createDate` > TIMESTAMP_MILLIS (1592223758609)  AND _PARTITIONTIME >= '2020-06-15 15:22:38' AND _PARTITIONTIME < '2020-06-22 15:22:38'
+   ```
 
-```
-  WHERE `createDate` > TIMESTAMP_MILLIS (1592223758609)  AND _PARTITIONTIME >= '2020-06-15 15:22:38' AND _PARTITIONTIME < '2020-06-22 15:22:38'
-```
+   c. Macro $__timeTo with last 7 days example:
 
-c. Macro $__timeTo with last 7 days example:
-
-```
-  WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
-```
+   ```
+     WHERE `createDate` < TIMESTAMP_MILLIS (1592828659681)  AND _PARTITIONTIME >= '2020-06-15 15:24:19' AND _PARTITIONTIME < '2020-06-22 15:24:19'
+   ```
 
 You can now use timeFilter macro in raw sql mode
 
